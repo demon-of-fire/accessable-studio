@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessible Studio</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <!-- Live Region for Screen Reader Announcements -->
+  <div id="sr-announcer" aria-live="assertive" aria-atomic="true" class="sr-only" role="alert"></div>
+  <div id="sr-status" aria-live="polite" aria-atomic="true" class="sr-only" role="status"></div>
+
+  <div id="app">
+    <!-- ============================================
+         LEFT SIDEBAR - Main Navigation
+         ============================================ -->
+    <nav id="sidebar" role="navigation" aria-label="Main navigation">
+      <h1 id="app-title">Accessible Studio</h1>
+      <div id="nav-buttons" role="group" aria-label="Application sections">
+        <button id="nav-video-editor" class="nav-button active" aria-pressed="true" aria-label="Video Editor section">
+          Video Editor
+        </button>
+        <button id="nav-photo-editor" class="nav-button" aria-pressed="false" aria-label="Photo Editor section">
+          Photo Editor
+        </button>
+        <button id="nav-file-converter" class="nav-button" aria-pressed="false" aria-label="File Converter section">
+          File Converter
+        </button>
+        <button id="nav-assistant" class="nav-button" aria-pressed="false" aria-label="Project Assistant chatbot">
+          Assistant
+        </button>
+        <button id="nav-user-guide" class="nav-button" aria-pressed="false" aria-label="User guide with all commands and instructions">
+          User Guide
+        </button>
+        <button id="nav-settings" class="nav-button" aria-pressed="false" aria-label="Application settings, login, themes">
+          Settings
+        </button>
+      </div>
+      <div id="sidebar-bottom">
+        <button id="btn-keyboard-shortcuts" aria-label="Show keyboard shortcuts, press F1">
+          Keyboard Shortcuts
+        </button>
+        <button id="btn-about" aria-label="About Accessible Studio">
+          About
+        </button>
+      </div>
+    </nav>
+
+    <!-- ============================================
+         MAIN CONTENT AREA - switches based on sidebar
+         ============================================ -->
+    <div id="main-area">
+
+      <!-- ==========================================
+           VIDEO EDITOR SECTION
+           ========================================== -->
+      <section id="section-video-editor" class="app-section active" role="region" aria-label="Video Editor">
+
+        <!-- Step 1: Getting media in -->
+        <div id="video-toolbar-main" role="group" aria-label="Main actions: import and manage your project">
+          <button id="btn-import-media" aria-label="Import video or image files">Import Media</button>
+          <button id="btn-import-audio" aria-label="Import audio or music files">Import Audio</button>
+          <button id="btn-save-project" aria-label="Save current project to file">Save Project</button>
+          <button id="btn-open-project" aria-label="Open an existing project file">Open Project</button>
+          <button id="btn-export-video" aria-label="Export your finished video">Export Video</button>
+        </div>
+
+        <!-- Step 2: Editing tools - only shown when a clip is selected -->
+        <div id="video-toolbar-edit" role="group" aria-label="Editing tools. Select a clip on the timeline to use these." class="hidden">
+          <p id="edit-tools-label" class="toolbar-label">Editing selected clip:</p>
+          <button id="btn-split-clip" aria-label="Split this clip at the current playhead position">Split</button>
+          <button id="btn-delete-clip" aria-label="Delete this clip from the timeline">Delete</button>
+          <button id="btn-duplicate-clip" aria-label="Make a copy of this clip">Duplicate</button>
+          <button id="btn-add-text" aria-label="Add text that appears over the video">Add Text</button>
+          <button id="btn-show-filters" aria-label="Adjust brightness, contrast and other effects">Adjust Filters</button>
+          <button id="btn-undo" aria-label="Undo last action">Undo</button>
+          <button id="btn-redo" aria-label="Redo">Redo</button>
+        </div>
+
+        <!-- Video editor main layout -->
+        <div id="video-editor-layout">
+          <!-- Media library -->
+          <div id="media-library" role="region" aria-label="Your imported media files">
+            <h2 id="media-library-heading">Media Library</h2>
+            <div id="media-list" role="list" aria-label="List of imported media files" tabindex="0">
+              <p id="media-empty-message" class="help-text">No media imported yet. Use the Import Media or Import Audio button above. Files are automatically added to the timeline at the playhead position.</p>
+            </div>
+          </div>
+
+          <!-- Video preview area -->
+          <div id="preview-area" role="region" aria-label="Video preview and playback controls">
+            <h2 class="sr-only">Video Preview</h2>
+            <div id="video-container">
+              <video id="video-player" aria-label="Video preview. Use playback controls below to control playback." tabindex="0">
+                Your browser does not support video playback.
+              </video>
+              <div id="no-video-message" class="placeholder-message">
+                <p>No video loaded</p>
+                <p>Import media files to begin editing</p>
+              </div>
+            </div>
+
+            <!-- Playback controls - ALL BUTTONS, ALL LABELED -->
+            <div id="playback-controls" role="group" aria-label="Video playback controls">
+              <button id="btn-skip-back" aria-label="Skip backward 5 seconds">Back 5s</button>
+              <button id="btn-frame-back" aria-label="Go back 1 frame">Back 1 Frame</button>
+              <button id="btn-play-pause" aria-label="Play video">Play</button>
+              <button id="btn-frame-forward" aria-label="Go forward 1 frame">Forward 1 Frame</button>
+              <button id="btn-skip-forward" aria-label="Skip forward 5 seconds">Forward 5s</button>
+              <button id="btn-stop" aria-label="Stop playback and return to beginning">Stop</button>
+              <button id="btn-where-am-i" aria-label="Announce the current playhead position and what clips are here">Where Am I?</button>
+            </div>
+
+            <!-- Playhead position - live announced to screen readers -->
+            <div id="playhead-info" role="status" aria-live="polite" aria-label="Playhead position information">
+              <span id="playhead-position-text">Playhead at 0 seconds. No clips at this position.</span>
+            </div>
+
+            <!-- Filmstrip scrubber (like iMovie) -->
+            <div id="scrubber-area" role="group" aria-label="Video scrubber showing thumbnail frames with a playhead line">
+              <span id="time-display" aria-label="Current playback time" role="timer">00:00 / 00:00</span>
+              <div id="filmstrip-container" aria-hidden="true">
+                <canvas id="filmstrip-canvas"></canvas>
+                <div id="filmstrip-playhead"></div>
+              </div>
+              <label for="seek-slider" class="sr-only">Scrub through video frames</label>
+              <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.01"
+                     aria-label="Scrub through video frames. Use left and right arrow keys to move frame by frame."
+                     aria-valuetext="0 seconds of 0 seconds">
+            </div>
+
+            <!-- Volume -->
+            <div id="volume-controls" role="group" aria-label="Volume controls">
+              <label for="volume-slider" id="volume-label">Volume:</label>
+              <input type="range" id="volume-slider" min="0" max="100" value="100" step="1"
+                     aria-label="Volume, currently 100 percent" aria-valuetext="100 percent">
+              <button id="btn-mute" aria-label="Mute audio">Mute</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters Panel (shows/hides) -->
+        <div id="filters-panel" class="collapsible-panel hidden" role="region" aria-label="Video filters and effects">
+          <h2>Filters & Effects</h2>
+          <p class="help-text">Adjust filters for the selected clip. Changes preview in real time.</p>
+          <div id="filter-controls" role="group" aria-label="Filter adjustment sliders">
+            <div class="filter-row">
+              <label for="filter-brightness" id="label-brightness">Brightness:</label>
+              <input type="range" id="filter-brightness" min="0" max="200" value="100"
+                     aria-label="Brightness, currently 100 percent" aria-valuetext="100 percent">
+              <span id="brightness-value" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-row">
+              <label for="filter-contrast" id="label-contrast">Contrast:</label>
+              <input type="range" id="filter-contrast" min="0" max="200" value="100"
+                     aria-label="Contrast, currently 100 percent" aria-valuetext="100 percent">
+              <span id="contrast-value" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-row">
+              <label for="filter-saturation" id="label-saturation">Saturation:</label>
+              <input type="range" id="filter-saturation" min="0" max="200" value="100"
+                     aria-label="Saturation, currently 100 percent" aria-valuetext="100 percent">
+              <span id="saturation-value" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-row">
+              <label for="filter-blur" id="label-blur">Blur:</label>
+              <input type="range" id="filter-blur" min="0" max="20" value="0" step="0.5"
+                     aria-label="Blur effect, currently 0 pixels" aria-valuetext="0 pixels">
+              <span id="blur-value" aria-hidden="true">0px</span>
+            </div>
+            <div class="filter-row">
+              <label for="filter-grayscale" id="label-grayscale">Grayscale:</label>
+              <input type="range" id="filter-grayscale" min="0" max="100" value="0"
+                     aria-label="Grayscale effect, currently 0 percent" aria-valuetext="0 percent">
+              <span id="grayscale-value" aria-hidden="true">0%</span>
+            </div>
+            <div class="filter-row">
+              <label for="filter-sepia" id="label-sepia">Sepia:</label>
+              <input type="range" id="filter-sepia" min="0" max="100" value="0"
+                     aria-label="Sepia effect, currently 0 percent" aria-valuetext="0 percent">
+              <span id="sepia-value" aria-hidden="true">0%</span>
+            </div>
+            <div class="filter-row">
+              <label for="filter-hue" id="label-hue">Hue Rotate:</label>
+              <input type="range" id="filter-hue" min="0" max="360" value="0"
+                     aria-label="Hue rotation, currently 0 degrees" aria-valuetext="0 degrees">
+              <span id="hue-value" aria-hidden="true">0°</span>
+            </div>
+            <div class="filter-row">
+              <label for="filter-invert" id="label-invert">Invert:</label>
+              <input type="range" id="filter-invert" min="0" max="100" value="0"
+                     aria-label="Color invert, currently 0 percent" aria-valuetext="0 percent">
+              <span id="invert-value" aria-hidden="true">0%</span>
+            </div>
+          </div>
+
+          <h3>Filter Presets</h3>
+          <div id="filter-presets" role="group" aria-label="Quick filter presets">
+            <button class="preset-button" data-preset="none" aria-label="Remove all filters">None (Original)</button>
+            <button class="preset-button" data-preset="vintage" aria-label="Apply vintage film filter">Vintage</button>
+            <button class="preset-button" data-preset="cinematic" aria-label="Apply cinematic color grading">Cinematic</button>
+            <button class="preset-button" data-preset="noir" aria-label="Apply black and white noir filter">Black & White</button>
+            <button class="preset-button" data-preset="warm" aria-label="Apply warm tone filter">Warm Tone</button>
+            <button class="preset-button" data-preset="cool" aria-label="Apply cool tone filter">Cool Tone</button>
+            <button class="preset-button" data-preset="dramatic" aria-label="Apply dramatic high contrast filter">Dramatic</button>
+            <button class="preset-button" data-preset="faded" aria-label="Apply faded film look">Faded Film</button>
+            <button class="preset-button" data-preset="vivid" aria-label="Apply vivid saturated colors">Vivid</button>
+          </div>
+          <button id="btn-reset-filters" aria-label="Reset all filters back to their default values">Reset All Filters</button>
+          <button id="btn-close-filters" aria-label="Close the filters panel">Close Filters</button>
+        </div>
+
+        <!-- TIMELINE -->
+        <div id="timeline-section" role="region" aria-label="Video timeline. This is where your clips are arranged.">
+          <div id="timeline-header">
+            <h2>Timeline</h2>
+            <div role="group" aria-label="Timeline zoom controls">
+              <button id="btn-zoom-in" aria-label="Zoom in on the timeline to see more detail">Zoom In</button>
+              <button id="btn-zoom-out" aria-label="Zoom out on the timeline to see the full project">Zoom Out</button>
+              <span id="zoom-level" aria-live="polite" aria-label="Current zoom level">100%</span>
+            </div>
+          </div>
+
+          <div id="timeline-container">
+            <div id="time-ruler" aria-hidden="true"><canvas id="ruler-canvas"></canvas></div>
+            <div id="playhead" aria-hidden="true"></div>
+
+            <!-- Video Track -->
+            <div id="video-track" class="track" role="list" aria-label="Video track. Contains your video and image clips.">
+              <div class="track-label" aria-hidden="true"><span>Video</span></div>
+              <div class="track-clips" id="video-track-clips"></div>
+            </div>
+            <!-- Audio Track -->
+            <div id="audio-track" class="track" role="list" aria-label="Audio track. Contains your music and sound effect clips.">
+              <div class="track-label" aria-hidden="true"><span>Audio</span></div>
+              <div class="track-clips" id="audio-track-clips"></div>
+            </div>
+            <!-- Text Track -->
+            <div id="text-track" class="track" role="list" aria-label="Text overlay track. Contains text that appears over your video.">
+              <div class="track-label" aria-hidden="true"><span>Text</span></div>
+              <div class="track-clips" id="text-track-clips"></div>
+            </div>
+          </div>
+
+          <!-- Clip info when selected -->
+          <div id="clip-properties" class="hidden" role="region" aria-label="Properties for the currently selected clip">
+            <h3>Selected Clip Properties</h3>
+            <div id="clip-props-content">
+              <label for="clip-name-input">Clip Name:</label>
+              <input type="text" id="clip-name-input" aria-label="Edit the name of this clip">
+
+              <label for="clip-start-input">Start Time (seconds):</label>
+              <input type="number" id="clip-start-input" step="0.1" min="0" aria-label="When this clip starts on the timeline, in seconds">
+
+              <label for="clip-duration-input">Duration (seconds):</label>
+              <input type="number" id="clip-duration-input" step="0.1" min="0.5" aria-label="How long this clip lasts, in seconds">
+
+              <label for="clip-volume-slider">Clip Volume:</label>
+              <input type="range" id="clip-volume-slider" min="0" max="200" value="100"
+                     aria-label="Volume of this clip, currently 100 percent" aria-valuetext="100 percent">
+              <span id="clip-volume-display" aria-hidden="true">100%</span>
+
+              <label for="clip-speed-select">Playback Speed:</label>
+              <select id="clip-speed-select" aria-label="How fast this clip plays">
+                <option value="0.25">0.25x (Very Slow)</option>
+                <option value="0.5">0.5x (Slow)</option>
+                <option value="0.75">0.75x (Slightly Slow)</option>
+                <option value="1" selected>1x (Normal Speed)</option>
+                <option value="1.25">1.25x (Slightly Fast)</option>
+                <option value="1.5">1.5x (Fast)</option>
+                <option value="2">2x (Double Speed)</option>
+                <option value="4">4x (Very Fast)</option>
+              </select>
+
+              <button id="btn-remove-clip-audio" aria-label="Remove audio from this video clip">Remove Audio from Clip</button>
+              <button id="btn-apply-clip-changes" aria-label="Apply changes to this clip">Apply Changes</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           PHOTO EDITOR SECTION
+           ========================================== -->
+      <section id="section-photo-editor" class="app-section" role="region" aria-label="Photo Editor" style="display:none">
+        <div id="photo-toolbar" role="toolbar" aria-label="Photo editor toolbar">
+          <button id="btn-photo-open" aria-label="Open an image file to edit">Open Image</button>
+          <button id="btn-photo-save" aria-label="Save the edited image">Save Image</button>
+          <button id="btn-photo-save-as" aria-label="Save the image as a new file in a different format">Save As</button>
+          <span class="toolbar-separator" aria-hidden="true"></span>
+          <button id="btn-photo-undo" aria-label="Undo last photo edit">Undo</button>
+          <button id="btn-photo-redo" aria-label="Redo last undone photo edit">Redo</button>
+          <span class="toolbar-separator" aria-hidden="true"></span>
+          <button id="btn-photo-crop" aria-label="Crop the image">Crop</button>
+          <button id="btn-photo-resize" aria-label="Resize the image dimensions">Resize</button>
+          <button id="btn-photo-rotate-left" aria-label="Rotate image 90 degrees counter-clockwise">Rotate Left</button>
+          <button id="btn-photo-rotate-right" aria-label="Rotate image 90 degrees clockwise">Rotate Right</button>
+          <button id="btn-photo-flip-h" aria-label="Flip image horizontally, left to right">Flip Horizontal</button>
+          <button id="btn-photo-flip-v" aria-label="Flip image vertically, top to bottom">Flip Vertical</button>
+          <span class="toolbar-separator" aria-hidden="true"></span>
+          <button id="btn-photo-filters" aria-label="Open photo filters and adjustments">Filters</button>
+          <button id="btn-photo-text" aria-label="Add text to the image">Add Text</button>
+        </div>
+
+        <div id="photo-editor-layout">
+          <div id="photo-canvas-area" role="img" aria-label="Image editing canvas. Open an image to begin editing.">
+            <canvas id="photo-canvas" tabindex="0" aria-label="Image canvas"></canvas>
+            <div id="no-photo-message" class="placeholder-message">
+              <p>No image loaded</p>
+              <p>Use the Open Image button to load a photo for editing</p>
+            </div>
+          </div>
+
+          <div id="photo-adjustments" role="region" aria-label="Photo adjustments panel" class="hidden">
+            <h2>Photo Adjustments</h2>
+            <div class="filter-row">
+              <label for="photo-brightness">Brightness:</label>
+              <input type="range" id="photo-brightness" min="-100" max="100" value="0"
+                     aria-label="Photo brightness adjustment" aria-valuetext="0">
+              <span id="photo-brightness-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-row">
+              <label for="photo-contrast">Contrast:</label>
+              <input type="range" id="photo-contrast" min="-100" max="100" value="0"
+                     aria-label="Photo contrast adjustment" aria-valuetext="0">
+              <span id="photo-contrast-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-row">
+              <label for="photo-saturation">Saturation:</label>
+              <input type="range" id="photo-saturation" min="-100" max="100" value="0"
+                     aria-label="Photo saturation adjustment" aria-valuetext="0">
+              <span id="photo-saturation-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-row">
+              <label for="photo-sharpness">Sharpness:</label>
+              <input type="range" id="photo-sharpness" min="0" max="100" value="0"
+                     aria-label="Photo sharpness adjustment" aria-valuetext="0">
+              <span id="photo-sharpness-val" aria-hidden="true">0</span>
+            </div>
+
+            <h3>Quick Filters</h3>
+            <div role="group" aria-label="Photo filter presets">
+              <button class="photo-preset-btn" data-preset="none" aria-label="Remove all photo filters">Original</button>
+              <button class="photo-preset-btn" data-preset="grayscale" aria-label="Convert to black and white">Grayscale</button>
+              <button class="photo-preset-btn" data-preset="sepia" aria-label="Apply sepia brown tone">Sepia</button>
+              <button class="photo-preset-btn" data-preset="vintage" aria-label="Apply vintage photo look">Vintage</button>
+              <button class="photo-preset-btn" data-preset="warm" aria-label="Apply warm tones">Warm</button>
+              <button class="photo-preset-btn" data-preset="cool" aria-label="Apply cool tones">Cool</button>
+              <button class="photo-preset-btn" data-preset="vivid" aria-label="Boost all colors">Vivid</button>
+              <button class="photo-preset-btn" data-preset="noir" aria-label="High contrast black and white">Noir</button>
+            </div>
+            <button id="btn-photo-reset-filters" aria-label="Reset all photo adjustments to original">Reset Adjustments</button>
+            <button id="btn-photo-close-filters" aria-label="Close the adjustments panel">Close Panel</button>
+          </div>
+        </div>
+
+        <!-- Resize dialog -->
+        <div id="resize-dialog" class="modal hidden" role="dialog" aria-labelledby="resize-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="resize-title">Resize Image</h2>
+            <label for="resize-width">Width (pixels):</label>
+            <input type="number" id="resize-width" min="1" aria-label="New width in pixels">
+            <label for="resize-height">Height (pixels):</label>
+            <input type="number" id="resize-height" min="1" aria-label="New height in pixels">
+            <div>
+              <label>
+                <input type="checkbox" id="resize-lock-ratio" checked aria-label="Keep the same width to height ratio">
+                Maintain aspect ratio
+              </label>
+            </div>
+            <div class="modal-actions">
+              <button id="btn-resize-apply" aria-label="Apply the new size">Apply</button>
+              <button id="btn-resize-cancel" aria-label="Cancel resizing">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           FILE CONVERTER SECTION
+           ========================================== -->
+      <section id="section-file-converter" class="app-section" role="region" aria-label="File Converter" style="display:none">
+        <h2>File Converter</h2>
+        <p class="help-text">Convert between video, audio, image, and document formats. Select a file, choose the output format, and click Convert.</p>
+
+        <!-- Video/Audio conversion -->
+        <div id="converter-media" role="group" aria-label="Video and audio file conversion">
+          <h3>Video & Audio Conversion</h3>
+          <button id="btn-conv-select-media" aria-label="Select a video or audio file to convert">Select Video or Audio File</button>
+          <p id="conv-media-file-display" aria-live="polite">No file selected</p>
+
+          <label for="conv-media-format">Convert To:</label>
+          <select id="conv-media-format" aria-label="Choose the output format for video or audio conversion">
+            <optgroup label="Video Formats">
+              <option value="mp4">MP4 (most compatible)</option>
+              <option value="avi">AVI</option>
+              <option value="mkv">MKV</option>
+              <option value="mov">MOV (Apple)</option>
+              <option value="webm">WebM (web)</option>
+              <option value="wmv">WMV (Windows)</option>
+              <option value="gif">GIF (animated image)</option>
+            </optgroup>
+            <optgroup label="Audio Formats">
+              <option value="mp3">MP3</option>
+              <option value="wav">WAV (uncompressed)</option>
+              <option value="ogg">OGG</option>
+              <option value="flac">FLAC (lossless)</option>
+              <option value="aac">AAC</option>
+            </optgroup>
+          </select>
+
+          <label for="conv-media-quality">Quality:</label>
+          <select id="conv-media-quality" aria-label="Choose output quality, higher means bigger file size">
+            <option value="high">High Quality (larger file)</option>
+            <option value="medium" selected>Medium Quality (balanced)</option>
+            <option value="low">Low Quality (smaller file)</option>
+          </select>
+
+          <button id="btn-conv-media-start" aria-label="Start converting the selected media file" disabled>Convert File</button>
+          <div id="conv-media-progress" class="progress-bar hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Conversion progress">
+            <div id="conv-media-progress-fill"></div>
+            <span id="conv-media-progress-text">0%</span>
+          </div>
+          <p id="conv-media-status" aria-live="polite"></p>
+        </div>
+
+        <!-- Image conversion -->
+        <div id="converter-image" role="group" aria-label="Image file conversion">
+          <h3>Image Conversion</h3>
+          <button id="btn-conv-select-image" aria-label="Select an image file to convert">Select Image File</button>
+          <p id="conv-image-file-display" aria-live="polite">No file selected</p>
+
+          <label for="conv-image-format">Convert To:</label>
+          <select id="conv-image-format" aria-label="Choose the output image format">
+            <option value="png">PNG (high quality, larger)</option>
+            <option value="jpg">JPG (compressed, smaller)</option>
+            <option value="webp">WebP (modern web format)</option>
+            <option value="bmp">BMP (uncompressed)</option>
+            <option value="gif">GIF</option>
+            <option value="tiff">TIFF (print quality)</option>
+          </select>
+
+          <button id="btn-conv-image-start" aria-label="Start converting the selected image" disabled>Convert Image</button>
+          <p id="conv-image-status" aria-live="polite"></p>
+        </div>
+
+        <!-- Document conversion -->
+        <div id="converter-document" role="group" aria-label="Document file conversion">
+          <h3>Document Conversion</h3>
+          <p class="help-text">Convert between PDF, Word, text, and HTML formats.</p>
+          <button id="btn-conv-select-doc" aria-label="Select a document file to convert, such as PDF or Word">Select Document</button>
+          <p id="conv-doc-file-display" aria-live="polite">No file selected</p>
+
+          <label for="conv-doc-format">Convert To:</label>
+          <select id="conv-doc-format" aria-label="Choose the document output format">
+            <option value="pdf">PDF</option>
+            <option value="docx">Word Document (DOCX)</option>
+            <option value="txt">Plain Text</option>
+            <option value="html">HTML Web Page</option>
+          </select>
+
+          <button id="btn-conv-doc-start" aria-label="Start converting the selected document" disabled>Convert Document</button>
+          <p id="conv-doc-status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           ASSISTANT / CHATBOT SECTION
+           ========================================== -->
+      <section id="section-assistant" class="app-section" role="region" aria-label="Project Assistant" style="display:none">
+        <h2>Project Assistant</h2>
+        <p class="help-text">Type commands in plain English to control your project. The assistant understands commands like trimming, splitting, adding filters, and more.</p>
+
+        <div id="chat-messages" role="log" aria-label="Conversation history with the assistant" tabindex="0">
+          <div class="chat-message bot-message" role="article" aria-label="Assistant message">
+            <strong>Assistant:</strong> Hello! I can help you edit your project. Here are some things you can say:
+            <ul>
+              <li><strong>trim first 5 seconds</strong> - Remove the beginning of a clip</li>
+              <li><strong>split at 10 seconds</strong> - Cut a clip in two</li>
+              <li><strong>apply vintage preset</strong> - Use a filter preset</li>
+              <li><strong>delete clip</strong> - Remove the selected clip</li>
+              <li><strong>what clips do I have</strong> - List all clips</li>
+              <li><strong>export as mp4</strong> - Export your video</li>
+            </ul>
+            <strong>AI Features:</strong>
+            <ul>
+              <li><strong>search for rain sound effect</strong> - Find free sounds online</li>
+              <li><strong>find background jazz music</strong> - Find free music tracks</li>
+              <li><strong>auto color correct</strong> - Fix video colors automatically</li>
+              <li><strong>auto enhance</strong> - Improve photo quality</li>
+              <li><strong>make it cinematic</strong> - Quick style presets</li>
+              <li><strong>suggest edits</strong> - Get AI tips for your project</li>
+              <li><strong>create montage</strong> - Auto-arrange clips</li>
+              <li><strong>close gaps</strong> - Remove spaces between clips</li>
+              <li><strong>add fade in and out</strong> - Add fade effects</li>
+            </ul>
+            Type <strong>help</strong> for the full command list.
+          </div>
+        </div>
+
+        <div id="chat-input-area" role="form" aria-label="Send a command to the assistant">
+          <label for="chat-input" class="sr-only">Type your command here</label>
+          <input type="text" id="chat-input" placeholder="Type a command, for example: trim first 5 seconds"
+                 aria-label="Type your command here, then press Enter or click Send">
+          <button id="btn-send-chat" aria-label="Send your command to the assistant">Send</button>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           USER GUIDE SECTION
+           ========================================== -->
+      <section id="section-user-guide" class="app-section" role="region" aria-label="User Guide" style="display:none">
+        <h2>User Guide</h2>
+        <p class="help-text">This guide explains all the features and commands available in Accessible Studio. Everything is keyboard accessible and works with NVDA.</p>
+
+        <div role="group" aria-label="Getting started guide">
+          <h3>Getting Started</h3>
+          <ol>
+            <li>Use the sidebar buttons on the left to switch between Video Editor, Photo Editor, File Converter, and Assistant.</li>
+            <li>In the Video Editor, click Import Media to add video or image files.</li>
+            <li>Your imported files are automatically added to the timeline at the playhead position. They also appear in the Media Library for reference.</li>
+            <li>Use the playback controls to preview your video.</li>
+            <li>When finished, click Export Video to save your project.</li>
+          </ol>
+        </div>
+
+        <div role="group" aria-label="Video editor commands">
+          <h3>Video Editor Commands</h3>
+          <table role="table" aria-label="Video editor buttons and what they do">
+            <thead><tr><th scope="col">Button</th><th scope="col">What it does</th></tr></thead>
+            <tbody>
+              <tr><td>Import Media</td><td>Opens a file picker to add video or image files. They are automatically placed on the timeline at the current playhead position.</td></tr>
+              <tr><td>Import Audio</td><td>Opens a file picker to add music or sound files</td></tr>
+              <tr><td>New Project</td><td>Starts a fresh, empty project (clears the timeline)</td></tr>
+              <tr><td>Save Project</td><td>Saves your project so you can continue working on it later</td></tr>
+              <tr><td>Open Project</td><td>Opens a previously saved project file</td></tr>
+              <tr><td>Export Video</td><td>Renders your timeline into a finished video file</td></tr>
+              <tr><td>Undo</td><td>Reverses the last action you performed</td></tr>
+              <tr><td>Redo</td><td>Re-applies an action you just undid</td></tr>
+              <tr><td>Split Clip</td><td>Cuts the clip at the current playhead position into two pieces</td></tr>
+              <tr><td>Delete Clip</td><td>Removes the currently selected clip from the timeline</td></tr>
+              <tr><td>Duplicate Clip</td><td>Makes a copy of the selected clip and places it after the original</td></tr>
+              <tr><td>Add Text</td><td>Adds text that appears over your video at the current position</td></tr>
+              <tr><td>Filters</td><td>Opens the filters panel where you can adjust brightness, contrast, and more</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div role="group" aria-label="Playback controls guide">
+          <h3>Playback Controls</h3>
+          <table role="table" aria-label="Playback control buttons">
+            <thead><tr><th scope="col">Button</th><th scope="col">What it does</th></tr></thead>
+            <tbody>
+              <tr><td>Play / Pause</td><td>Starts or pauses video playback</td></tr>
+              <tr><td>Stop</td><td>Stops playback and returns to the beginning</td></tr>
+              <tr><td>Back 5s</td><td>Jumps backward 5 seconds</td></tr>
+              <tr><td>Forward 5s</td><td>Jumps forward 5 seconds</td></tr>
+              <tr><td>Back 1 Frame</td><td>Goes back exactly one video frame</td></tr>
+              <tr><td>Forward 1 Frame</td><td>Goes forward exactly one video frame</td></tr>
+              <tr><td>Mute</td><td>Toggles audio on and off</td></tr>
+              <tr><td>Position slider</td><td>Drag to jump to any point in the video</td></tr>
+              <tr><td>Volume slider</td><td>Drag to adjust playback volume</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div role="group" aria-label="Assistant chatbot commands">
+          <h3>Assistant Commands</h3>
+          <p>You can type these commands in the Assistant section:</p>
+          <table role="table" aria-label="Available assistant text commands">
+            <thead><tr><th scope="col">Command</th><th scope="col">What it does</th></tr></thead>
+            <tbody>
+              <tr><td>trim first [number] seconds</td><td>Removes time from the start of the selected clip</td></tr>
+              <tr><td>trim last [number] seconds</td><td>Removes time from the end of the selected clip</td></tr>
+              <tr><td>split at [number] seconds</td><td>Splits a clip at the specified time</td></tr>
+              <tr><td>delete clip</td><td>Deletes the currently selected clip</td></tr>
+              <tr><td>duplicate clip</td><td>Copies the selected clip</td></tr>
+              <tr><td>remove audio</td><td>Removes audio from the selected video clip</td></tr>
+              <tr><td>set volume to [number]</td><td>Sets clip volume (0 to 200)</td></tr>
+              <tr><td>set speed to [number]x</td><td>Sets playback speed</td></tr>
+              <tr><td>set brightness to [number]</td><td>Adjusts brightness (0 to 200)</td></tr>
+              <tr><td>set contrast to [number]</td><td>Adjusts contrast (0 to 200)</td></tr>
+              <tr><td>set saturation to [number]</td><td>Adjusts saturation (0 to 200)</td></tr>
+              <tr><td>add blur [number]</td><td>Adds blur effect</td></tr>
+              <tr><td>apply [preset name]</td><td>Applies a filter preset (vintage, cinematic, noir, warm, cool, dramatic, faded, vivid)</td></tr>
+              <tr><td>add text [your text]</td><td>Adds a text overlay</td></tr>
+              <tr><td>what clips do I have</td><td>Lists all clips on the timeline</td></tr>
+              <tr><td>export as [format]</td><td>Starts exporting (mp4, webm, avi, mov, mkv)</td></tr>
+              <tr><td>clear timeline</td><td>Removes all clips from the timeline</td></tr>
+              <tr><td>help</td><td>Shows available commands</td></tr>
+            </tbody>
+          </table>
+
+          <h4>AI Commands</h4>
+          <table role="table" aria-label="AI assistant commands">
+            <thead><tr><th scope="col">Command</th><th scope="col">What it does</th></tr></thead>
+            <tbody>
+              <tr><td>search for [name] sound effect</td><td>Opens free sound libraries in your browser to find sound effects</td></tr>
+              <tr><td>find background music for [mood]</td><td>Opens free music libraries to find background tracks</td></tr>
+              <tr><td>auto color correct</td><td>Automatically adjusts brightness, contrast and saturation to fix video colors</td></tr>
+              <tr><td>auto enhance</td><td>Automatically improves photo quality with brightness, contrast, saturation and sharpness</td></tr>
+              <tr><td>make it cinematic</td><td>Applies a cinematic film look to your video</td></tr>
+              <tr><td>make it dramatic</td><td>Applies high contrast dramatic styling</td></tr>
+              <tr><td>make it vintage</td><td>Applies a retro vintage film look</td></tr>
+              <tr><td>make it black and white</td><td>Converts to high contrast noir black and white</td></tr>
+              <tr><td>suggest edits</td><td>Analyzes your project and gives improvement suggestions</td></tr>
+              <tr><td>create montage</td><td>Auto-arranges all clips into equal-length segments</td></tr>
+              <tr><td>speed ramp</td><td>Creates dramatic slow-fast-slow speed variation on selected clip</td></tr>
+              <tr><td>close gaps</td><td>Removes empty space between all clips on the timeline</td></tr>
+              <tr><td>add fade in and out</td><td>Adds fade effects to the selected clip for smooth transitions</td></tr>
+              <tr><td>auto trim</td><td>Removes dead space from the start and end of the selected clip</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div role="group" aria-label="Keyboard shortcuts in the guide">
+          <h3>Keyboard Shortcuts</h3>
+          <table role="table" aria-label="Keyboard shortcuts reference">
+            <thead><tr><th scope="col">Keys</th><th scope="col">Action</th></tr></thead>
+            <tbody>
+              <tr><td>Space</td><td>Play or Pause</td></tr>
+              <tr><td>Left Arrow</td><td>Skip back 5 seconds</td></tr>
+              <tr><td>Right Arrow</td><td>Skip forward 5 seconds</td></tr>
+              <tr><td>Comma</td><td>Back 1 frame</td></tr>
+              <tr><td>Period</td><td>Forward 1 frame</td></tr>
+              <tr><td>S</td><td>Split clip</td></tr>
+              <tr><td>Delete</td><td>Delete clip</td></tr>
+              <tr><td>M</td><td>Mute / Unmute</td></tr>
+              <tr><td>Control + Z</td><td>Undo</td></tr>
+              <tr><td>Control + Y</td><td>Redo</td></tr>
+              <tr><td>Control + I</td><td>Import media</td></tr>
+              <tr><td>Control + Shift + I</td><td>Import audio</td></tr>
+              <tr><td>Control + E</td><td>Export video</td></tr>
+              <tr><td>Control + S</td><td>Save project</td></tr>
+              <tr><td>F1</td><td>Show shortcuts dialog</td></tr>
+              <tr><td>Tab</td><td>Move to next control</td></tr>
+              <tr><td>Shift + Tab</td><td>Move to previous control</td></tr>
+              <tr><td>Escape</td><td>Close dialog or panel</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div role="group" aria-label="File converter guide">
+          <h3>File Converter</h3>
+          <p>The File Converter supports converting between:</p>
+          <ul>
+            <li><strong>Video formats:</strong> MP4, AVI, MKV, MOV, WebM, WMV, GIF</li>
+            <li><strong>Audio formats:</strong> MP3, WAV, OGG, FLAC, AAC</li>
+            <li><strong>Image formats:</strong> PNG, JPG, WebP, BMP, GIF, TIFF</li>
+            <li><strong>Document formats:</strong> PDF, Word (DOCX), Plain Text, HTML</li>
+          </ul>
+        </div>
+
+        <div role="group" aria-label="Photo editor guide">
+          <h3>Photo Editor</h3>
+          <p>The Photo Editor lets you:</p>
+          <ul>
+            <li>Open images in common formats (PNG, JPG, BMP, WebP, etc.)</li>
+            <li>Crop, resize, rotate, and flip images</li>
+            <li>Adjust brightness, contrast, saturation, and sharpness</li>
+            <li>Apply filter presets (Grayscale, Sepia, Vintage, Warm, Cool, Vivid, Noir)</li>
+            <li>Add text overlays to images</li>
+            <li>Save in different formats</li>
+          </ul>
+        </div>
+
+        <div role="group" aria-label="NVDA screen reader tips">
+          <h3>Tips for Screen Reader Users</h3>
+          <ul>
+            <li>All buttons have descriptive labels that your screen reader will read.</li>
+            <li>Use Tab and Shift+Tab to move between controls.</li>
+            <li>Sliders (like volume and filters) can be adjusted with Left/Right arrow keys.</li>
+            <li>The status bar at the bottom announces important changes.</li>
+            <li>Dialog boxes trap focus so you stay inside them until you close with Escape or the Close button.</li>
+            <li>The Assistant section lets you type commands instead of clicking buttons, which may be faster.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SETTINGS SECTION
+           ========================================== -->
+      <section id="section-settings" class="app-section" role="region" aria-label="Application Settings" style="display:none">
+        <h2>Settings</h2>
+
+        <!-- Account / Login -->
+        <div id="settings-account" role="group" aria-label="Account and login settings">
+          <h3>Account</h3>
+          <div id="login-form" role="form" aria-label="Login or create an account">
+            <p class="help-text">Log in to save your projects to the cloud and sync across devices.</p>
+
+            <label for="login-email">Email Address:</label>
+            <input type="email" id="login-email" aria-label="Enter your email address" placeholder="your@email.com">
+
+            <label for="login-password">Password:</label>
+            <input type="password" id="login-password" aria-label="Enter your password" placeholder="Password">
+
+            <div id="login-buttons" role="group" aria-label="Login actions">
+              <button id="btn-login" aria-label="Log in to your account">Log In</button>
+              <button id="btn-register" aria-label="Create a new account">Create Account</button>
+            </div>
+            <p id="login-status" aria-live="polite"></p>
+          </div>
+
+          <div id="account-info" class="hidden" role="group" aria-label="Your account information">
+            <p id="account-email" aria-label="Logged in email"></p>
+            <button id="btn-logout" aria-label="Log out of your account">Log Out</button>
+          </div>
+        </div>
+
+        <!-- Saved Projects -->
+        <div id="settings-projects" role="group" aria-label="Saved projects">
+          <h3>Saved Projects</h3>
+          <p class="help-text">Your saved projects appear here. You can save and load projects locally even without logging in.</p>
+          <div id="saved-projects-list" role="list" aria-label="List of saved projects">
+            <p>No saved projects yet.</p>
+          </div>
+          <button id="btn-save-local" aria-label="Save current project to your computer">Save Project Locally</button>
+        </div>
+
+        <!-- Theme Settings -->
+        <div id="settings-theme" role="group" aria-label="Theme and appearance settings">
+          <h3>Appearance</h3>
+
+          <div class="setting-row">
+            <label for="theme-mode-select">Color Theme:</label>
+            <select id="theme-mode-select" aria-label="Choose between dark mode and light mode">
+              <option value="dark">Dark Mode (default)</option>
+              <option value="light">Light Mode</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <label for="contrast-level-select">Contrast Level:</label>
+            <select id="contrast-level-select" aria-label="Choose the contrast level for better visibility">
+              <option value="normal">Normal Contrast</option>
+              <option value="high">High Contrast</option>
+              <option value="very-high">Very High Contrast (maximum readability)</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <label for="font-size-select">Text Size:</label>
+            <select id="font-size-select" aria-label="Choose how large the text appears">
+              <option value="small">Small</option>
+              <option value="normal" selected>Normal</option>
+              <option value="large">Large</option>
+              <option value="very-large">Very Large</option>
+            </select>
+          </div>
+
+          <button id="btn-apply-theme" aria-label="Apply the selected appearance settings">Apply Changes</button>
+          <button id="btn-reset-theme" aria-label="Reset appearance settings to defaults">Reset to Defaults</button>
+        </div>
+
+        <!-- General Settings -->
+        <div id="settings-general" role="group" aria-label="General application settings">
+          <h3>General</h3>
+
+          <div class="setting-row">
+            <label for="autosave-toggle">
+              <input type="checkbox" id="autosave-toggle" checked aria-label="Automatically save your project every 5 minutes">
+              Auto-save project every 5 minutes
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="announce-actions-toggle">
+              <input type="checkbox" id="announce-actions-toggle" checked aria-label="Have the screen reader announce actions as they happen">
+              Announce actions to screen reader
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="default-export-format">Default Export Format:</label>
+            <select id="default-export-format" aria-label="Choose the default format when exporting videos">
+              <option value="mp4" selected>MP4</option>
+              <option value="webm">WebM</option>
+              <option value="avi">AVI</option>
+              <option value="mov">MOV</option>
+              <option value="mkv">MKV</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- end main-area -->
+
+    <!-- Export Dialog -->
+    <div id="export-dialog" class="modal hidden" role="dialog" aria-labelledby="export-dialog-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="export-dialog-title">Export Video</h2>
+
+        <label for="export-format">Video Format:</label>
+        <select id="export-format" aria-label="Choose the format for your exported video">
+          <option value="mp4">MP4 (H.264) - Most Compatible</option>
+          <option value="webm">WebM (VP9) - For Web</option>
+          <option value="avi">AVI - Windows</option>
+          <option value="mov">MOV - Apple</option>
+          <option value="mkv">MKV - High Quality</option>
+        </select>
+
+        <label for="export-resolution">Resolution:</label>
+        <select id="export-resolution" aria-label="Choose the resolution for your exported video">
+          <option value="3840:2160">4K Ultra HD (3840 by 2160)</option>
+          <option value="1920:1080" selected>Full HD (1920 by 1080)</option>
+          <option value="1280:720">HD (1280 by 720)</option>
+          <option value="854:480">Standard (854 by 480)</option>
+          <option value="original">Keep Original Resolution</option>
+        </select>
+
+        <label for="export-fps">Frame Rate:</label>
+        <select id="export-fps" aria-label="Choose frames per second">
+          <option value="24">24 fps (Film)</option>
+          <option value="30" selected>30 fps (Standard)</option>
+          <option value="60">60 fps (Smooth)</option>
+        </select>
+
+        <label for="export-quality">Quality:</label>
+        <select id="export-quality" aria-label="Choose export quality, higher means bigger file">
+          <option value="high">High (8 Megabits per second)</option>
+          <option value="medium" selected>Medium (5 Megabits per second)</option>
+          <option value="low">Low (2 Megabits per second)</option>
+        </select>
+
+        <div id="export-progress-area" class="hidden">
+          <div id="export-progress" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Export progress">
+            <div id="export-progress-fill"></div>
+          </div>
+          <p id="export-status" aria-live="assertive">Preparing to export...</p>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-export-start" aria-label="Begin exporting your video">Export</button>
+          <button id="btn-export-cancel" aria-label="Cancel and close the export window">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Text Overlay Dialog -->
+    <div id="text-dialog" class="modal hidden" role="dialog" aria-labelledby="text-dialog-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="text-dialog-title">Add Text Overlay</h2>
+
+        <label for="text-content-input">Text to display:</label>
+        <textarea id="text-content-input" rows="3" aria-label="Enter the text you want to appear on the video"></textarea>
+
+        <label for="text-font-size-input">Font Size:</label>
+        <input type="number" id="text-font-size-input" value="48" min="8" max="200" aria-label="Font size in pixels">
+
+        <label for="text-color-input">Text Color:</label>
+        <input type="color" id="text-color-input" value="#ffffff" aria-label="Choose the color for your text">
+
+        <label for="text-position-select">Position on screen:</label>
+        <select id="text-position-select" aria-label="Where the text appears on the video">
+          <option value="top">Top of video</option>
+          <option value="center" selected>Center of video</option>
+          <option value="bottom">Bottom of video</option>
+        </select>
+
+        <label for="text-duration-input">How long to show (seconds):</label>
+        <input type="number" id="text-duration-input" value="5" min="0.5" step="0.5" aria-label="How many seconds the text appears">
+
+        <div class="modal-actions">
+          <button id="btn-text-add" aria-label="Add this text to your video">Add Text</button>
+          <button id="btn-text-cancel" aria-label="Cancel and close">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Dialog -->
+    <div id="shortcuts-dialog" class="modal hidden" role="dialog" aria-labelledby="shortcuts-title" aria-modal="true">
+      <div class="modal-content modal-large">
+        <h2 id="shortcuts-title">Keyboard Shortcuts</h2>
+        <table role="table" aria-label="All available keyboard shortcuts">
+          <thead><tr><th scope="col">What it does</th><th scope="col">Keys to press</th></tr></thead>
+          <tbody>
+            <tr><td>Play or Pause video</td><td>Space bar</td></tr>
+            <tr><td>Skip forward 5 seconds</td><td>Right Arrow</td></tr>
+            <tr><td>Skip backward 5 seconds</td><td>Left Arrow</td></tr>
+            <tr><td>Forward 1 frame</td><td>Period key</td></tr>
+            <tr><td>Backward 1 frame</td><td>Comma key</td></tr>
+            <tr><td>Split clip at playhead</td><td>S key</td></tr>
+            <tr><td>Delete selected clip</td><td>Delete key</td></tr>
+            <tr><td>Undo</td><td>Control plus Z</td></tr>
+            <tr><td>Redo</td><td>Control plus Y</td></tr>
+            <tr><td>Import media files</td><td>Control plus I</td></tr>
+            <tr><td>Import audio files</td><td>Control plus Shift plus I</td></tr>
+            <tr><td>Export video</td><td>Control plus E</td></tr>
+            <tr><td>Save project</td><td>Control plus S</td></tr>
+            <tr><td>Mute or unmute</td><td>M key</td></tr>
+            <tr><td>Where Am I? (announce playhead position)</td><td>W key</td></tr>
+            <tr><td>Volume up</td><td>Up Arrow</td></tr>
+            <tr><td>Volume down</td><td>Down Arrow</td></tr>
+            <tr><td>Move between items</td><td>Tab or Shift plus Tab</td></tr>
+            <tr><td>Activate a button</td><td>Enter or Space bar</td></tr>
+            <tr><td>Close any dialog</td><td>Escape key</td></tr>
+          </tbody>
+        </table>
+        <div class="modal-actions">
+          <button id="btn-shortcuts-close" aria-label="Close the keyboard shortcuts list">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placement Dialog - shown after importing a file -->
+    <div id="placement-dialog" class="modal hidden" role="dialog" aria-labelledby="placement-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="placement-title">Where do you want to place this file?</h2>
+        <p id="placement-file-name" aria-live="polite">File: example.mp4</p>
+        <p id="placement-file-info" class="help-text">Choose where on the timeline this file should be placed.</p>
+
+        <div id="placement-options" role="group" aria-label="Placement options">
+          <button id="placement-start-track" class="placement-option" aria-label="Add to the very beginning of the track, at 0 seconds">
+            Start of Track (0 seconds)
+          </button>
+          <button id="placement-playhead" class="placement-option" aria-label="Add at the current playhead position">
+            Current Playhead Position
+          </button>
+          <button id="placement-end-track" class="placement-option" aria-label="Add to the end of the track, after all existing clips">
+            End of Track
+          </button>
+          <button id="placement-after-selected" class="placement-option" aria-label="Add right after the currently selected clip">
+            After Selected Clip
+          </button>
+          <button id="placement-before-selected" class="placement-option" aria-label="Add right before the currently selected clip">
+            Before Selected Clip
+          </button>
+        </div>
+
+        <div class="modal-actions">
+          <button id="placement-cancel" aria-label="Cancel importing this file">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- About Dialog -->
+    <div id="about-dialog" class="modal hidden" role="dialog" aria-labelledby="about-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="about-title">About Accessible Studio</h2>
+        <p>Accessible Studio is a fully accessible video editor, photo editor, and file converter designed to work with NVDA and other screen readers.</p>
+        <p>Every button and control is properly labeled for screen reader users. All features can be accessed via keyboard.</p>
+        <p>Version 1.0.0</p>
+        <div class="modal-actions">
+          <button id="btn-about-close" aria-label="Close the about dialog">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <footer id="status-bar" role="status" aria-live="polite" aria-label="Application status">
+      <span id="status-text">Ready. Use the sidebar to navigate between Video Editor, Photo Editor, File Converter, and Assistant.</span>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/accessibility.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/photoeditor.js"></script>
+  <script src="js/ai-assistant.js"></script>
+  <script src="js/chatbot.js"></script>
+  <script src="js/converter.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
