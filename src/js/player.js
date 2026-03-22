@@ -19,6 +19,66 @@ const Player = (() => {
   let currentSource = '';
   let filmstripGenerated = false;
 
+  // Audio playback engine - manages audio clips from the timeline
+  const activeAudioElements = new Map(); // clipId -> HTMLAudioElement
+
+  /** Sync audio clips: start/stop audio elements based on current playhead time */
+  function syncAudioClips(currentTime) {
+    const allClips = Timeline.getClips();
+    const audioClips = allClips.filter(c => c.type === 'audio');
+
+    // Start audio clips that should be playing
+    for (const clip of audioClips) {
+      const clipEnd = clip.startTime + clip.duration;
+      const shouldPlay = isPlaying && currentTime >= clip.startTime && currentTime < clipEnd;
+
+      if (shouldPlay) {
+        if (!activeAudioElements.has(clip.id)) {
+          // Create and start a new audio element for this clip
+          const audio = new Audio(clip.filePath);
+          audio.volume = isMuted ? 0 : (clip.volume ?? 100) / 100 * (video.volume || 1);
+          audio.currentTime = currentTime - clip.startTime;
+          audio.play().catch(() => {}); // ignore autoplay errors
+          activeAudioElements.set(clip.id, audio);
+        } else {
+          // Already playing - check if we need to correct drift
+          const audio = activeAudioElements.get(clip.id);
+          const expectedTime = currentTime - clip.startTime;
+          if (Math.abs(audio.currentTime - expectedTime) > 0.3) {
+            audio.currentTime = expectedTime;
+          }
+          audio.volume = isMuted ? 0 : (clip.volume ?? 100) / 100 * (video.volume || 1);
+        }
+      } else {
+        // Should not be playing - stop if it is
+        if (activeAudioElements.has(clip.id)) {
+          const audio = activeAudioElements.get(clip.id);
+          audio.pause();
+          audio.src = '';
+          activeAudioElements.delete(clip.id);
+        }
+      }
+    }
+
+    // Clean up audio elements for clips that no longer exist
+    for (const [clipId, audio] of activeAudioElements) {
+      if (!audioClips.find(c => c.id === clipId)) {
+        audio.pause();
+        audio.src = '';
+        activeAudioElements.delete(clipId);
+      }
+    }
+  }
+
+  /** Stop all audio clips */
+  function stopAllAudio() {
+    for (const [clipId, audio] of activeAudioElements) {
+      audio.pause();
+      audio.src = '';
+    }
+    activeAudioElements.clear();
+  }
+
   /** Load a video file */
   function loadVideo(filePath) {
     currentSource = filePath;
@@ -43,25 +103,40 @@ const Player = (() => {
     }, { once: true });
   }
 
-  /** Play video */
+  /** Play video and audio */
   function play() {
-    if (!video.src) {
-      Accessibility.announce('No video loaded. Import media first.');
+    const hasVideo = video.src && video.src !== '';
+    const hasAudioClips = Timeline.getClips().some(c => c.type === 'audio');
+
+    if (!hasVideo && !hasAudioClips) {
+      Accessibility.announce('No media loaded. Import media first.');
       return;
     }
-    video.play();
+
+    if (hasVideo) {
+      video.play();
+    }
     isPlaying = true;
+    syncAudioClips(getCurrentTime());
+
+    // Start audio sync loop if we have audio clips
+    if (hasAudioClips) {
+      startAudioSyncLoop();
+    }
+
     playBtn.textContent = 'Pause';
-    playBtn.setAttribute('aria-label', 'Pause video');
+    playBtn.setAttribute('aria-label', 'Pause');
     Accessibility.announceStatus('Playing');
   }
 
-  /** Pause video */
+  /** Pause video and audio */
   function pause() {
     video.pause();
     isPlaying = false;
+    stopAllAudio();
+    stopAudioSyncLoop();
     playBtn.textContent = 'Play';
-    playBtn.setAttribute('aria-label', 'Play video');
+    playBtn.setAttribute('aria-label', 'Play');
     Accessibility.announceStatus('Paused');
   }
 
@@ -76,11 +151,45 @@ const Player = (() => {
     video.pause();
     video.currentTime = 0;
     isPlaying = false;
+    stopAllAudio();
+    stopAudioSyncLoop();
+    audioOnlyTime = 0;
     playBtn.textContent = 'Play';
-    playBtn.setAttribute('aria-label', 'Play video');
+    playBtn.setAttribute('aria-label', 'Play');
     updateTimeDisplay();
     Timeline.setPlayheadPosition(0);
     Accessibility.announceStatus('Stopped');
+  }
+
+  // Audio-only playback: when no video is loaded, we track time ourselves
+  let audioOnlyTime = 0;
+  let audioSyncInterval = null;
+  let lastRealTime = 0;
+
+  function startAudioSyncLoop() {
+    if (audioSyncInterval) return;
+    lastRealTime = performance.now();
+    audioSyncInterval = setInterval(() => {
+      if (!isPlaying) return;
+      const now = performance.now();
+      const delta = (now - lastRealTime) / 1000;
+      lastRealTime = now;
+
+      const hasVideo = video.src && video.src !== '' && video.duration;
+      if (!hasVideo) {
+        // Audio-only mode: advance our own clock
+        audioOnlyTime += delta;
+        updateTimeDisplay();
+      }
+      syncAudioClips(getCurrentTime());
+    }, 50);
+  }
+
+  function stopAudioSyncLoop() {
+    if (audioSyncInterval) {
+      clearInterval(audioSyncInterval);
+      audioSyncInterval = null;
+    }
   }
 
   /** Skip forward */
@@ -193,7 +302,18 @@ const Player = (() => {
 
   /** Seek to time */
   function seekTo(time) {
-    video.currentTime = Math.max(0, Math.min(time, video.duration || 0));
+    const maxTime = getDuration();
+    const seekTime = Math.max(0, Math.min(time, maxTime));
+    const hasVideo = video.src && video.src !== '' && video.duration;
+    if (hasVideo) {
+      video.currentTime = Math.min(seekTime, video.duration);
+    }
+    audioOnlyTime = seekTime;
+    // Re-sync audio clips to new position
+    stopAllAudio();
+    if (isPlaying) {
+      syncAudioClips(seekTime);
+    }
     updateTimeDisplay();
   }
 
@@ -219,12 +339,20 @@ const Player = (() => {
     if (isMuted) {
       video.muted = false;
       isMuted = false;
+      // Unmute all active audio elements
+      for (const [, audio] of activeAudioElements) {
+        audio.volume = video.volume || 1;
+      }
       muteBtn.textContent = 'Mute';
       muteBtn.setAttribute('aria-label', 'Mute audio');
       Accessibility.announceStatus('Audio unmuted');
     } else {
       video.muted = true;
       isMuted = true;
+      // Mute all active audio elements
+      for (const [, audio] of activeAudioElements) {
+        audio.volume = 0;
+      }
       muteBtn.textContent = 'Unmute';
       muteBtn.setAttribute('aria-label', 'Unmute audio');
       Accessibility.announceStatus('Audio muted');
@@ -236,8 +364,8 @@ const Player = (() => {
 
   /** Update time display + filmstrip playhead + playhead info */
   function updateTimeDisplay() {
-    const current = video.currentTime || 0;
-    const duration = video.duration || 0;
+    const current = getCurrentTime();
+    const duration = getDuration();
     const currentStr = Accessibility.formatTimeDisplay(current);
     const durationStr = Accessibility.formatTimeDisplay(duration);
     timeDisplay.textContent = `${currentStr} / ${durationStr}`;
@@ -288,8 +416,8 @@ const Player = (() => {
 
   /** Announce full playhead context (for the "Where Am I?" button) */
   function announceWhereAmI() {
-    const current = video.currentTime || 0;
-    const duration = video.duration || 0;
+    const current = getCurrentTime();
+    const duration = getDuration();
     const clipsHere = Timeline.getClipsAtTime(current);
     const timeStr = Accessibility.formatTime(current);
     const durationStr = Accessibility.formatTime(duration);
@@ -458,14 +586,21 @@ const Player = (() => {
     });
   }
 
-  /** Get current time */
+  /** Get current time - uses video time if video loaded, otherwise audio-only clock */
   function getCurrentTime() {
-    return video.currentTime || 0;
+    const hasVideo = video.src && video.src !== '' && video.duration;
+    if (hasVideo) return video.currentTime || 0;
+    return audioOnlyTime;
   }
 
-  /** Get duration */
+  /** Get duration - uses video duration or end of last audio clip */
   function getDuration() {
-    return video.duration || 0;
+    const videoDur = video.duration || 0;
+    const allClips = Timeline.getClips();
+    const audioDur = allClips
+      .filter(c => c.type === 'audio')
+      .reduce((max, c) => Math.max(max, c.startTime + c.duration), 0);
+    return Math.max(videoDur, audioDur);
   }
 
   /** Apply CSS filter for preview */
@@ -475,11 +610,25 @@ const Player = (() => {
 
   // Time update loop
   function init() {
-    video.addEventListener('timeupdate', updateTimeDisplay);
+    video.addEventListener('timeupdate', () => {
+      updateTimeDisplay();
+      if (isPlaying) syncAudioClips(getCurrentTime());
+    });
     video.addEventListener('ended', () => {
+      // Check if audio clips are still playing
+      const audioDur = getDuration();
+      const current = getCurrentTime();
+      if (current < audioDur - 0.1) {
+        // Audio still has time left, keep playing in audio-only mode
+        audioOnlyTime = current;
+        startAudioSyncLoop();
+        return;
+      }
       isPlaying = false;
+      stopAllAudio();
+      stopAudioSyncLoop();
       playBtn.textContent = 'Play';
-      playBtn.setAttribute('aria-label', 'Play video');
+      playBtn.setAttribute('aria-label', 'Play');
       Accessibility.announceStatus('Playback finished');
     });
 

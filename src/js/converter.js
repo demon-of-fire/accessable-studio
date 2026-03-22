@@ -26,12 +26,18 @@ const Converter = (() => {
       webm: ['-c:v', 'libvpx-vp9', '-c:a', 'libopus', '-b:v', '2M'],
       wmv: ['-c:v', 'wmv2', '-c:a', 'wmav2'],
       flv: ['-c:v', 'flv1', '-c:a', 'mp3'],
+      mpeg: ['-c:v', 'mpeg2video', '-c:a', 'mp2'],
+      m4v: ['-c:v', 'libx264', '-c:a', 'aac', ...qArgs],
+      ts: ['-c:v', 'libx264', '-c:a', 'aac', '-f', 'mpegts'],
       gif: ['-vf', 'fps=10,scale=480:-1:flags=lanczos', '-loop', '0'],
       mp3: ['-vn', '-c:a', 'libmp3lame', '-q:a', '2'],
       wav: ['-vn', '-c:a', 'pcm_s16le'],
       ogg: ['-vn', '-c:a', 'libvorbis', '-q:a', '5'],
       flac: ['-vn', '-c:a', 'flac'],
       aac: ['-vn', '-c:a', 'aac', '-b:a', '192k'],
+      wma: ['-vn', '-c:a', 'wmav2'],
+      m4a: ['-vn', '-c:a', 'aac', '-f', 'ipod'],
+      opus: ['-vn', '-c:a', 'libopus', '-b:a', '128k'],
     };
     return formatArgs[format] || [];
   }
@@ -40,6 +46,12 @@ const Converter = (() => {
   async function convertMedia(inputPath, outputFormat, quality = 'medium') {
     if (!inputPath) {
       Accessibility.announce('No file selected for conversion');
+      return;
+    }
+    if (!window.api) {
+      Accessibility.announce('File conversion requires the desktop application.');
+      const statusEl = document.getElementById('conv-media-status');
+      if (statusEl) statusEl.textContent = 'Error: Conversion requires the desktop application with FFmpeg installed.';
       return;
     }
 
@@ -225,14 +237,43 @@ const Converter = (() => {
         const format = document.getElementById('conv-doc-format')?.value || 'pdf';
         const statusEl = document.getElementById('conv-doc-status');
         if (!docInputPath) return;
+        if (!window.api) {
+          if (statusEl) statusEl.textContent = 'Error: Document conversion requires the desktop application.';
+          Accessibility.announce('Document conversion requires the desktop application.');
+          return;
+        }
 
-        if (statusEl) statusEl.textContent = 'Document conversion is handled by the backend. Processing...';
+        const inputExt = docInputPath.split('.').pop().toLowerCase();
+
+        if (statusEl) statusEl.textContent = `Converting ${inputExt.toUpperCase()} to ${format.toUpperCase()}... Please wait.`;
         Accessibility.announce('Converting document. Please wait.');
 
-        // Note: Full document conversion (PDF<->DOCX) requires server-side processing
-        // For now, announce the limitation
-        if (statusEl) statusEl.textContent = 'Document conversion between PDF and DOCX requires LibreOffice or similar tool. Text extraction is available.';
-        Accessibility.announce('Document conversion requires additional tools. Text file conversions work directly.');
+        try {
+          let savePath = docInputPath.replace(/\.[^.]+$/, `.${format}`);
+          const result = await window.api.showSaveDialog({
+            title: 'Save Converted Document',
+            defaultPath: savePath,
+            filters: [{ name: `${format.toUpperCase()} File`, extensions: [format] }],
+          });
+          if (result.canceled) {
+            if (statusEl) statusEl.textContent = 'Cancelled.';
+            return;
+          }
+          savePath = result.filePath;
+
+          await window.api.convertDocument({
+            inputPath: docInputPath,
+            outputPath: savePath,
+            inputExt,
+            outputFormat: format,
+          });
+
+          if (statusEl) statusEl.textContent = `Document converted! Saved to: ${savePath}`;
+          Accessibility.announce(`Document converted to ${format.toUpperCase()}`);
+        } catch (err) {
+          if (statusEl) statusEl.textContent = `Error: ${err.message || err}`;
+          Accessibility.announce('Document conversion failed. ' + (err.message || err));
+        }
       });
     }
   }

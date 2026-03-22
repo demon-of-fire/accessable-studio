@@ -24,10 +24,17 @@ contextBridge.exposeInMainWorld('api', {
   runFFmpeg: (args) => ipcRenderer.invoke('run-ffmpeg', args),
   exportVideo: (data) => ipcRenderer.invoke('export-video', data),
   convertFile: (data) => ipcRenderer.invoke('convert-file', data),
+  convertDocument: (data) => ipcRenderer.invoke('convert-document', data),
+  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
+  writeFile: (data) => ipcRenderer.invoke('write-file', data),
   showSaveDialog: (options) => ipcRenderer.invoke('show-save-dialog', options),
   showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
   getFFmpegPath: () => ipcRenderer.invoke('get-ffmpeg-path'),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  listProjects: () => ipcRenderer.invoke('list-projects'),
+  saveProjectToLibrary: (data) => ipcRenderer.invoke('save-project-to-library', data),
+  loadProjectFromLibrary: (filePath) => ipcRenderer.invoke('load-project-from-library', filePath),
+  deleteProjectFromLibrary: (filePath) => ipcRenderer.invoke('delete-project-from-library', filePath),
 
   // Event listeners
   onFilesImported: (callback) => ipcRenderer.on('files-imported', (_, files) => callback(files)),

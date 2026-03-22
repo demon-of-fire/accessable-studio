@@ -6,17 +6,57 @@ const { exec, spawn } = require('child_process');
 let mainWindow;
 let ffmpegPath = 'ffmpeg';
 
-// Find FFmpeg
+// Find FFmpeg - searches PATH, WinGet, common install locations
 function findFFmpeg() {
+  // First try to find via 'where' command (searches PATH)
+  try {
+    const result = require('child_process').execSync('where ffmpeg', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+    if (result) {
+      const firstPath = result.split('\n')[0].trim();
+      if (firstPath) return firstPath;
+    }
+  } catch (e) { /* not in PATH */ }
+
+  // Search common locations
   const possible = [
-    'ffmpeg',
     path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Links', 'ffmpeg.exe'),
     'C:\\ffmpeg\\bin\\ffmpeg.exe',
     path.join(process.env.ProgramFiles || '', 'ffmpeg', 'bin', 'ffmpeg.exe'),
+    path.join(process.env.ProgramFiles || '', 'ffmpeg', 'ffmpeg.exe'),
   ];
+
+  // Also search WinGet packages folder recursively
+  const wingetPkgs = path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Packages');
+  try {
+    if (fs.existsSync(wingetPkgs)) {
+      const dirs = fs.readdirSync(wingetPkgs).filter(d => d.toLowerCase().includes('ffmpeg'));
+      for (const dir of dirs) {
+        const binPath = path.join(wingetPkgs, dir);
+        // Search for ffmpeg.exe recursively (up to 3 levels)
+        const searchDir = (dirPath, depth) => {
+          if (depth > 3) return null;
+          try {
+            const entries = fs.readdirSync(dirPath);
+            for (const entry of entries) {
+              const fullPath = path.join(dirPath, entry);
+              if (entry.toLowerCase() === 'ffmpeg.exe') return fullPath;
+              if (fs.statSync(fullPath).isDirectory()) {
+                const found = searchDir(fullPath, depth + 1);
+                if (found) return found;
+              }
+            }
+          } catch (e) { /* skip */ }
+          return null;
+        };
+        const found = searchDir(binPath, 0);
+        if (found) possible.unshift(found);
+      }
+    }
+  } catch (e) { /* skip */ }
+
   for (const p of possible) {
     try {
-      require('child_process').execSync(`"${p}" -version`, { stdio: 'ignore' });
+      require('child_process').execSync(`"${p}" -version`, { stdio: 'ignore', timeout: 5000 });
       return p;
     } catch (e) { continue; }
   }
@@ -35,6 +75,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      webSecurity: false,  // Allow file:// images on canvas without tainting (needed for photo editor)
     },
   });
 
@@ -211,6 +252,12 @@ ipcMain.handle('show-open-dialog', async (event, options) => {
 });
 
 ipcMain.handle('convert-file', async (event, { inputPath, outputPath, args }) => {
+  // Verify FFmpeg is available
+  try {
+    require('child_process').execSync(`"${ffmpegPath}" -version`, { stdio: 'ignore', timeout: 5000 });
+  } catch (e) {
+    throw new Error('FFmpeg is not installed or not found. Please install FFmpeg to use the converter. You can install it with: winget install ffmpeg');
+  }
   const cmd = `"${ffmpegPath}" -i "${inputPath}" ${args.join(' ')} "${outputPath}" -y`;
   return new Promise((resolve, reject) => {
     exec(cmd, { maxBuffer: 1024 * 1024 * 100 }, (error, stdout, stderr) => {
@@ -220,8 +267,197 @@ ipcMain.handle('convert-file', async (event, { inputPath, outputPath, args }) =>
   });
 });
 
+ipcMain.handle('convert-document', async (event, { inputPath, outputPath, inputExt, outputFormat }) => {
+  // Helper: read source content (handles DOCX via mammoth, others as text)
+  async function getSourceContent() {
+    if (inputExt === 'docx') {
+      try {
+        const mammoth = require('mammoth');
+        const htmlResult = await mammoth.convertToHtml({ path: inputPath });
+        const textResult = await mammoth.extractRawText({ path: inputPath });
+        return { html: htmlResult.value, text: textResult.value };
+      } catch (e) {
+        throw new Error('Failed to read DOCX: ' + (e.message || e));
+      }
+    }
+    const raw = fs.readFileSync(inputPath, 'utf-8');
+    if (inputExt === 'html' || inputExt === 'htm') {
+      return { html: raw, text: raw.replace(/<[^>]*>/g, '') };
+    }
+    // txt, md, rtf, csv, etc — treat as plain text
+    const escaped = raw.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return { html: `<pre>${escaped}</pre>`, text: raw };
+  }
+
+  const src = await getSourceContent();
+
+  // Convert to the target format
+  switch (outputFormat) {
+    case 'txt': {
+      fs.writeFileSync(outputPath, src.text, 'utf-8');
+      return outputPath;
+    }
+    case 'html': {
+      const fullHtml = src.html.startsWith('<!DOCTYPE') ? src.html
+        : `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Converted</title></head><body>${src.html}</body></html>`;
+      fs.writeFileSync(outputPath, fullHtml, 'utf-8');
+      return outputPath;
+    }
+    case 'md': {
+      // Simple HTML-to-Markdown: strip tags, keep text structure
+      let md = src.html;
+      md = md.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n');
+      md = md.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n');
+      md = md.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n');
+      md = md.replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n');
+      md = md.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**');
+      md = md.replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**');
+      md = md.replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*');
+      md = md.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*');
+      md = md.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+      md = md.replace(/<br\s*\/?>/gi, '\n');
+      md = md.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
+      md = md.replace(/<[^>]*>/g, '');
+      md = md.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      md = md.replace(/\n{3,}/g, '\n\n').trim();
+      fs.writeFileSync(outputPath, md, 'utf-8');
+      return outputPath;
+    }
+    case 'rtf': {
+      // Basic RTF wrapper around plain text
+      const rtfEscaped = src.text.replace(/\\/g, '\\\\').replace(/\{/g, '\\{').replace(/\}/g, '\\}').replace(/\n/g, '\\par\n');
+      const rtf = `{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Arial;}}\n{\\pard\\f0\\fs24\n${rtfEscaped}\n\\par}}\n`;
+      fs.writeFileSync(outputPath, rtf, 'utf-8');
+      return outputPath;
+    }
+    case 'csv': {
+      // Extract table data from HTML, or just output text lines as CSV rows
+      let csvContent = '';
+      const tableMatch = src.html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
+      if (tableMatch) {
+        const rows = tableMatch[1].match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi) || [];
+        rows.forEach(row => {
+          const cells = (row.match(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi) || [])
+            .map(c => '"' + c.replace(/<[^>]*>/g, '').replace(/"/g, '""').trim() + '"');
+          csvContent += cells.join(',') + '\n';
+        });
+      } else {
+        // Fallback: each line is a row
+        csvContent = src.text.split('\n').map(line => '"' + line.replace(/"/g, '""') + '"').join('\n');
+      }
+      fs.writeFileSync(outputPath, csvContent, 'utf-8');
+      return outputPath;
+    }
+    case 'docx': {
+      // Can only produce DOCX if input is not already DOCX
+      if (inputExt === 'docx') {
+        fs.copyFileSync(inputPath, outputPath);
+      } else {
+        throw new Error('Creating DOCX from ' + inputExt.toUpperCase() + ' requires a DOCX library. Use TXT, HTML, MD, or RTF output instead.');
+      }
+      return outputPath;
+    }
+    case 'pdf': {
+      const PDFDocument = require('pdfkit');
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const stream = fs.createWriteStream(outputPath);
+      doc.pipe(stream);
+
+      // Split text into lines and write to PDF with word wrapping
+      const lines = src.text.split('\n');
+      let isFirst = true;
+      for (const line of lines) {
+        if (isFirst) { isFirst = false; } else if (line.trim() === '') { doc.moveDown(); continue; }
+        // Detect headings (lines that are all caps or start with # in markdown)
+        const isHeading = line.startsWith('# ') || line.startsWith('## ') || (line.length < 80 && line === line.toUpperCase() && line.trim().length > 0);
+        if (isHeading) {
+          const cleanLine = line.replace(/^#+\s*/, '');
+          doc.fontSize(16).font('Helvetica-Bold').text(cleanLine, { lineGap: 4 });
+          doc.fontSize(12).font('Helvetica');
+        } else {
+          doc.fontSize(12).font('Helvetica').text(line, { lineGap: 2 });
+        }
+      }
+      doc.end();
+
+      await new Promise((resolve, reject) => {
+        stream.on('finish', resolve);
+        stream.on('error', reject);
+      });
+      return outputPath;
+    }
+    case 'epub': {
+      throw new Error('EPUB output is not yet supported. Convert to HTML first, then use an EPUB tool like Calibre.');
+    }
+    case 'odt': {
+      throw new Error('ODT output is not yet supported. Convert to HTML or RTF first, then open in LibreOffice.');
+    }
+    default: {
+      // Same format — just copy
+      if (inputExt === outputFormat) {
+        fs.copyFileSync(inputPath, outputPath);
+        return outputPath;
+      }
+      throw new Error(`Converting ${inputExt.toUpperCase()} to ${outputFormat.toUpperCase()} is not supported yet.`);
+    }
+  }
+});
+
+ipcMain.handle('read-file', async (event, filePath) => {
+  return fs.readFileSync(filePath, 'utf-8');
+});
+
+ipcMain.handle('write-file', async (event, { filePath, content }) => {
+  fs.writeFileSync(filePath, content, 'utf-8');
+  return filePath;
+});
+
+ipcMain.handle('list-projects', async () => {
+  const projectsDir = path.join(app.getPath('userData'), 'projects');
+  if (!fs.existsSync(projectsDir)) {
+    fs.mkdirSync(projectsDir, { recursive: true });
+    return [];
+  }
+  const files = fs.readdirSync(projectsDir).filter(f => f.endsWith('.asproj'));
+  return files.map(f => {
+    const filePath = path.join(projectsDir, f);
+    const stat = fs.statSync(filePath);
+    let name = f.replace('.asproj', '');
+    try {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      if (data.name) name = data.name;
+    } catch (e) { /* use filename */ }
+    return { fileName: f, name, date: stat.mtime.toISOString(), path: filePath };
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+});
+
+ipcMain.handle('save-project-to-library', async (event, { name, data }) => {
+  const projectsDir = path.join(app.getPath('userData'), 'projects');
+  if (!fs.existsSync(projectsDir)) {
+    fs.mkdirSync(projectsDir, { recursive: true });
+  }
+  const safeName = name.replace(/[^a-zA-Z0-9_\- ]/g, '').substring(0, 50);
+  const filePath = path.join(projectsDir, `${safeName}.asproj`);
+  const projectData = { ...data, name, savedAt: new Date().toISOString() };
+  fs.writeFileSync(filePath, JSON.stringify(projectData, null, 2));
+  return filePath;
+});
+
+ipcMain.handle('load-project-from-library', async (event, filePath) => {
+  const data = fs.readFileSync(filePath, 'utf-8');
+  return JSON.parse(data);
+});
+
+ipcMain.handle('delete-project-from-library', async (event, filePath) => {
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+  return true;
+});
+
 app.whenReady().then(() => {
   ffmpegPath = findFFmpeg();
+  console.log('FFmpeg found at:', ffmpegPath);
   createWindow();
 });
 

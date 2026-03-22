@@ -69,8 +69,9 @@ const Effects = (() => {
 
   /** Update a single slider UI */
   function updateSlider(name, value) {
-    const slider = document.getElementById(`filter-${name}`);
-    const display = document.getElementById(`${name}-value`);
+    // Try both ID patterns: filter-{name} and filter-{name}-slider
+    const slider = document.getElementById(`filter-${name}`) || document.getElementById(`filter-${name}-slider`);
+    const display = document.getElementById(`${name}-value`) || document.getElementById(`filter-${name}-val`);
     if (slider) {
       slider.value = value;
       let unit = '%';

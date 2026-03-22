@@ -11,7 +11,6 @@ const App = (() => {
     'nav-video-editor': 'section-video-editor',
     'nav-photo-editor': 'section-photo-editor',
     'nav-file-converter': 'section-file-converter',
-    'nav-assistant': 'section-assistant',
     'nav-user-guide': 'section-user-guide',
     'nav-settings': 'section-settings',
   };
@@ -47,7 +46,6 @@ const App = (() => {
       'section-video-editor': 'Video Editor',
       'section-photo-editor': 'Photo Editor',
       'section-file-converter': 'File Converter',
-      'section-assistant': 'Project Assistant',
       'section-user-guide': 'User Guide',
       'section-settings': 'Settings',
     };
@@ -88,48 +86,72 @@ const App = (() => {
         const isAudio = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'wma', 'm4a'].includes(ext);
         const isImage = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'tiff', 'svg'].includes(ext);
 
-        // Use default durations - no waiting for FFmpeg
-        let duration = 10;
         let type = 'video';
         if (isAudio) type = 'audio';
-        else if (isImage) { type = 'image'; duration = 5; }
+        else if (isImage) type = 'image';
 
-        // Add to media library immediately
-        const libEntry = { path: fp, name: fileName, type, duration };
+        // Add to media library immediately with placeholder duration
+        const libEntry = { path: fp, name: fileName, type, duration: isImage ? 5 : 10 };
         mediaLibrary.push(libEntry);
         renderMediaLibrary();
 
-        // Load preview for video files
-        if (isVideo) {
-          Player.loadVideo(fp);
-        }
-
-        // Queue for placement dialog - show IMMEDIATELY, don't wait for media info
         const trackType = isAudio ? 'audio' : 'video';
-        pendingFiles.push({ fileName, trackType, filePath: fp, duration });
-        console.log('File queued for placement:', fileName, 'pending count:', pendingFiles.length);
 
-        // Show placement dialog for first pending file
-        if (pendingFiles.length === 1) {
-          showPlacementDialog();
-        }
+        if (isVideo || isAudio) {
+          // Get real duration from a temporary media element before placing
+          const mediaEl = isVideo ? document.createElement('video') : document.createElement('audio');
+          mediaEl.preload = 'metadata';
+          mediaEl.src = fp;
+          let metadataHandled = false;
+          mediaEl.addEventListener('loadedmetadata', () => {
+            if (metadataHandled) return;
+            metadataHandled = true;
+            const realDuration = mediaEl.duration && isFinite(mediaEl.duration) ? mediaEl.duration : 10;
+            libEntry.duration = realDuration;
+            renderMediaLibrary();
 
-        // Try to get real duration in background (update library entry if found)
-        if ((isVideo || isAudio) && window.api) {
-          window.api.getMediaInfo(fp).then(info => {
-            if (info && info.duration) {
-              libEntry.duration = info.duration;
-              console.log('Updated duration for', fileName, ':', info.duration);
+            // Now enqueue for placement with the real duration
+            pendingFiles.push({ fileName, trackType, filePath: fp, duration: realDuration });
+            if (pendingFiles.length === 1) {
+              showPlacementDialog();
             }
-          }).catch(e => {
-            console.warn('Could not get media info for', fileName);
-          });
+            mediaEl.src = ''; // release
+          }, { once: true });
+          mediaEl.addEventListener('error', () => {
+            if (metadataHandled) return;
+            metadataHandled = true;
+            // Fallback: use default duration
+            pendingFiles.push({ fileName, trackType, filePath: fp, duration: 10 });
+            if (pendingFiles.length === 1) {
+              showPlacementDialog();
+            }
+          }, { once: true });
+
+          // Load preview for video files and show player
+          if (isVideo) {
+            Player.loadVideo(fp);
+            showVideoPlayer();
+          }
+        } else {
+          // Images — fixed 5 second duration, no metadata needed
+          pendingFiles.push({ fileName, trackType, filePath: fp, duration: 5 });
+          if (pendingFiles.length === 1) {
+            showPlacementDialog();
+          }
         }
       } catch (err) {
         console.error('Error importing file:', fp, err);
         Accessibility.announce('Error importing file: ' + fp.split(/[\\/]/).pop());
       }
     }
+  }
+
+  /** Show the video player wrapper (called when first video is loaded) */
+  function showVideoPlayer() {
+    const wrapper = document.getElementById('video-player-wrapper');
+    const noVideoMsg = document.getElementById('no-video-message');
+    if (wrapper) wrapper.classList.remove('hidden');
+    if (noVideoMsg) noVideoMsg.style.display = 'none';
   }
 
   /** Show the placement dialog for the next pending file */
@@ -229,28 +251,34 @@ const App = (() => {
   }
 
   /** Place the current pending file at a given time and move to next */
+  let isPlacing = false;
   function placePendingFile(startTime) {
-    if (!currentPendingFile) return;
+    if (!currentPendingFile || isPlacing) return;
+    isPlacing = true;
+
+    const file = currentPendingFile;
+
+    // Remove from queue FIRST to prevent double-add
+    pendingFiles.shift();
+    currentPendingFile = null;
 
     Timeline.addClip({
-      name: currentPendingFile.fileName,
-      type: currentPendingFile.trackType,
-      filePath: currentPendingFile.filePath,
-      duration: currentPendingFile.duration,
+      name: file.fileName,
+      type: file.trackType,
+      filePath: file.filePath,
+      duration: file.duration,
       startTime,
     });
 
     const placedAt = Accessibility.formatTime(startTime);
     Accessibility.announce(
-      `${currentPendingFile.fileName} placed on ${currentPendingFile.trackType} track at ${placedAt}. Duration: ${Accessibility.formatTime(currentPendingFile.duration)}.`
+      `${file.fileName} placed on ${file.trackType} track at ${placedAt}. Duration: ${Accessibility.formatTime(file.duration)}.`
     );
-
-    // Remove from queue
-    pendingFiles.shift();
-    currentPendingFile = null;
 
     // Close dialog
     Accessibility.hideModal(document.getElementById('placement-dialog'));
+
+    isPlacing = false;
 
     // Show next if there are more
     if (pendingFiles.length > 0) {
@@ -357,6 +385,7 @@ const App = (() => {
       // Load preview
       if (item.type === 'video') {
         Player.loadVideo(item.path);
+        showVideoPlayer();
       }
       Accessibility.announce(`Selected: ${item.name}`);
     }
@@ -411,44 +440,39 @@ const App = (() => {
     });
 
     // Save project
-    document.getElementById('btn-save-project')?.addEventListener('click', async () => {
-      if (window.api) {
-        const data = {
+    document.getElementById('btn-save-project')?.addEventListener('click', () => {
+      const dialog = document.getElementById('save-project-dialog');
+      if (dialog) Accessibility.showModal(dialog);
+    });
+
+    document.getElementById('btn-save-project-confirm')?.addEventListener('click', async () => {
+      const nameInput = document.getElementById('save-project-name');
+      const name = nameInput?.value?.trim();
+      if (!name) {
+        Accessibility.announce('Please enter a project name');
+        return;
+      }
+      if (!window.api) {
+        Accessibility.announce('Save requires the desktop application');
+        return;
+      }
+      try {
+        const projectData = {
           timeline: Timeline.serialize(),
           mediaLibrary,
-          version: '1.0.0',
         };
-        const result = await window.api.saveProject(data);
-        if (result) {
-          Accessibility.announce('Project saved successfully');
-          Accessibility.setStatus('Project saved');
-        }
+        await window.api.saveProjectToLibrary({ name, data: projectData });
+        Accessibility.announce(`Project "${name}" saved successfully`);
+        Accessibility.hideModal(document.getElementById('save-project-dialog'));
+        nameInput.value = '';
+        loadProjectList();
+      } catch (e) {
+        Accessibility.announce('Error saving project: ' + (e.message || e));
       }
     });
 
-    // Open project
-    document.getElementById('btn-open-project')?.addEventListener('click', async () => {
-      if (window.api) {
-        const result = await window.api.showOpenDialog({
-          title: 'Open Project',
-          filters: [{ name: 'Accessible Studio Project', extensions: ['asproj'] }],
-          properties: ['openFile'],
-        });
-        if (!result.canceled && result.filePaths.length > 0) {
-          try {
-            const fs = require('fs');
-            const data = JSON.parse(fs.readFileSync(result.filePaths[0], 'utf-8'));
-            if (data.timeline) Timeline.deserialize(data.timeline);
-            if (data.mediaLibrary) {
-              mediaLibrary = data.mediaLibrary;
-              renderMediaLibrary();
-            }
-            Accessibility.announce('Project loaded');
-          } catch (e) {
-            Accessibility.announce('Error loading project');
-          }
-        }
-      }
+    document.getElementById('btn-save-project-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('save-project-dialog'));
     });
 
     // Export video
@@ -507,21 +531,88 @@ const App = (() => {
     document.getElementById('btn-zoom-in')?.addEventListener('click', () => Timeline.zoomIn());
     document.getElementById('btn-zoom-out')?.addEventListener('click', () => Timeline.zoomOut());
 
-    // Filter presets
-    document.querySelectorAll('.preset-button').forEach(btn => {
+    // Brightness slider in filter panel
+    const brightnessSlider = document.getElementById('filter-brightness-slider');
+    if (brightnessSlider) {
+      brightnessSlider.addEventListener('input', (e) => {
+        const val = e.target.value;
+        document.getElementById('filter-brightness-val').textContent = val + '%';
+        e.target.setAttribute('aria-valuetext', val + ' percent');
+        e.target.setAttribute('aria-label', `Brightness, currently ${val} percent`);
+        Effects.setFilter('brightness', val);
+      });
+    }
+
+    // Contrast slider in filter panel
+    const contrastSlider = document.getElementById('filter-contrast-slider');
+    if (contrastSlider) {
+      contrastSlider.addEventListener('input', (e) => {
+        const val = e.target.value;
+        document.getElementById('filter-contrast-val').textContent = val + '%';
+        e.target.setAttribute('aria-valuetext', val + ' percent');
+        e.target.setAttribute('aria-label', `Contrast, currently ${val} percent`);
+        Effects.setFilter('contrast', val);
+      });
+    }
+
+    // Filter scope dialog - tracks pending filter preset
+    let pendingFilterPreset = null;
+
+    // Filter list items - show scope dialog
+    document.querySelectorAll('.filter-option').forEach(btn => {
       btn.addEventListener('click', () => {
         const preset = btn.dataset.preset;
-        Effects.applyPreset(preset);
-        // Highlight active preset
-        document.querySelectorAll('.preset-button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        const wasActive = btn.classList.contains('active');
+
+        if (wasActive || preset === 'none') {
+          // Toggle off or reset - no dialog needed
+          document.querySelectorAll('.filter-option').forEach(b => b.classList.remove('active'));
+          Effects.applyPreset('none');
+          return;
+        }
+
+        // Show scope dialog
+        pendingFilterPreset = preset;
+        const scopeDialog = document.getElementById('filter-scope-dialog');
+        const desc = document.getElementById('filter-scope-desc');
+        if (desc) desc.textContent = `Apply the "${btn.querySelector('strong').textContent}" filter to:`;
+        if (scopeDialog) Accessibility.showModal(scopeDialog);
       });
     });
 
-    // Reset filters
-    document.getElementById('btn-reset-filters')?.addEventListener('click', () => {
-      Effects.resetAll();
-      document.querySelectorAll('.preset-button').forEach(b => b.classList.remove('active'));
+    // Scope dialog buttons
+    document.getElementById('filter-scope-clip')?.addEventListener('click', () => {
+      if (pendingFilterPreset) {
+        document.querySelectorAll('.filter-option').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector(`.filter-option[data-preset="${pendingFilterPreset}"]`);
+        if (btn) btn.classList.add('active');
+        Effects.applyPreset(pendingFilterPreset);
+        Accessibility.announce(`Applied ${pendingFilterPreset} filter to the selected clip.`);
+      }
+      pendingFilterPreset = null;
+      Accessibility.hideModal(document.getElementById('filter-scope-dialog'));
+    });
+
+    document.getElementById('filter-scope-all')?.addEventListener('click', () => {
+      if (pendingFilterPreset) {
+        document.querySelectorAll('.filter-option').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector(`.filter-option[data-preset="${pendingFilterPreset}"]`);
+        if (btn) btn.classList.add('active');
+        Effects.applyPreset(pendingFilterPreset);
+        // Store the filter on all video clips
+        const clips = Timeline.getClips().filter(c => c.type === 'video');
+        clips.forEach(c => {
+          Timeline.updateClipProperty(c.id, 'filters', { preset: pendingFilterPreset });
+        });
+        Accessibility.announce(`Applied ${pendingFilterPreset} filter to all ${clips.length} video clips.`);
+      }
+      pendingFilterPreset = null;
+      Accessibility.hideModal(document.getElementById('filter-scope-dialog'));
+    });
+
+    document.getElementById('filter-scope-cancel')?.addEventListener('click', () => {
+      pendingFilterPreset = null;
+      Accessibility.hideModal(document.getElementById('filter-scope-dialog'));
     });
 
     // Clip properties
@@ -604,6 +695,26 @@ const App = (() => {
     document.getElementById('btn-photo-rotate-right')?.addEventListener('click', () => PhotoEditor.rotateRight());
     document.getElementById('btn-photo-flip-h')?.addEventListener('click', () => PhotoEditor.flipHorizontal());
     document.getElementById('btn-photo-flip-v')?.addEventListener('click', () => PhotoEditor.flipVertical());
+
+    // Remove background
+    document.getElementById('btn-photo-remove-bg')?.addEventListener('click', async () => {
+      if (!PhotoEditor.hasImage) { Accessibility.announce('No image loaded'); return; }
+      Accessibility.announce('Removing background, please wait...');
+      await PhotoEditor.removeBackground(70);
+    });
+
+    // Blur background
+    document.getElementById('btn-photo-blur-bg')?.addEventListener('click', async () => {
+      if (!PhotoEditor.hasImage) { Accessibility.announce('No image loaded'); return; }
+      Accessibility.announce('Blurring background, please wait...');
+      await PhotoEditor.blurBackground(70, 35);
+    });
+
+    // Insert image overlay button
+    document.getElementById('btn-photo-insert-image')?.addEventListener('click', async () => {
+      if (!PhotoEditor.hasImage) { Accessibility.announce('Open a base image first, then use Insert Image to add an overlay'); return; }
+      await PhotoEditor.insertImageFromPicker('center', 0.3);
+    });
 
     // Crop button
     document.getElementById('btn-photo-crop')?.addEventListener('click', () => {
@@ -797,6 +908,40 @@ const App = (() => {
       Accessibility.announce('Appearance reset to defaults');
     });
 
+    // Gemini API key
+    const geminiInput = document.getElementById('gemini-api-key');
+    const geminiStatus = document.getElementById('gemini-status');
+    const savedGeminiKey = Gemini.getApiKey();
+    if (savedGeminiKey && geminiInput) {
+      geminiInput.value = savedGeminiKey;
+      if (geminiStatus) geminiStatus.textContent = 'API key saved. Gemini AI is active — it can see and edit your project.';
+      if (geminiStatus) geminiStatus.style.color = 'var(--success)';
+    }
+
+    document.getElementById('btn-save-gemini-key')?.addEventListener('click', () => {
+      const key = geminiInput?.value?.trim();
+      if (key) {
+        Gemini.setApiKey(key);
+        if (geminiStatus) {
+          geminiStatus.textContent = 'API key saved. Gemini AI is active — it can see and edit your project in real time.';
+          geminiStatus.style.color = 'var(--success)';
+        }
+        Accessibility.announce('Gemini API key saved. AI assistant can now see and edit your project.');
+      } else {
+        Gemini.setApiKey('');
+        if (geminiStatus) {
+          geminiStatus.textContent = 'No API key set. The assistant will use basic keyword matching.';
+          geminiStatus.style.color = 'var(--text-muted)';
+        }
+        Accessibility.announce('Gemini API key removed.');
+      }
+    });
+
+    document.getElementById('link-gemini-api')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.api) window.api.openExternal('https://aistudio.google.com/apikey');
+    });
+
     // Load saved settings
     const savedTheme = localStorage.getItem('as-theme');
     const savedContrast = localStorage.getItem('as-contrast');
@@ -811,72 +956,6 @@ const App = (() => {
     if (savedContrast) document.getElementById('contrast-level-select').value = savedContrast;
     if (savedFontSize) document.getElementById('font-size-select').value = savedFontSize;
 
-    // Login (local simulation)
-    document.getElementById('btn-login')?.addEventListener('click', () => {
-      const email = document.getElementById('login-email')?.value;
-      const password = document.getElementById('login-password')?.value;
-      if (!email || !password) {
-        document.getElementById('login-status').textContent = 'Please enter both email and password.';
-        Accessibility.announce('Please enter both email and password');
-        return;
-      }
-      // Simulate local login (store in localStorage)
-      localStorage.setItem('as-user-email', email);
-      document.getElementById('login-status').textContent = 'Logged in successfully!';
-      document.getElementById('login-form').classList.add('hidden');
-      document.getElementById('account-info').classList.remove('hidden');
-      document.getElementById('account-email').textContent = `Logged in as: ${email}`;
-      Accessibility.announce('Logged in successfully as ' + email);
-    });
-
-    document.getElementById('btn-register')?.addEventListener('click', () => {
-      const email = document.getElementById('login-email')?.value;
-      const password = document.getElementById('login-password')?.value;
-      if (!email || !password) {
-        document.getElementById('login-status').textContent = 'Please enter email and password to create an account.';
-        Accessibility.announce('Please enter email and password');
-        return;
-      }
-      localStorage.setItem('as-user-email', email);
-      document.getElementById('login-status').textContent = 'Account created and logged in!';
-      document.getElementById('login-form').classList.add('hidden');
-      document.getElementById('account-info').classList.remove('hidden');
-      document.getElementById('account-email').textContent = `Logged in as: ${email}`;
-      Accessibility.announce('Account created. Logged in as ' + email);
-    });
-
-    document.getElementById('btn-logout')?.addEventListener('click', () => {
-      localStorage.removeItem('as-user-email');
-      document.getElementById('login-form').classList.remove('hidden');
-      document.getElementById('account-info').classList.add('hidden');
-      document.getElementById('login-status').textContent = 'Logged out.';
-      Accessibility.announce('Logged out');
-    });
-
-    // Check if already logged in
-    const savedEmail = localStorage.getItem('as-user-email');
-    if (savedEmail) {
-      document.getElementById('login-form')?.classList.add('hidden');
-      document.getElementById('account-info')?.classList.remove('hidden');
-      document.getElementById('account-email').textContent = `Logged in as: ${savedEmail}`;
-    }
-
-    // Save project locally
-    document.getElementById('btn-save-local')?.addEventListener('click', async () => {
-      if (window.api) {
-        const data = {
-          timeline: Timeline.serialize(),
-          mediaLibrary,
-          version: '1.0.0',
-        };
-        const result = await window.api.saveProject(data);
-        if (result) {
-          Accessibility.announce('Project saved locally');
-        }
-      } else {
-        Accessibility.announce('Local save requires the desktop application');
-      }
-    });
   }
 
   // ==========================================
@@ -914,17 +993,17 @@ const App = (() => {
               document.getElementById('btn-import-media')?.click();
             }
             return;
-          case 'e':
-            e.preventDefault();
-            document.getElementById('btn-export-video')?.click();
-            return;
           case 's':
             e.preventDefault();
             document.getElementById('btn-save-project')?.click();
             return;
+          case 'e':
+            e.preventDefault();
+            document.getElementById('btn-export-video')?.click();
+            return;
           case 'b':
             e.preventDefault();
-            switchSection('section-assistant');
+            document.getElementById('chat-input')?.focus();
             return;
         }
         return;
@@ -989,12 +1068,6 @@ const App = (() => {
       Accessibility.hideModal(document.getElementById('shortcuts-dialog'));
     });
 
-    document.getElementById('btn-about')?.addEventListener('click', () => {
-      Accessibility.showModal(document.getElementById('about-dialog'));
-    });
-    document.getElementById('btn-about-close')?.addEventListener('click', () => {
-      Accessibility.hideModal(document.getElementById('about-dialog'));
-    });
   }
 
   // ==========================================
@@ -1020,7 +1093,7 @@ const App = (() => {
         case 'duplicate': Timeline.duplicateClip(); break;
         case 'zoom-in': Timeline.zoomIn(); break;
         case 'zoom-out': Timeline.zoomOut(); break;
-        case 'toggle-chatbot': switchSection('section-assistant'); break;
+        case 'toggle-chatbot': document.getElementById('chat-input')?.focus(); break;
         case 'toggle-converter': switchSection('section-file-converter'); break;
         case 'show-shortcuts':
           Accessibility.showModal(document.getElementById('shortcuts-dialog'));
@@ -1030,6 +1103,97 @@ const App = (() => {
           break;
       }
     });
+  }
+
+  // ==========================================
+  // PROJECT LIST (right panel)
+  // ==========================================
+  async function loadProjectList() {
+    const listEl = document.getElementById('projects-list');
+    const emptyMsg = document.getElementById('projects-empty-message');
+    if (!listEl || !window.api) return;
+
+    try {
+      const projects = await window.api.listProjects();
+      listEl.innerHTML = '';
+
+      if (projects.length === 0) {
+        if (emptyMsg) {
+          listEl.appendChild(emptyMsg);
+          emptyMsg.style.display = 'block';
+        }
+        return;
+      }
+
+      projects.forEach(proj => {
+        const item = document.createElement('div');
+        item.className = 'project-item';
+        item.setAttribute('role', 'listitem');
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('aria-label', `Project: ${proj.name}, saved ${new Date(proj.date).toLocaleDateString()}`);
+
+        const dateStr = new Date(proj.date).toLocaleDateString(undefined, {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit',
+        });
+
+        item.innerHTML = `
+          <span class="project-item-name">${proj.name}</span>
+          <span class="project-item-date">${dateStr}</span>
+          <div class="project-item-actions">
+            <button class="load-btn" aria-label="Open project ${proj.name}">Open</button>
+            <button class="delete-btn" aria-label="Delete project ${proj.name}">Delete</button>
+          </div>
+        `;
+
+        // Open project
+        const loadBtn = item.querySelector('.load-btn');
+        loadBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          try {
+            const data = await window.api.loadProjectFromLibrary(proj.path);
+            if (data.timeline) Timeline.deserialize(data.timeline);
+            if (data.mediaLibrary) {
+              mediaLibrary = data.mediaLibrary;
+              renderMediaLibrary();
+            }
+            // Show video player if there are video clips
+            const clips = Timeline.getClips();
+            const videoClip = clips.find(c => c.type === 'video' && c.filePath);
+            if (videoClip) {
+              Player.loadVideo(videoClip.filePath);
+              showVideoPlayer();
+            }
+            Accessibility.announce(`Project "${proj.name}" loaded`);
+            Accessibility.setStatus(`Project: ${proj.name}`);
+          } catch (err) {
+            Accessibility.announce('Error loading project');
+          }
+        });
+
+        // Also open on Enter key or click on the item itself
+        item.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') loadBtn.click();
+        });
+
+        // Delete project
+        const deleteBtn = item.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          try {
+            await window.api.deleteProjectFromLibrary(proj.path);
+            Accessibility.announce(`Project "${proj.name}" deleted`);
+            loadProjectList();
+          } catch (err) {
+            Accessibility.announce('Error deleting project');
+          }
+        });
+
+        listEl.appendChild(item);
+      });
+    } catch (e) {
+      console.error('Error loading project list:', e);
+    }
   }
 
   // ==========================================
@@ -1061,8 +1225,268 @@ const App = (() => {
       Accessibility.setupToolbarNavigation(toolbar);
     });
 
+    initClipList();
+    loadProjectList();
+
     Accessibility.setStatus('Ready. Use the sidebar to navigate between sections.');
-    Accessibility.announce('Accessible Studio loaded. Use the sidebar buttons to switch between Video Editor, Photo Editor, File Converter, Assistant, User Guide, and Settings.');
+    Accessibility.announce('Accessible Studio loaded. Use the sidebar buttons to switch between Video Editor, Photo Editor, File Converter, User Guide, and Settings.');
+  }
+
+  // ==========================================
+  // CLIP LIST (bottom panel)
+  // ==========================================
+  let clipboardClip = null; // for copy/cut
+  let clipboardAction = null; // 'copy' or 'cut'
+
+  function renderClipList() {
+    const allClips = Timeline.getClips();
+    const videoClips = allClips.filter(c => c.type === 'video' || c.type === 'image').sort((a, b) => a.startTime - b.startTime);
+    const audioClips = allClips.filter(c => c.type === 'audio').sort((a, b) => a.startTime - b.startTime);
+    const selectedClip = Timeline.getSelectedClip();
+
+    renderClipSelect('video-clip-select', videoClips, selectedClip, 'No video clips yet');
+    renderClipSelect('audio-clip-select', audioClips, selectedClip, 'No audio clips yet');
+    updateClipActionButtons();
+  }
+
+  function renderClipSelect(selectId, clips, selectedClip, emptyMsg) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const prevValue = select.value;
+    select.innerHTML = '';
+
+    if (clips.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.disabled = true;
+      opt.selected = true;
+      opt.textContent = emptyMsg;
+      select.appendChild(opt);
+      return;
+    }
+
+    clips.forEach((clip, i) => {
+      const opt = document.createElement('option');
+      opt.value = clip.id;
+      const startStr = Accessibility.formatTimeDisplay(clip.startTime);
+      const endTime = clip.startTime + clip.duration;
+      const endStr = Accessibility.formatTimeDisplay(endTime);
+      opt.textContent = `Clip ${i + 1}: ${clip.name} — ${startStr} to ${endStr}`;
+      if (selectedClip && selectedClip.id === clip.id) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    });
+
+    // Restore previous selection if it still exists
+    if (!selectedClip && prevValue) {
+      select.value = prevValue;
+    }
+  }
+
+  function getSelectedClipId(selectId) {
+    const select = document.getElementById(selectId);
+    return select && select.value ? select.value : null;
+  }
+
+  function updateClipActionButtons() {
+    const videoId = getSelectedClipId('video-clip-select');
+    const audioId = getSelectedClipId('audio-clip-select');
+
+    ['btn-video-clip-jump', 'btn-video-clip-copy', 'btn-video-clip-cut', 'btn-video-clip-remove'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.disabled = !videoId;
+    });
+    ['btn-audio-clip-jump', 'btn-audio-clip-copy', 'btn-audio-clip-cut', 'btn-audio-clip-remove'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.disabled = !audioId;
+    });
+  }
+
+  function jumpToClip(clipId) {
+    const clip = Timeline.getClips().find(c => c.id === clipId);
+    if (!clip) return;
+    Timeline.selectClip(clipId);
+    Player.seekTo(clip.startTime);
+    if (clip.type === 'video') {
+      Player.loadVideo(clip.filePath);
+      showVideoPlayer();
+    }
+    Accessibility.announce(`Jumped to "${clip.name}" at ${Accessibility.formatTime(clip.startTime)}`);
+    renderClipList();
+  }
+
+  function clipAction(selectId, action) {
+    const clipId = getSelectedClipId(selectId);
+    if (!clipId) return;
+    const clip = Timeline.getClips().find(c => c.id === clipId);
+    if (!clip) return;
+
+    switch (action) {
+      case 'jump':
+        jumpToClip(clipId);
+        break;
+      case 'copy':
+        clipboardClip = { ...clip };
+        clipboardAction = 'copy';
+        Accessibility.announce(`Copied "${clip.name}"`);
+        break;
+      case 'cut':
+        clipboardClip = { ...clip };
+        clipboardAction = 'cut';
+        Timeline.removeClip(clipId);
+        Accessibility.announce(`Cut "${clip.name}"`);
+        renderClipList();
+        break;
+      case 'remove':
+        Timeline.removeClip(clipId);
+        Accessibility.announce(`Removed "${clip.name}"`);
+        renderClipList();
+        break;
+    }
+  }
+
+  function initClipList() {
+    // Select change events
+    const videoSelect = document.getElementById('video-clip-select');
+    const audioSelect = document.getElementById('audio-clip-select');
+    if (videoSelect) videoSelect.addEventListener('change', updateClipActionButtons);
+    if (audioSelect) audioSelect.addEventListener('change', updateClipActionButtons);
+
+    // Video clip action buttons
+    document.getElementById('btn-video-clip-jump')?.addEventListener('click', () => clipAction('video-clip-select', 'jump'));
+    document.getElementById('btn-video-clip-copy')?.addEventListener('click', () => clipAction('video-clip-select', 'copy'));
+    document.getElementById('btn-video-clip-cut')?.addEventListener('click', () => clipAction('video-clip-select', 'cut'));
+    document.getElementById('btn-video-clip-remove')?.addEventListener('click', () => clipAction('video-clip-select', 'remove'));
+
+    // Audio clip action buttons
+    document.getElementById('btn-audio-clip-jump')?.addEventListener('click', () => clipAction('audio-clip-select', 'jump'));
+    document.getElementById('btn-audio-clip-copy')?.addEventListener('click', () => clipAction('audio-clip-select', 'copy'));
+    document.getElementById('btn-audio-clip-cut')?.addEventListener('click', () => clipAction('audio-clip-select', 'cut'));
+    document.getElementById('btn-audio-clip-remove')?.addEventListener('click', () => clipAction('audio-clip-select', 'remove'));
+
+    // Paste with Ctrl+V
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v' && clipboardClip) {
+        e.preventDefault();
+        const playheadTime = Player.getCurrentTime();
+        Timeline.addClip({
+          ...clipboardClip,
+          startTime: playheadTime,
+        });
+        Accessibility.announce(`Pasted "${clipboardClip.name}" at ${Accessibility.formatTime(playheadTime)}`);
+        if (clipboardAction === 'cut') {
+          clipboardClip = null;
+          clipboardAction = null;
+        }
+        renderClipList();
+      }
+    });
+
+    // Re-render clip list whenever timeline changes
+    Timeline.onChange(renderClipList);
+
+    // Initial render
+    renderClipList();
+
+    // === User Guide navigation and search ===
+    initUserGuide();
+  }
+
+  function initUserGuide() {
+    // Page-based navigation — only one section visible at a time
+    const navBtns = document.querySelectorAll('.guide-nav-btn');
+    const allSections = document.querySelectorAll('.guide-section');
+    const pageInfo = document.getElementById('guide-page-info');
+
+    function showGuidePage(targetId, focusHeading = true) {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+
+      // Hide all sections, show only the target
+      allSections.forEach(s => s.style.display = 'none');
+      target.style.display = 'block';
+
+      // Update active nav button
+      navBtns.forEach(b => {
+        const isActive = b.getAttribute('data-target') === targetId;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-current', isActive ? 'page' : 'false');
+      });
+
+      // Update page indicator and prev/next button states
+      const pageIndex = Array.from(navBtns).findIndex(b => b.getAttribute('data-target') === targetId);
+      if (pageInfo) pageInfo.textContent = `Page ${pageIndex + 1} of ${navBtns.length}`;
+      const prevBtn = document.getElementById('guide-prev-page');
+      const nextBtn = document.getElementById('guide-next-page');
+      if (prevBtn) prevBtn.disabled = (pageIndex <= 0);
+      if (nextBtn) nextBtn.disabled = (pageIndex >= navBtns.length - 1);
+
+      // Focus heading so Shift+Tab goes back to nav, not top of guide
+      if (focusHeading) {
+        const heading = target.querySelector('h3');
+        if (heading) {
+          heading.setAttribute('tabindex', '-1');
+          heading.focus();
+        }
+      }
+      Accessibility.announce('Page: ' + (target.querySelector('h3')?.textContent || ''));
+    }
+
+    navBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        showGuidePage(btn.getAttribute('data-target'));
+      });
+    });
+
+    // Previous / Next page buttons
+    document.getElementById('guide-prev-page')?.addEventListener('click', () => {
+      const activeIdx = Array.from(navBtns).findIndex(b => b.classList.contains('active'));
+      if (activeIdx > 0) showGuidePage(navBtns[activeIdx - 1].getAttribute('data-target'));
+    });
+    document.getElementById('guide-next-page')?.addEventListener('click', () => {
+      const activeIdx = Array.from(navBtns).findIndex(b => b.classList.contains('active'));
+      if (activeIdx < navBtns.length - 1) showGuidePage(navBtns[activeIdx + 1].getAttribute('data-target'));
+    });
+
+    // Show first page by default (without stealing focus on init)
+    showGuidePage('guide-getting-started', false);
+
+    // Search — filters the nav buttons and shows matching pages
+    const searchInput = document.getElementById('guide-search');
+    const searchStatus = document.getElementById('guide-search-status');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.trim().toLowerCase();
+
+        if (!query) {
+          // Show all nav buttons, revert to current active page
+          navBtns.forEach(btn => btn.closest('li').style.display = '');
+          if (searchStatus) searchStatus.textContent = '';
+          return;
+        }
+
+        let visibleCount = 0;
+        let firstMatch = null;
+        allSections.forEach((section, i) => {
+          const text = section.textContent.toLowerCase();
+          const matches = text.includes(query);
+          const btn = navBtns[i];
+          if (btn) btn.closest('li').style.display = matches ? '' : 'none';
+          if (matches) {
+            visibleCount++;
+            if (!firstMatch) firstMatch = section.id;
+          }
+        });
+
+        // Jump to first matching page
+        if (firstMatch) showGuidePage(firstMatch, false);
+
+        if (searchStatus) {
+          searchStatus.textContent = visibleCount + ' section' + (visibleCount !== 1 ? 's' : '') + ' found';
+        }
+      });
+    }
   }
 
   // Start when DOM is ready

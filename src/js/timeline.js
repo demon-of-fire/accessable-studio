@@ -11,6 +11,7 @@ const Timeline = (() => {
   let playheadPosition = 0; // in seconds
   let undoStack = [];
   let redoStack = [];
+  let onChangeCallbacks = [];
 
   /** Generate unique clip ID */
   function generateId() {
@@ -248,6 +249,13 @@ const Timeline = (() => {
     renderTrack('text', document.getElementById('text-track-clips'));
     renderRuler();
     updatePlayhead();
+    // Notify listeners
+    onChangeCallbacks.forEach(cb => { try { cb(); } catch(e) {} });
+  }
+
+  /** Register a callback for when clips change */
+  function onChange(callback) {
+    onChangeCallbacks.push(callback);
   }
 
   /** Render a single track */
@@ -559,6 +567,7 @@ const Timeline = (() => {
     deserialize,
     getPPS,
     getTrackEndTime,
+    onChange,
     initTimelineClick,
   };
 })();
