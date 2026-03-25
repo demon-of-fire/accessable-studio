@@ -443,7 +443,7 @@ const PhotoEditor = (() => {
   }
 
   /** Remove background — makes background pixels transparent with edge feathering, then bakes result */
-  async function removeBackground(tolerance = 70) {
+  async function removeBackground(tolerance = 70, fillMode = 'transparent') {
     if (!originalImage || !ctx) {
       Accessibility.announce('No image loaded');
       return 'No image loaded.';
@@ -508,44 +508,117 @@ const PhotoEditor = (() => {
       }
     }
 
-    // Apply transparency with edge feathering
+    // Apply removal with edge feathering
     const featherRadius = 2;
-    for (let i = 0; i < total; i++) {
-      const idx = i * 4;
-      if (visited[i]) {
-        // Check distance to nearest non-background pixel for feathering
-        const px = i % w;
-        const py = Math.floor(i / w);
-        let minDist = featherRadius + 1;
-        for (let dy = -featherRadius; dy <= featherRadius; dy++) {
-          for (let dx = -featherRadius; dx <= featherRadius; dx++) {
-            const nx = px + dx, ny = py + dy;
-            if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
-              if (!visited[ny * w + nx]) {
+
+    if (fillMode === 'mirror') {
+      // Mirror fill: replace background pixels with mirrored foreground content
+      // Find the bounding box of the foreground
+      let fgMinX = w, fgMaxX = 0, fgMinY = h, fgMaxY = 0;
+      for (let i = 0; i < total; i++) {
+        if (!visited[i]) {
+          const fx = i % w, fy = Math.floor(i / w);
+          if (fx < fgMinX) fgMinX = fx;
+          if (fx > fgMaxX) fgMaxX = fx;
+          if (fy < fgMinY) fgMinY = fy;
+          if (fy > fgMaxY) fgMaxY = fy;
+        }
+      }
+      const fgCenterX = (fgMinX + fgMaxX) / 2;
+      const fgCenterY = (fgMinY + fgMaxY) / 2;
+
+      for (let i = 0; i < total; i++) {
+        if (visited[i]) {
+          const px = i % w;
+          const py = Math.floor(i / w);
+          // Mirror this pixel's position through the nearest foreground edge
+          // Sample from the mirrored position within the foreground
+          let mirrorX = Math.round(2 * fgCenterX - px);
+          let mirrorY = Math.round(2 * fgCenterY - py);
+          mirrorX = Math.max(0, Math.min(w - 1, mirrorX));
+          mirrorY = Math.max(0, Math.min(h - 1, mirrorY));
+          const mirrorIdx = (mirrorY * w + mirrorX) * 4;
+          const idx = i * 4;
+
+          // Feather the edge
+          let minDist = featherRadius + 1;
+          for (let dy = -featherRadius; dy <= featherRadius; dy++) {
+            for (let dx = -featherRadius; dx <= featherRadius; dx++) {
+              const nx = px + dx, ny = py + dy;
+              if (nx >= 0 && nx < w && ny >= 0 && ny < h && !visited[ny * w + nx]) {
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist < minDist) minDist = dist;
               }
             }
           }
+          const blend = minDist <= featherRadius ? minDist / featherRadius : 1;
+          data[idx] = Math.round(data[mirrorIdx] * blend + data[idx] * (1 - blend));
+          data[idx + 1] = Math.round(data[mirrorIdx + 1] * blend + data[idx + 1] * (1 - blend));
+          data[idx + 2] = Math.round(data[mirrorIdx + 2] * blend + data[idx + 2] * (1 - blend));
+          data[idx + 3] = 255;
+          removed++;
         }
-        if (minDist <= featherRadius) {
-          // Edge pixel - partial transparency for smooth edges
-          data[idx + 3] = Math.round((minDist / featherRadius) * 255);
-        } else {
-          data[idx + 3] = 0;
+      }
+    } else {
+      // Transparent mode (default)
+      for (let i = 0; i < total; i++) {
+        const idx = i * 4;
+        if (visited[i]) {
+          const px = i % w;
+          const py = Math.floor(i / w);
+          let minDist = featherRadius + 1;
+          for (let dy = -featherRadius; dy <= featherRadius; dy++) {
+            for (let dx = -featherRadius; dx <= featherRadius; dx++) {
+              const nx = px + dx, ny = py + dy;
+              if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                if (!visited[ny * w + nx]) {
+                  const dist = Math.sqrt(dx * dx + dy * dy);
+                  if (dist < minDist) minDist = dist;
+                }
+              }
+            }
+          }
+          if (minDist <= featherRadius) {
+            data[idx + 3] = Math.round((minDist / featherRadius) * 255);
+          } else {
+            data[idx + 3] = 0;
+          }
+          removed++;
         }
-        removed++;
       }
     }
 
     ctx.putImageData(imageData, 0, 0);
 
+    // If mirror fill, apply a blur pass over the filled areas for smoother results
+    if (fillMode === 'mirror') {
+      const blurCanvas2 = document.createElement('canvas');
+      blurCanvas2.width = w;
+      blurCanvas2.height = h;
+      const blurCtx2 = blurCanvas2.getContext('2d');
+      blurCtx2.filter = 'blur(3px)';
+      blurCtx2.drawImage(canvas, 0, 0);
+      const blurData = blurCtx2.getImageData(0, 0, w, h);
+      const finalData = ctx.getImageData(0, 0, w, h);
+      // Only apply blur to background pixels (keep foreground sharp)
+      for (let i = 0; i < total; i++) {
+        if (visited[i]) {
+          const idx = i * 4;
+          finalData.data[idx] = blurData.data[idx];
+          finalData.data[idx + 1] = blurData.data[idx + 1];
+          finalData.data[idx + 2] = blurData.data[idx + 2];
+        }
+      }
+      ctx.putImageData(finalData, 0, 0);
+    }
+
     // Bake the result into a new working image
     await bakeCanvas();
 
     const percent = Math.round((removed / total) * 100);
-    Accessibility.announce(`Background removed. ${percent} percent of pixels made transparent.`);
-    return `Removed background (${percent}% of pixels). Tolerance: ${tolerance}. Try "remove background 80" for wider or "remove background 30" for tighter.`;
+    const modeLabel = fillMode === 'mirror' ? 'mirror-filled' : 'made transparent';
+    Accessibility.announce(`Background removed. ${percent} percent of pixels ${modeLabel}.`);
+    return `Removed background (${percent}% of pixels, ${modeLabel}). Tolerance: ${tolerance}. Try "remove background 80" for wider or "remove background 30" for tighter.`;
   }
 
   /** Box blur helper - applies a fast box blur to image data */
@@ -985,60 +1058,134 @@ const PhotoEditor = (() => {
       return 'Nothing to remove at that position.';
     }
 
-    // ---- Nearest-neighbor cloning ----
-    // For each removed pixel, find the closest non-removed pixel by scanning
-    // up, down, left, right. Copy from the NEAREST one.
-    // This extends the surrounding content naturally — e.g. a notification bar
-    // at the bottom gets replaced by the content just above it continuing down.
-    const scanLimit = Math.max(bx1 - bx0, by1 - by0) + 20;
+    // ---- Context-aware mirror fill ----
+    // 1. Analyze each border strip for uniformity (color variance)
+    // 2. Clean/uniform borders (solid color, smooth gradient) get HIGH weight
+    // 3. Noisy borders (icons, text, complex detail) get LOW weight
+    // 4. Mirror-fill from each side, weighted by both proximity AND border cleanliness
 
+    // Analyze border strips: compute color variance for each side
+    // Sample a strip of pixels just outside each edge
+    const stripDepth = Math.max(3, Math.min(15, Math.round(Math.min(by1 - by0, bx1 - bx0) * 0.1)));
+
+    function computeStripVariance(pixels) {
+      if (pixels.length === 0) return 999999;
+      let mR = 0, mG = 0, mB = 0;
+      for (const p of pixels) { mR += p[0]; mG += p[1]; mB += p[2]; }
+      mR /= pixels.length; mG /= pixels.length; mB /= pixels.length;
+      let variance = 0;
+      for (const p of pixels) {
+        variance += (p[0] - mR) ** 2 + (p[1] - mG) ** 2 + (p[2] - mB) ** 2;
+      }
+      return variance / pixels.length;
+    }
+
+    // Sample TOP border strip (row just above the removed area)
+    const topPixels = [];
+    for (let sy = Math.max(0, by0 - stripDepth); sy < by0; sy++) {
+      for (let sx = bx0; sx <= bx1; sx += 3) {
+        const si = (sy * w + sx) * 4;
+        topPixels.push([data[si], data[si + 1], data[si + 2]]);
+      }
+    }
+    // Sample BOTTOM border strip
+    const botPixels = [];
+    for (let sy = by1 + 1; sy <= Math.min(h - 1, by1 + stripDepth); sy++) {
+      for (let sx = bx0; sx <= bx1; sx += 3) {
+        const si = (sy * w + sx) * 4;
+        botPixels.push([data[si], data[si + 1], data[si + 2]]);
+      }
+    }
+    // Sample LEFT border strip
+    const leftPixels = [];
+    for (let sx = Math.max(0, bx0 - stripDepth); sx < bx0; sx++) {
+      for (let sy = by0; sy <= by1; sy += 3) {
+        const si = (sy * w + sx) * 4;
+        leftPixels.push([data[si], data[si + 1], data[si + 2]]);
+      }
+    }
+    // Sample RIGHT border strip
+    const rightPixels = [];
+    for (let sx = bx1 + 1; sx <= Math.min(w - 1, bx1 + stripDepth); sx++) {
+      for (let sy = by0; sy <= by1; sy += 3) {
+        const si = (sy * w + sx) * 4;
+        rightPixels.push([data[si], data[si + 1], data[si + 2]]);
+      }
+    }
+
+    const topVar = computeStripVariance(topPixels);
+    const botVar = computeStripVariance(botPixels);
+    const leftVar = computeStripVariance(leftPixels);
+    const rightVar = computeStripVariance(rightPixels);
+
+    // Convert variance to a "cleanliness" score: low variance = high cleanliness
+    // Use inverse: 1 / (1 + variance/1000). Solid black (var=0) → score 1.0
+    // Noisy icons (var=5000) → score ~0.17
+    const topClean = 1 / (1 + topVar / 500);
+    const botClean = 1 / (1 + botVar / 500);
+    const leftClean = 1 / (1 + leftVar / 500);
+    const rightClean = 1 / (1 + rightVar / 500);
+
+    // Fill each removed pixel using mirror from all 4 sides,
+    // weighted by: (1/distance²) * cleanliness
     for (let y = by0; y <= by1; y++) {
       for (let x = bx0; x <= bx1; x++) {
         const i = y * w + x;
         if (!toRemove[i]) continue;
-
-        let bestDist = Infinity;
-        let bestIdx = -1;
-
-        // Scan UP (most common — content above a notification)
-        for (let sy = y - 1; sy >= Math.max(0, y - scanLimit); sy--) {
-          if (!toRemove[sy * w + x]) {
-            const d = y - sy;
-            if (d < bestDist) { bestDist = d; bestIdx = (sy * w + x) * 4; }
-            break;
-          }
-        }
-        // Scan DOWN
-        for (let sy = y + 1; sy <= Math.min(h - 1, y + scanLimit); sy++) {
-          if (!toRemove[sy * w + x]) {
-            const d = sy - y;
-            if (d < bestDist) { bestDist = d; bestIdx = (sy * w + x) * 4; }
-            break;
-          }
-        }
-        // Scan LEFT
-        for (let sx = x - 1; sx >= Math.max(0, x - scanLimit); sx--) {
-          if (!toRemove[y * w + sx]) {
-            const d = x - sx;
-            if (d < bestDist) { bestDist = d; bestIdx = (y * w + sx) * 4; }
-            break;
-          }
-        }
-        // Scan RIGHT
-        for (let sx = x + 1; sx <= Math.min(w - 1, x + scanLimit); sx++) {
-          if (!toRemove[y * w + sx]) {
-            const d = sx - x;
-            if (d < bestDist) { bestDist = d; bestIdx = (y * w + sx) * 4; }
-            break;
-          }
-        }
-
-        // Copy from nearest clean pixel
         const idx = i * 4;
-        if (bestIdx >= 0) {
-          data[idx]     = data[bestIdx];
-          data[idx + 1] = data[bestIdx + 1];
-          data[idx + 2] = data[bestIdx + 2];
+
+        const dTop = y - by0 + 1;
+        const dBot = by1 - y + 1;
+        const dLeft = x - bx0 + 1;
+        const dRight = bx1 - x + 1;
+
+        let rTotal = 0, gTotal = 0, bTotal = 0, wTotal = 0;
+
+        // Mirror from TOP
+        {
+          const mirrorY = Math.max(0, by0 - dTop);
+          const mi = mirrorY * w + Math.min(w - 1, Math.max(0, x));
+          if (!toRemove[mi]) {
+            const si = mi * 4;
+            const weight = topClean / (dTop * dTop);
+            rTotal += data[si] * weight; gTotal += data[si + 1] * weight; bTotal += data[si + 2] * weight; wTotal += weight;
+          }
+        }
+        // Mirror from BOTTOM
+        {
+          const mirrorY = Math.min(h - 1, by1 + dBot);
+          const mi = mirrorY * w + Math.min(w - 1, Math.max(0, x));
+          if (!toRemove[mi]) {
+            const si = mi * 4;
+            const weight = botClean / (dBot * dBot);
+            rTotal += data[si] * weight; gTotal += data[si + 1] * weight; bTotal += data[si + 2] * weight; wTotal += weight;
+          }
+        }
+        // Mirror from LEFT
+        {
+          const mirrorX = Math.max(0, bx0 - dLeft);
+          const mi = Math.min(h - 1, Math.max(0, y)) * w + mirrorX;
+          if (!toRemove[mi]) {
+            const si = mi * 4;
+            const weight = leftClean / (dLeft * dLeft);
+            rTotal += data[si] * weight; gTotal += data[si + 1] * weight; bTotal += data[si + 2] * weight; wTotal += weight;
+          }
+        }
+        // Mirror from RIGHT
+        {
+          const mirrorX = Math.min(w - 1, bx1 + dRight);
+          const mi = Math.min(h - 1, Math.max(0, y)) * w + mirrorX;
+          if (!toRemove[mi]) {
+            const si = mi * 4;
+            const weight = rightClean / (dRight * dRight);
+            rTotal += data[si] * weight; gTotal += data[si + 1] * weight; bTotal += data[si + 2] * weight; wTotal += weight;
+          }
+        }
+
+        if (wTotal > 0) {
+          data[idx]     = Math.min(255, Math.max(0, Math.round(rTotal / wTotal)));
+          data[idx + 1] = Math.min(255, Math.max(0, Math.round(gTotal / wTotal)));
+          data[idx + 2] = Math.min(255, Math.max(0, Math.round(bTotal / wTotal)));
         }
         data[idx + 3] = 255;
       }
@@ -1046,8 +1193,8 @@ const PhotoEditor = (() => {
 
     ctx.putImageData(imageData, 0, 0);
 
-    // Light blur on just the seam edges (not the whole removed area) to smooth transitions
-    const pad = 3;
+    // Smooth the filled region with CSS blur to blend seams
+    const pad = 4;
     const sx0 = Math.max(0, bx0 - pad), sy0 = Math.max(0, by0 - pad);
     const sx1 = Math.min(w - 1, bx1 + pad), sy1 = Math.min(h - 1, by1 + pad);
     const bw = sx1 - sx0 + 1, bh = sy1 - sy0 + 1;
@@ -1057,23 +1204,15 @@ const PhotoEditor = (() => {
       patchCanvas.height = bh;
       const patchCtx = patchCanvas.getContext('2d');
       patchCtx.drawImage(canvas, sx0, sy0, bw, bh, 0, 0, bw, bh);
-      patchCtx.filter = 'blur(1px)';
+      patchCtx.filter = 'blur(2px)';
       patchCtx.drawImage(patchCanvas, 0, 0);
       const smoothed = patchCtx.getImageData(0, 0, bw, bh);
       const origPatch = ctx.getImageData(sx0, sy0, bw, bh);
-      // Only smooth pixels right at the border of the removed area (within 3px of edge)
+      // Blend smoothed version into removed pixels (full blend at edges, less in center)
       for (let py = 0; py < bh; py++) {
         for (let px = 0; px < bw; px++) {
-          const gx = sx0 + px, gy = sy0 + py;
-          const gi = gy * w + gx;
-          if (!toRemove[gi]) continue;
-          // Check if near edge of removed area
-          let nearEdge = false;
-          if (gx > 0 && !toRemove[gi - 1]) nearEdge = true;
-          else if (gx < w - 1 && !toRemove[gi + 1]) nearEdge = true;
-          else if (gy > 0 && !toRemove[gi - w]) nearEdge = true;
-          else if (gy < h - 1 && !toRemove[gi + w]) nearEdge = true;
-          if (nearEdge) {
+          const gi = (sy0 + py) * w + (sx0 + px);
+          if (toRemove[gi]) {
             const li = (py * bw + px) * 4;
             origPatch.data[li] = smoothed.data[li];
             origPatch.data[li + 1] = smoothed.data[li + 1];
@@ -1297,6 +1436,22 @@ const PhotoEditor = (() => {
     }
   }
 
+  /** Get quick image stats for context awareness */
+  function getImageStats() {
+    if (!originalImage || !canvas || canvas.width === 0) return null;
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      fileName: currentFilePath ? currentFilePath.split(/[\\/]/).pop() : 'Unknown',
+      rotation,
+      flipH,
+      flipV,
+      adjustments: { ...adjustments },
+      undoDepth: undoStack.length,
+      redoDepth: redoStack.length,
+    };
+  }
+
   return {
     loadImage,
     undo,
@@ -1321,6 +1476,7 @@ const PhotoEditor = (() => {
     drawTextOnPhoto,
     fillRegion,
     getImageDataURL,
+    getImageStats,
     init,
     get hasImage() { return !!originalImage; },
     get currentPath() { return currentFilePath; },

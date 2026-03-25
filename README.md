@@ -44,7 +44,7 @@ Or download it from [ffmpeg.org](https://ffmpeg.org/download.html) and add it to
 - **Photo Editor** — open images, crop, rotate, resize, adjust brightness/contrast, apply filter presets, remove or blur backgrounds, and remove objects from photos.
 - **File Converter** — convert between video formats (MP4, AVI, MKV, MOV, WebM), audio formats (MP3, WAV, FLAC, OGG, AAC), image formats (PNG, JPG, WebP, BMP, GIF, TIFF), and document formats (DOCX to TXT, DOCX to HTML, TXT to HTML).
 - **User Guide** — searchable in-app documentation covering every button, shortcut, and assistant command.
-- **Settings** — switch between dark/light mode, adjust contrast levels, change text size, and connect Gemini AI.
+- **Settings** — switch between dark/light mode, adjust contrast levels, change text size, toggle vertical/horizontal slider orientation, and connect Gemini AI.
 
 ### Step 5: Connect Gemini AI (optional, free)
 
@@ -78,14 +78,36 @@ The assistant bar sits at the very bottom of the screen and works on every tab. 
 - "select clip 2" / "select the intro clip"
 - "what clips do I have"
 
-**Filters and color:**
+**Transitions:**
+- "add fade transition" / "add dissolve" / "wipe left" / "slide right" / "zoom transition"
+- "add 2 second fade transition" — specify duration in seconds
+- "remove transition" / "no transition"
+- Available types: fade, fade-white, dissolve, cross-dissolve, wipe (left/right/up/down), slide (left/right/up/down), zoom, zoom-out, spin, blur, flash, iris-open, iris-close, curtain (left/right)
+
+**Fade in/out:**
+- "fade in 2 seconds" / "fade out 3 seconds" — applies to both video and audio
+- "fade in video 2 seconds" / "fade out audio 1 second" — video or audio only
+- "clear fade" / "remove fade"
+
+**Clip management:**
+- "rename clip Intro Scene" / "call this Opening Shot"
+- "detach clip" — remove from main timeline for overlay layers
+- "reattach clip" / "attach clip" — back to main timeline
+- "set layer 2" — change overlay layer for detached clips
+
+**Captions:**
+- Use the Add Caption button to add single-line or multi-line captions
+- Multi-line mode lets you set per-line duration and gap between lines
+
+**Filters and color (35+ presets):**
 - "make it cinematic" / "apply vintage" / "black and white"
 - "set brightness to 120" / "darken it"
 - "increase contrast" / "boost saturation"
+- Presets include: cinematic, noir, vintage, warm, cool, old-film, golden, teal, sunset, winter, dreamy, moody, retro-80s, VHS, and many more
 
 **Photo editing commands:**
 - "describe the image" — with Gemini, gives a real description of what's in the photo
-- "remove background" / "blur background"
+- "remove background" / "remove background mirror fill" / "blur background"
 - "remove the person in the middle" / "remove the object on the left"
 - "make it grayscale" / "apply sepia" / "vintage look"
 - "rotate left" / "flip horizontal" / "resize to 1920 by 1080"
@@ -96,11 +118,19 @@ The assistant bar sits at the very bottom of the screen and works on every tab. 
 - "go to 30 seconds" / "where am I"
 - "mute" / "unmute"
 
+**Memory and context:**
+- "remember that my project is called Summer Vacation" — stores info across sessions
+- "what do you remember" / "show memories" — recalls stored memories
+- "forget [topic]" / "forget everything"
+- "status" / "project summary" — shows current app state
+- "suggest" / "what should I do next" — context-aware suggestions
+
 **Smart tools:**
 - "auto color correct" / "close gaps"
 - "undo" / "redo"
 - "zoom in" / "zoom out"
 - "export as mp4" / "import media"
+- "normalize" — equalizes brightness and volume across all clips
 
 Type **help** in the assistant for the full command list.
 
@@ -110,11 +140,11 @@ Your projects are saved to the app's data folder and listed in the **Projects** 
 
 ## Features
 
-- **Video Editor** — timeline-based editing with trim, split, effects, text overlays, undo/redo, drag-to-move clips, and multi-track support (video, audio, text)
-- **Photo Editor** — canvas-based editing with crop, rotate, flip, resize, brightness/contrast/saturation/sharpness sliders, filter presets, background removal, background blur, and region removal
+- **Video Editor** — timeline-based editing with trim, split, 35+ filter presets, 20+ transition types, text overlays, captions (single/multi-line), fade in/out (video and audio separately), clip layering and detaching, normalize brightness/volume, undo/redo, drag-to-move clips, and multi-track support (video, audio, text)
+- **Photo Editor** — canvas-based editing with crop, rotate, flip, resize, brightness/contrast/saturation/sharpness sliders, filter presets, background removal, background blur, region removal, and image overlay/insert
 - **File Converter** — convert between video, audio, image, and document formats powered by FFmpeg and Mammoth
-- **AI Assistant** — natural language control powered by Google Gemini 2.5 Pro (free), with inline responses, image vision, and real-time project editing. Gemini has full access to your timeline and photos — it can split, delete, trim, move clips, apply filters, remove backgrounds, and more. Automatically falls back to Gemini 3 Flash or 2.5 Flash if rate limited. Works with built-in keyword matching when no API key is set
-- **Full Accessibility** — ARIA labels on every control, live announcements, keyboard navigation, focus trapping, high-contrast themes, and a "Where Am I?" button
+- **AI Assistant** — natural language control powered by Google Gemini 2.5 Pro (free), with persistent memory across sessions, context-aware suggestions, inline responses, image vision, and real-time project editing. Gemini has full access to your timeline and photos — it can split, delete, trim, move clips, apply filters, add transitions, set fades, rename clips, detach/reattach clips, remove backgrounds, and more. Automatically falls back to Gemini 3 Flash or 2.5 Flash if rate limited. Works with built-in keyword matching when no API key is set
+- **Full Accessibility** — ARIA labels on every control, live announcements, keyboard navigation, focus trapping, high-contrast themes, vertical slider option, and a "Where Am I?" button
 
 ## Keyboard Shortcuts
 

@@ -55,6 +55,12 @@
           <button id="btn-import-media" aria-label="Import video or image files">Import Media</button>
           <button id="btn-import-audio" aria-label="Import audio or music file, adds at playhead position">Import Audio</button>
           <button id="btn-show-filters" aria-label="Add a filter to the selected clip">Add Filter</button>
+          <button id="btn-add-caption" aria-label="Add a caption or subtitle to the video">Add Caption</button>
+          <button id="btn-normalize" aria-label="Normalize video brightness and audio volume to be consistent throughout">Normalize</button>
+          <button id="btn-color-correct" aria-label="Open color correction panel with RGB balance and temperature controls">Color Correct</button>
+          <button id="btn-add-title" aria-label="Add a title from the built-in template library">Title Template</button>
+          <button id="btn-add-marker" aria-label="Add a marker or bookmark at the current playhead position">Add Marker</button>
+          <button id="btn-new-project" aria-label="Start a new empty project">New Project</button>
           <button id="btn-save-project" aria-label="Save your current project">Save Project</button>
           <button id="btn-export-video" aria-label="Export your finished video">Export Video</button>
         </div>
@@ -66,6 +72,13 @@
           <button id="btn-delete-clip" aria-label="Delete this clip from the timeline">Delete</button>
           <button id="btn-duplicate-clip" aria-label="Make a copy of this clip">Duplicate</button>
           <button id="btn-add-text" aria-label="Add text that appears over the video">Add Text</button>
+          <button id="btn-add-transition" aria-label="Add a transition to the selected clip">Add Transition</button>
+          <button id="btn-chroma-key" aria-label="Apply green screen or chroma key to the selected clip">Green Screen</button>
+          <button id="btn-keyframe" aria-label="Add keyframe animation to the selected clip">Keyframe</button>
+          <button id="btn-speed-ramp" aria-label="Add variable speed ramping to the selected clip">Speed Ramp</button>
+          <button id="btn-ken-burns" aria-label="Add Ken Burns zoom and pan effect to an image clip">Ken Burns</button>
+          <button id="btn-freeze-frame" aria-label="Insert a freeze frame at the playhead position">Freeze Frame</button>
+          <button id="btn-toggle-snap" aria-label="Toggle clip snapping on the timeline">Snap: On</button>
           <button id="btn-undo" aria-label="Undo last action">Undo</button>
           <button id="btn-redo" aria-label="Redo">Redo</button>
         </div>
@@ -78,6 +91,7 @@
             <div id="media-list" role="list" aria-label="List of imported media files" tabindex="0">
               <p id="media-empty-message" class="help-text">No media imported yet. Use the Import Media or Import Audio button above. Files are automatically added to the timeline at the playhead position.</p>
             </div>
+            <button id="btn-add-to-timeline" aria-label="Add selected media file to the timeline">Add to Timeline</button>
           </div>
 
           <!-- Video preview area -->
@@ -156,42 +170,7 @@
 
           <h3 style="padding: 0 12px; margin: 8px 0 4px; font-size: 0.9em; color: var(--text-muted);">Filter Presets</h3>
           <div id="filter-list" role="list" aria-label="Available filters">
-            <button class="filter-option" role="listitem" data-preset="vintage" aria-label="Vintage: Warm faded look like old film footage from the 70s">
-              <strong>Vintage</strong>
-              <span class="filter-desc">Warm faded look like old film footage from the 70s</span>
-            </button>
-            <button class="filter-option" role="listitem" data-preset="cinematic" aria-label="Cinematic: High contrast with slightly desaturated colors, like a Hollywood movie">
-              <strong>Cinematic</strong>
-              <span class="filter-desc">High contrast with slightly desaturated colors, like a Hollywood movie</span>
-            </button>
-            <button class="filter-option" role="listitem" data-preset="noir" aria-label="Black and White: Classic grayscale with boosted contrast for a dramatic noir look">
-              <strong>Black & White</strong>
-              <span class="filter-desc">Classic grayscale with boosted contrast for a dramatic noir look</span>
-            </button>
-            <button class="filter-option" role="listitem" data-preset="warm" aria-label="Warm Tone: Adds golden, sunny warmth to your footage with a slight sepia tint">
-              <strong>Warm Tone</strong>
-              <span class="filter-desc">Adds golden, sunny warmth to your footage with a slight sepia tint</span>
-            </button>
-            <button class="filter-option" role="listitem" data-preset="cool" aria-label="Cool Tone: Blue-shifted colors for a calm, winter or moonlit atmosphere">
-              <strong>Cool Tone</strong>
-              <span class="filter-desc">Blue-shifted colors for a calm, winter or moonlit atmosphere</span>
-            </button>
-            <button class="filter-option" role="listitem" data-preset="dramatic" aria-label="Dramatic: Very high contrast with vivid colors for intense, punchy footage">
-              <strong>Dramatic</strong>
-              <span class="filter-desc">Very high contrast with vivid colors for intense, punchy footage</span>
-            </button>
-            <button class="filter-option" role="listitem" data-preset="faded" aria-label="Faded Film: Soft washed-out look like a sun-bleached photograph">
-              <strong>Faded Film</strong>
-              <span class="filter-desc">Soft washed-out look like a sun-bleached photograph</span>
-            </button>
-            <button class="filter-option" role="listitem" data-preset="vivid" aria-label="Vivid: Boosted saturation and contrast for bright, eye-catching colors">
-              <strong>Vivid</strong>
-              <span class="filter-desc">Boosted saturation and contrast for bright, eye-catching colors</span>
-            </button>
-            <button class="filter-option" role="listitem" data-preset="none" aria-label="None: Remove all filters and return to the original look">
-              <strong>None (Original)</strong>
-              <span class="filter-desc">Remove all filters and return to the original look</span>
-            </button>
+            <!-- Filters are populated dynamically from Effects.getPresetNames() by app.js -->
           </div>
           <button id="btn-close-filters" aria-label="Close the filters panel">Close</button>
         </div>
@@ -205,6 +184,84 @@
               <button id="filter-scope-clip" aria-label="Apply filter to just the selected clip">Selected Clip Only</button>
               <button id="filter-scope-all" aria-label="Apply filter to the entire video, all clips">Entire Video (All Clips)</button>
               <button id="filter-scope-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Caption Dialog -->
+        <div id="caption-dialog" class="modal hidden" role="dialog" aria-labelledby="caption-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="caption-title">Add Captions / Subtitles</h2>
+
+            <div role="group" aria-label="Caption mode">
+              <label for="caption-mode-select">Mode:</label>
+              <select id="caption-mode-select" aria-label="Choose single caption or multi-line mode">
+                <option value="single">Single Caption</option>
+                <option value="multi">Multi-Line (one caption per line, set duration per line)</option>
+              </select>
+            </div>
+
+            <!-- Single caption mode -->
+            <div id="caption-single-mode">
+              <label for="caption-text-input">Caption Text:</label>
+              <textarea id="caption-text-input" rows="3" aria-label="Enter the caption or subtitle text" placeholder="Enter caption text..."></textarea>
+              <label for="caption-start-input">Start Time (seconds):</label>
+              <input type="number" id="caption-start-input" step="0.1" min="0" value="0" aria-label="When this caption appears">
+              <label for="caption-duration-input">Duration (seconds):</label>
+              <input type="number" id="caption-duration-input" step="0.1" min="0.5" value="3" aria-label="How long the caption stays on screen">
+            </div>
+
+            <!-- Multi-line caption mode -->
+            <div id="caption-multi-mode" class="hidden">
+              <p class="help-text" style="padding: 4px 0;">Type or paste your captions below — one line per caption. Set the duration each line stays on screen, then they'll be placed sequentially from the start time.</p>
+              <label for="caption-multi-text">Captions (one per line):</label>
+              <textarea id="caption-multi-text" rows="8" aria-label="Enter captions, one per line. Each line becomes a separate caption." placeholder="Line 1: Welcome to my video&#10;Line 2: Today we are going to...&#10;Line 3: Let's get started!"></textarea>
+              <label for="caption-multi-start">Start Time (seconds):</label>
+              <input type="number" id="caption-multi-start" step="0.1" min="0" value="0" aria-label="When the first caption appears">
+              <label for="caption-line-duration">Duration Per Line (seconds):</label>
+              <input type="number" id="caption-line-duration" step="0.25" min="0.5" value="3" aria-label="How long each line stays on screen before the next one appears">
+              <label for="caption-gap-duration">Gap Between Lines (seconds):</label>
+              <input type="number" id="caption-gap-duration" step="0.1" min="0" value="0.25" aria-label="Pause between captions">
+            </div>
+
+            <!-- Shared settings -->
+            <label for="caption-position-select">Position:</label>
+            <select id="caption-position-select" aria-label="Where the caption appears on screen">
+              <option value="bottom">Bottom (standard subtitles)</option>
+              <option value="top">Top</option>
+              <option value="center">Center</option>
+            </select>
+            <label for="caption-size-input">Font Size:</label>
+            <input type="number" id="caption-size-input" min="12" max="120" value="32" aria-label="Caption font size in pixels">
+            <label for="caption-color-input">Text Color:</label>
+            <input type="color" id="caption-color-input" value="#ffffff" aria-label="Caption text color">
+            <div class="modal-actions">
+              <button id="btn-caption-add" aria-label="Add caption or captions to the timeline">Add Captions</button>
+              <button id="btn-caption-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transition Dialog -->
+        <div id="transition-dialog" class="modal hidden" role="dialog" aria-labelledby="transition-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="transition-title">Add / Change Transition</h2>
+            <p>Choose a transition from the built-in library. The transition plays as the clip begins.</p>
+            <div role="group" aria-label="Transition type">
+              <label for="transition-type-select">Transition Type:</label>
+              <select id="transition-type-select" aria-label="Choose a transition type">
+                <option value="none">None (Remove Transition)</option>
+                <!-- Options populated dynamically from Timeline.getTransitionTypes() -->
+              </select>
+            </div>
+            <div role="group" aria-label="Transition duration">
+              <label for="transition-duration-input">Duration (seconds):</label>
+              <input type="number" id="transition-duration-input" min="0.25" max="5" step="0.25" value="1" aria-label="Transition duration in seconds">
+            </div>
+            <div class="modal-actions">
+              <button id="btn-transition-apply" aria-label="Apply this transition">Apply</button>
+              <button id="btn-transition-remove" aria-label="Remove the transition from this clip">Remove Transition</button>
+              <button id="btn-transition-cancel" aria-label="Cancel">Cancel</button>
             </div>
           </div>
         </div>
@@ -246,7 +303,8 @@
             <h3>Selected Clip Properties</h3>
             <div id="clip-props-content">
               <label for="clip-name-input">Clip Name:</label>
-              <input type="text" id="clip-name-input" aria-label="Edit the name of this clip">
+              <input type="text" id="clip-name-input" aria-label="Edit the name of this clip" placeholder="Clip name">
+              <button id="btn-clip-rename" aria-label="Apply the new name to this clip">Rename</button>
 
               <label for="clip-start-input">Start Time (seconds):</label>
               <input type="number" id="clip-start-input" step="0.1" min="0" aria-label="When this clip starts on the timeline, in seconds">
@@ -271,38 +329,257 @@
                 <option value="4">4x (Very Fast)</option>
               </select>
 
+              <div class="clip-prop-row">
+                <label>Fade In:</label>
+                <label for="clip-fade-in-video">Video <input type="number" id="clip-fade-in-video" min="0" max="30" step="0.1" value="0" aria-label="Video fade in duration in seconds"> s</label>
+                <label for="clip-fade-in-audio">Audio <input type="number" id="clip-fade-in-audio" min="0" max="30" step="0.1" value="0" aria-label="Audio fade in duration in seconds"> s</label>
+              </div>
+              <div class="clip-prop-row">
+                <label>Fade Out:</label>
+                <label for="clip-fade-out-video">Video <input type="number" id="clip-fade-out-video" min="0" max="30" step="0.1" value="0" aria-label="Video fade out duration in seconds"> s</label>
+                <label for="clip-fade-out-audio">Audio <input type="number" id="clip-fade-out-audio" min="0" max="30" step="0.1" value="0" aria-label="Audio fade out duration in seconds"> s</label>
+              </div>
+              <div class="clip-prop-row">
+                <button id="btn-apply-fade" aria-label="Apply fade in and out settings to the selected clip">Apply Fade</button>
+                <button id="btn-clear-fade" aria-label="Remove all fades from the selected clip">Clear Fade</button>
+              </div>
+              <div class="clip-prop-row">
+                <label>Layer: <span id="clip-layer-display">0</span></label>
+                <label>Status: <span id="clip-detach-status">Attached</span></label>
+                <label>Transition: <span id="clip-transition-display">None</span></label>
+              </div>
+
               <button id="btn-remove-clip-audio" aria-label="Remove audio from this video clip">Remove Audio from Clip</button>
+              <button id="btn-change-transition" class="hidden" aria-label="Change or remove the transition on this clip">Change Transition</button>
               <button id="btn-apply-clip-changes" aria-label="Apply changes to this clip">Apply Changes</button>
             </div>
           </div>
         </div>
 
         <!-- Clip List at bottom -->
-        <div id="clip-list-section" role="region" aria-label="List of all clips on the timeline">
-          <div id="clip-list-video" role="region" aria-label="Video clips">
-            <label for="video-clip-select"><h3>Video Clips</h3></label>
-            <select id="video-clip-select" aria-label="Video clips list. Select a clip then use the buttons below." size="5">
-              <option value="" disabled selected>No video clips yet</option>
+        <div id="clip-list-section" role="region" aria-label="Clip lists and properties">
+          <div id="clip-list-all" role="region" aria-label="All clips on timeline">
+            <label for="all-clip-select"><h3>All Clips</h3></label>
+            <select id="all-clip-select" aria-label="All clips on the timeline. Select a clip to view its properties or jump to it." size="6">
+              <option value="" disabled selected>No clips yet</option>
             </select>
             <div class="clip-select-actions">
-              <button id="btn-video-clip-jump" aria-label="Jump to the selected video clip on the timeline" disabled>Jump to Clip</button>
-              <button id="btn-video-clip-copy" aria-label="Copy the selected video clip" disabled>Copy</button>
-              <button id="btn-video-clip-cut" aria-label="Cut the selected video clip" disabled>Cut</button>
-              <button id="btn-video-clip-remove" aria-label="Remove the selected video clip from the timeline" disabled>Remove</button>
+              <button id="btn-clip-jump" aria-label="Jump to the selected clip on the timeline" disabled>Jump to Clip</button>
+              <button id="btn-clip-copy" aria-label="Duplicate the selected clip" disabled>Copy</button>
+              <button id="btn-clip-remove" aria-label="Remove the selected clip from the timeline" disabled>Remove</button>
+              <button id="btn-clip-detach" aria-label="Detach the selected clip from the main timeline" disabled>Detach</button>
+              <button id="btn-clip-freeze" aria-label="Insert a freeze frame at the playhead position on this clip" disabled>Freeze Frame</button>
             </div>
           </div>
-          <div id="clip-list-audio" role="region" aria-label="Audio clips">
-            <label for="audio-clip-select"><h3>Audio Clips</h3></label>
-            <select id="audio-clip-select" aria-label="Audio clips list. Select a clip then use the buttons below." size="5">
-              <option value="" disabled selected>No audio clips yet</option>
+          <div id="clip-list-detached" role="region" aria-label="Detached and overlay clips">
+            <label for="detached-clip-select"><h3>Detached / Overlay Clips</h3></label>
+            <select id="detached-clip-select" aria-label="Detached clips that are separate from the main timeline. Select to reattach or adjust layer." size="4">
+              <option value="" disabled selected>No detached clips</option>
             </select>
             <div class="clip-select-actions">
-              <button id="btn-audio-clip-jump" aria-label="Jump to the selected audio clip on the timeline" disabled>Jump to Clip</button>
-              <button id="btn-audio-clip-copy" aria-label="Copy the selected audio clip" disabled>Copy</button>
-              <button id="btn-audio-clip-cut" aria-label="Cut the selected audio clip" disabled>Cut</button>
-              <button id="btn-audio-clip-remove" aria-label="Remove the selected audio clip from the timeline" disabled>Remove</button>
+              <button id="btn-clip-attach" aria-label="Reattach the selected clip to the main timeline" disabled>Reattach</button>
+              <button id="btn-clip-layer-up" aria-label="Move detached clip to a higher layer" disabled>Layer Up</button>
+              <button id="btn-clip-layer-down" aria-label="Move detached clip to a lower layer" disabled>Layer Down</button>
+              <button id="btn-pip-preset" aria-label="Choose a picture-in-picture position for this clip" disabled>PIP Position</button>
             </div>
           </div>
+          <!-- Clip properties are shown in the panel above the clip list -->
+        </div>
+
+        <!-- Chroma Key Dialog -->
+        <div id="chroma-dialog" class="modal hidden" role="dialog" aria-labelledby="chroma-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="chroma-title">Chroma Key (Green Screen)</h2>
+            <p>Remove a background color from the video. The removed area becomes transparent, revealing clips on lower layers.</p>
+            <label for="chroma-color">Key Color:</label>
+            <input type="color" id="chroma-color" value="#00ff00" aria-label="Choose the color to remove, default is green">
+            <label for="chroma-tolerance">Tolerance (how much color variation to remove):</label>
+            <input type="range" id="chroma-tolerance" min="5" max="100" value="40" step="5"
+                   aria-label="Chroma key tolerance, currently 40" aria-valuetext="40">
+            <span id="chroma-tolerance-val" aria-hidden="true">40</span>
+            <label for="chroma-softness">Edge Softness:</label>
+            <input type="range" id="chroma-softness" min="0" max="50" value="10" step="5"
+                   aria-label="Edge softness, currently 10" aria-valuetext="10">
+            <span id="chroma-softness-val" aria-hidden="true">10</span>
+            <div class="modal-actions">
+              <button id="btn-chroma-apply" aria-label="Apply chroma key to the selected clip">Apply</button>
+              <button id="btn-chroma-remove" aria-label="Remove chroma key from this clip">Remove Chroma Key</button>
+              <button id="btn-chroma-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keyframe Dialog -->
+        <div id="keyframe-dialog" class="modal hidden" role="dialog" aria-labelledby="keyframe-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="keyframe-title">Add Keyframe</h2>
+            <p>Keyframes let you animate properties over time. Set a value at different points and the property smoothly transitions between them.</p>
+            <label for="keyframe-property">Property:</label>
+            <select id="keyframe-property" aria-label="Choose which property to animate">
+              <option value="opacity">Opacity (visibility)</option>
+              <option value="volume">Volume</option>
+              <option value="x">X Position</option>
+              <option value="y">Y Position</option>
+              <option value="scale">Scale (size)</option>
+              <option value="rotation">Rotation</option>
+            </select>
+            <label for="keyframe-time">Time (seconds from clip start):</label>
+            <input type="number" id="keyframe-time" min="0" step="0.1" value="0" aria-label="When this keyframe occurs relative to the clip start">
+            <label for="keyframe-value">Value:</label>
+            <input type="number" id="keyframe-value" step="0.1" value="100" aria-label="The value at this keyframe">
+            <p id="keyframe-list-display" aria-live="polite" style="padding: 8px 20px; font-size: 0.85em; color: var(--text-muted);">No keyframes set.</p>
+            <div class="modal-actions">
+              <button id="btn-keyframe-add" aria-label="Add this keyframe">Add Keyframe</button>
+              <button id="btn-keyframe-clear" aria-label="Remove all keyframes from this property">Clear All</button>
+              <button id="btn-keyframe-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Speed Ramp Dialog -->
+        <div id="speedramp-dialog" class="modal hidden" role="dialog" aria-labelledby="speedramp-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="speedramp-title">Speed Ramping</h2>
+            <p>Create variable speed within a clip. Add points where the speed changes, and it will smoothly transition between them.</p>
+            <div id="speedramp-points" role="list" aria-label="Speed ramp points">
+              <p class="help-text">No speed ramp points yet. Add points below.</p>
+            </div>
+            <div class="clip-prop-row">
+              <label for="speedramp-time">Time (sec):</label>
+              <input type="number" id="speedramp-time" min="0" step="0.1" value="0" aria-label="Time within the clip">
+              <label for="speedramp-speed">Speed:</label>
+              <input type="number" id="speedramp-speed" min="0.1" max="8" step="0.1" value="1" aria-label="Playback speed at this point">
+              <button id="btn-speedramp-add-point" aria-label="Add this speed point">Add Point</button>
+            </div>
+            <p class="help-text" style="padding: 4px 20px;">Common ramp: 1x normal → 0.25x slow motion → 1x normal. Speed 0.25 = quarter speed, 2 = double speed.</p>
+            <div class="modal-actions">
+              <button id="btn-speedramp-apply" aria-label="Apply speed ramp to the selected clip">Apply</button>
+              <button id="btn-speedramp-clear" aria-label="Remove speed ramp">Clear</button>
+              <button id="btn-speedramp-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ken Burns Dialog -->
+        <div id="kenburns-dialog" class="modal hidden" role="dialog" aria-labelledby="kenburns-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="kenburns-title">Ken Burns Effect (Zoom/Pan on Images)</h2>
+            <p>Slowly zoom and pan across an image clip to create dynamic motion from a still photo.</p>
+            <div class="clip-prop-row">
+              <label>Start: X <input type="number" id="kb-start-x" value="50" min="0" max="100" aria-label="Start X position percent"> %</label>
+              <label>Y <input type="number" id="kb-start-y" value="50" min="0" max="100" aria-label="Start Y position percent"> %</label>
+              <label>Zoom <input type="number" id="kb-start-scale" value="1" min="0.5" max="3" step="0.1" aria-label="Start zoom level"> x</label>
+            </div>
+            <div class="clip-prop-row">
+              <label>End: X <input type="number" id="kb-end-x" value="50" min="0" max="100" aria-label="End X position percent"> %</label>
+              <label>Y <input type="number" id="kb-end-y" value="50" min="0" max="100" aria-label="End Y position percent"> %</label>
+              <label>Zoom <input type="number" id="kb-end-scale" value="1.5" min="0.5" max="3" step="0.1" aria-label="End zoom level"> x</label>
+            </div>
+            <p class="help-text" style="padding: 4px 20px;">Preset: Zoom In = start 1x end 1.5x. Zoom Out = start 1.5x end 1x. Pan = change X/Y positions.</p>
+            <div class="modal-actions">
+              <button id="btn-kb-zoom-in" aria-label="Apply zoom in preset">Zoom In Preset</button>
+              <button id="btn-kb-zoom-out" aria-label="Apply zoom out preset">Zoom Out Preset</button>
+              <button id="btn-kb-pan-left" aria-label="Apply pan left preset">Pan Left</button>
+              <button id="btn-kb-pan-right" aria-label="Apply pan right preset">Pan Right</button>
+            </div>
+            <div class="modal-actions">
+              <button id="btn-kb-apply" aria-label="Apply Ken Burns effect">Apply</button>
+              <button id="btn-kb-remove" aria-label="Remove Ken Burns effect">Remove</button>
+              <button id="btn-kb-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Title Template Dialog -->
+        <div id="title-dialog" class="modal hidden" role="dialog" aria-labelledby="title-template-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="title-template-title">Title Templates</h2>
+            <p>Choose a pre-built title template. You can edit the text after adding it.</p>
+            <div id="title-template-list" role="list" aria-label="Available title templates">
+              <!-- Populated dynamically -->
+            </div>
+            <label for="title-custom-text">Custom Text (optional, replaces template text):</label>
+            <textarea id="title-custom-text" rows="3" aria-label="Enter custom text for the title, or leave blank to use the template text" placeholder="Leave blank to use template text..."></textarea>
+            <div class="modal-actions">
+              <button id="btn-title-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PIP Preset Dialog -->
+        <div id="pip-dialog" class="modal hidden" role="dialog" aria-labelledby="pip-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="pip-title">Picture-in-Picture Position</h2>
+            <p>Choose where the overlay clip appears on screen.</p>
+            <div id="pip-preset-list" role="list" aria-label="PIP position presets">
+              <!-- Populated dynamically -->
+            </div>
+            <div class="modal-actions">
+              <button id="btn-pip-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Marker Dialog -->
+        <div id="marker-dialog" class="modal hidden" role="dialog" aria-labelledby="marker-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="marker-title">Add Marker / Bookmark</h2>
+            <p>Place a marker on the timeline to bookmark an important moment.</p>
+            <label for="marker-label">Marker Label:</label>
+            <input type="text" id="marker-label" placeholder="e.g. Intro starts here" aria-label="Name or description for this marker">
+            <label for="marker-color">Marker Color:</label>
+            <input type="color" id="marker-color" value="#ffcc00" aria-label="Choose a color for this marker">
+            <p id="marker-time-display" aria-live="polite" style="padding: 4px 20px; font-size: 0.9em;">Marker will be placed at the current playhead position.</p>
+            <div class="modal-actions">
+              <button id="btn-marker-add" aria-label="Add this marker at the playhead position">Add Marker</button>
+              <button id="btn-marker-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Color Correction Panel (inline, not dialog) -->
+        <div id="color-correction-panel" class="collapsible-panel hidden" role="region" aria-label="Color correction and RGB balance">
+          <h2>Color Correction</h2>
+          <p class="help-text">Fine-tune color balance, temperature, and tonal range.</p>
+          <div id="cc-adjustments" role="group" aria-label="Color correction sliders">
+            <div class="filter-adjust-row">
+              <label for="cc-redBalance-slider">Red:</label>
+              <input type="range" id="cc-redBalance-slider" min="0" max="200" value="100" step="5" aria-label="Red channel balance, currently 100 percent" aria-valuetext="100%">
+              <span id="cc-redBalance-val" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-greenBalance-slider">Green:</label>
+              <input type="range" id="cc-greenBalance-slider" min="0" max="200" value="100" step="5" aria-label="Green channel balance, currently 100 percent" aria-valuetext="100%">
+              <span id="cc-greenBalance-val" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-blueBalance-slider">Blue:</label>
+              <input type="range" id="cc-blueBalance-slider" min="0" max="200" value="100" step="5" aria-label="Blue channel balance, currently 100 percent" aria-valuetext="100%">
+              <span id="cc-blueBalance-val" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-temperature-slider">Temperature:</label>
+              <input type="range" id="cc-temperature-slider" min="-100" max="100" value="0" step="5" aria-label="Color temperature, currently 0" aria-valuetext="0">
+              <span id="cc-temperature-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-tint-slider">Tint:</label>
+              <input type="range" id="cc-tint-slider" min="-100" max="100" value="0" step="5" aria-label="Color tint, currently 0" aria-valuetext="0">
+              <span id="cc-tint-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-shadows-slider">Shadows:</label>
+              <input type="range" id="cc-shadows-slider" min="-50" max="50" value="0" step="5" aria-label="Shadow adjustment, currently 0" aria-valuetext="0">
+              <span id="cc-shadows-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-highlights-slider">Highlights:</label>
+              <input type="range" id="cc-highlights-slider" min="-50" max="50" value="0" step="5" aria-label="Highlight adjustment, currently 0" aria-valuetext="0">
+              <span id="cc-highlights-val" aria-hidden="true">0</span>
+            </div>
+          </div>
+          <button id="btn-reset-cc" aria-label="Reset all color correction to defaults">Reset Color Correction</button>
+          <button id="btn-close-cc" aria-label="Close color correction panel">Close</button>
         </div>
       </section>
 
@@ -548,7 +825,11 @@
               <dl>
                 <dt>Import Media</dt><dd>Opens a file picker to add video or image files to the timeline.</dd>
                 <dt>Import Audio</dt><dd>Opens a file picker to add music or sound files to the timeline.</dd>
-                <dt>Add Filter</dt><dd>Opens a list of filters with descriptions you can apply to the selected clip.</dd>
+                <dt>Add Filter</dt><dd>Opens a list of 35+ filters with descriptions you can apply to the selected clip.</dd>
+                <dt>Add Transition</dt><dd>Opens a dialog to add a transition (fade, dissolve, wipe, slide, zoom, etc.) between clips.</dd>
+                <dt>Change Transition</dt><dd>Appears when the selected clip has a transition. Opens the transition dialog to change or remove it.</dd>
+                <dt>Add Caption</dt><dd>Adds captions to the video. Supports single-line or multi-line mode with per-line duration control.</dd>
+                <dt>Normalize</dt><dd>Normalizes brightness and volume across all clips to a consistent level.</dd>
                 <dt>Save Project</dt><dd>Saves your current project with a name. Saved projects appear in the Projects panel on the right.</dd>
                 <dt>Export Video</dt><dd>Renders your timeline into a finished video file.</dd>
                 <dt>Split Clip</dt><dd>Cuts the clip at the current playhead position into two pieces.</dd>
@@ -556,6 +837,19 @@
                 <dt>Duplicate Clip</dt><dd>Makes a copy of the selected clip and places it after the original.</dd>
                 <dt>Add Text</dt><dd>Adds text that appears over your video at the current position.</dd>
                 <dt>Undo and Redo</dt><dd>Reverses or re-applies the last action.</dd>
+                <dt>Detach Clip</dt><dd>Detaches a clip from the main timeline so it can be placed on overlay layers.</dd>
+                <dt>Reattach Clip</dt><dd>Moves a detached clip back to the main timeline.</dd>
+                <dt>Layer Up / Down</dt><dd>Moves a detached clip to a higher or lower overlay layer.</dd>
+                <dt>Color Correct</dt><dd>Opens a panel with 7 sliders for RGB balance, temperature, tint, shadows, and highlights.</dd>
+                <dt>Title Template</dt><dd>Opens a list of 12 title templates (Lower Third, Opening Credits, etc.) to add to the timeline.</dd>
+                <dt>Add Marker</dt><dd>Adds a labeled marker at the current playhead position for navigation.</dd>
+                <dt>Green Screen</dt><dd>Opens a dialog to apply chroma key (green/blue/red screen removal) to the selected clip.</dd>
+                <dt>Keyframe</dt><dd>Opens a dialog to add animation keyframes (opacity, scale, position, rotation) to a clip.</dd>
+                <dt>Speed Ramp</dt><dd>Opens a dialog to set variable speed points within a clip.</dd>
+                <dt>Ken Burns</dt><dd>Opens a dialog with zoom and pan presets for the Ken Burns slow-motion camera effect.</dd>
+                <dt>Freeze Frame</dt><dd>Inserts a still frame at the current position for a specified duration.</dd>
+                <dt>Snap</dt><dd>Toggles timeline snapping. When on, clips snap to edges of other clips, markers, and the playhead.</dd>
+                <dt>PIP Position</dt><dd>Opens a dialog with picture-in-picture presets (corners, center, side-by-side) for overlay clips.</dd>
               </dl>
             </div>
 
@@ -611,7 +905,7 @@
               <h4>Photo Editing Commands</h4>
               <dl>
                 <dt>Describe the image</dt><dd>"describe the image", "what is in the photo", "what do you see". With Gemini, you get a detailed description of the actual content — people, objects, colors, mood, composition.</dd>
-                <dt>Remove background</dt><dd>"remove background", "remove bg", "cut out the subject". You can set tolerance: "remove background 80" for wider, "remove background 30" for tighter.</dd>
+                <dt>Remove background</dt><dd>"remove background", "remove bg", "cut out the subject". You can set tolerance: "remove background 80" for wider, "remove background 30" for tighter. Say "remove background mirror fill" to fill the area with mirrored foreground content instead of making it transparent.</dd>
                 <dt>Blur background</dt><dd>"blur background", "blur bg", "portrait mode", "bokeh". Set tolerance: "blur background 80" for wider area.</dd>
                 <dt>Remove something from the photo</dt><dd>Describe what to remove and where it is. Examples: "remove the person in the middle", "remove the finger on the left", "remove the object in the top right".</dd>
                 <dt>Adjust photo</dt><dd>"make the photo brighter", "increase contrast", "boost saturation", "sharpen it"</dd>
@@ -619,6 +913,40 @@
                 <dt>Rotate and flip</dt><dd>"rotate left", "rotate right", "flip horizontal", "flip vertical"</dd>
                 <dt>Resize</dt><dd>"resize to 1920 by 1080", "make it 800 pixels wide"</dd>
                 <dt>Auto enhance</dt><dd>"auto enhance", "make the photo better", "auto improve"</dd>
+              </dl>
+
+              <h4>Transitions</h4>
+              <dl>
+                <dt>Add transition</dt><dd>"add fade transition", "add dissolve", "wipe left", "slide right", "zoom transition"</dd>
+                <dt>Set duration</dt><dd>"add 2 second fade transition" — specify duration in seconds</dd>
+                <dt>Remove transition</dt><dd>"remove transition", "no transition"</dd>
+                <dt>Available types</dt><dd>fade, fade-white, dissolve, cross-dissolve, wipe (left/right/up/down), slide (left/right/up/down), zoom, zoom-out, spin, blur, flash, iris-open, iris-close, curtain (left/right). Use the Add Transition button in the edit toolbar for a full list.</dd>
+              </dl>
+
+              <h4>Fade In/Out</h4>
+              <dl>
+                <dt>Fade in</dt><dd>"fade in 2 seconds", "add fade in". Applies to both video and audio by default.</dd>
+                <dt>Fade out</dt><dd>"fade out 3 seconds", "add fade out"</dd>
+                <dt>Video or audio only</dt><dd>"fade in video 2 seconds", "fade out audio 1 second"</dd>
+                <dt>Clear fades</dt><dd>"clear fade", "remove fade"</dd>
+              </dl>
+
+              <h4>Clip Management</h4>
+              <dl>
+                <dt>Rename</dt><dd>"rename clip Intro Scene", "call this Opening Shot"</dd>
+                <dt>Detach</dt><dd>"detach clip" — removes clip from main timeline so it can overlay on layers</dd>
+                <dt>Reattach</dt><dd>"reattach clip", "attach clip" — puts clip back on the main timeline</dd>
+                <dt>Layer</dt><dd>"set layer 2" — sets the overlay layer for a detached clip</dd>
+              </dl>
+
+              <h4>Memory and Context</h4>
+              <dl>
+                <dt>Remember</dt><dd>"remember that my project is called Summer Vacation", "remember my name is Aarya"</dd>
+                <dt>Recall</dt><dd>"what do you remember", "show memories", "recall"</dd>
+                <dt>Forget</dt><dd>"forget [topic]", "forget everything"</dd>
+                <dt>History</dt><dd>"history", "recent commands", "what have I done"</dd>
+                <dt>Status</dt><dd>"status", "project summary", "what's going on"</dd>
+                <dt>Suggestions</dt><dd>"suggest", "what should I do next", "any tips"</dd>
               </dl>
 
               <h4>Sound and Music</h4>
@@ -640,6 +968,96 @@
                 <dt>Close gaps</dt><dd>"close gaps", "snap clips together", "join clips"</dd>
                 <dt>Undo / Redo</dt><dd>"undo", "redo", "undo that"</dd>
                 <dt>Zoom</dt><dd>"zoom in", "zoom out"</dd>
+              </dl>
+
+              <h4>Green Screen (Chroma Key)</h4>
+              <dl>
+                <dt>Apply</dt><dd>"green screen", "chroma key", "blue screen". Colors: green (default), blue, red, white.</dd>
+                <dt>Adjust</dt><dd>Use the Chroma Key button in the edit toolbar to fine-tune tolerance and softness with sliders.</dd>
+                <dt>Remove</dt><dd>"remove green screen", "clear chroma key"</dd>
+              </dl>
+
+              <h4>Keyframe Animation</h4>
+              <dl>
+                <dt>Add keyframe</dt><dd>"add keyframe opacity 2 50" — set opacity to 50% at 2 seconds. Properties: opacity, scale, x, y, rotation.</dd>
+                <dt>Clear</dt><dd>"clear all keyframes" removes all keyframes from the selected clip.</dd>
+                <dt>GUI</dt><dd>Use the Keyframe button in the edit toolbar for a visual editor with property selector, time, and value inputs.</dd>
+              </dl>
+
+              <h4>Speed Ramping</h4>
+              <dl>
+                <dt>Ramp up</dt><dd>"speed ramp up" — gradually accelerate from 0.5x to 2x.</dd>
+                <dt>Ramp down</dt><dd>"speed ramp down" — gradually decelerate from 2x to 0.5x.</dd>
+                <dt>Dramatic</dt><dd>"dramatic speed ramp" — slow motion at the center of the clip, normal speed at start and end.</dd>
+                <dt>Clear</dt><dd>"clear speed ramp"</dd>
+                <dt>GUI</dt><dd>The Speed Ramp button in the edit toolbar opens a dialog where you can add custom time-speed points.</dd>
+              </dl>
+
+              <h4>Markers</h4>
+              <dl>
+                <dt>Add</dt><dd>"add marker" places a marker at the current playhead. "add marker Chapter 1" adds with a label. "add marker red" sets a color.</dd>
+                <dt>Navigate</dt><dd>"next marker" / "previous marker" to jump between markers.</dd>
+                <dt>List</dt><dd>"list markers" / "show markers" to see all markers.</dd>
+                <dt>Go to</dt><dd>"go to marker Chapter 1" jumps to a marker by label.</dd>
+                <dt>Remove</dt><dd>"remove marker" removes the last marker. "remove all markers" clears all.</dd>
+              </dl>
+
+              <h4>Freeze Frame</h4>
+              <dl>
+                <dt>Apply</dt><dd>"freeze frame" inserts a still frame at the current playhead for 3 seconds. "freeze frame 5 2" freezes at 5 seconds for 2 seconds.</dd>
+                <dt>GUI</dt><dd>Use the Freeze Frame button in the edit toolbar or the clip list.</dd>
+              </dl>
+
+              <h4>Ken Burns Effect</h4>
+              <dl>
+                <dt>Zoom in</dt><dd>"ken burns zoom in" — slowly zooms into the clip over its duration.</dd>
+                <dt>Zoom out</dt><dd>"ken burns zoom out" / "ken burns pull back"</dd>
+                <dt>Pan</dt><dd>"ken burns pan left" / "ken burns pan right"</dd>
+                <dt>Remove</dt><dd>"remove ken burns"</dd>
+                <dt>GUI</dt><dd>The Ken Burns button in the edit toolbar has zoom and pan presets, plus an apply/remove dialog.</dd>
+              </dl>
+
+              <h4>Picture-in-Picture (PIP)</h4>
+              <dl>
+                <dt>Apply preset</dt><dd>"pip bottom right", "pip top left", "pip center", "pip side by side left". A PIP preset detaches the clip and positions it as an overlay.</dd>
+                <dt>Presets</dt><dd>top-left, top-right, bottom-left, bottom-right, center, side-by-side-left, side-by-side-right.</dd>
+                <dt>Remove</dt><dd>"remove pip" / "clear pip"</dd>
+              </dl>
+
+              <h4>Color Correction</h4>
+              <dl>
+                <dt>Temperature</dt><dd>"color correction warm" / "color correction cool" / "color correction temperature 50"</dd>
+                <dt>Tint</dt><dd>"color correction tint 20" / "color correction tint green 30"</dd>
+                <dt>RGB balance</dt><dd>"color correction red 120" / "color correction green 80" / "color correction blue 110"</dd>
+                <dt>Shadows / Highlights</dt><dd>"color correction shadows 30" / "color correction highlights -20"</dd>
+                <dt>Reset</dt><dd>"reset color correction"</dd>
+                <dt>GUI</dt><dd>Use the Color Correct button in the main toolbar to open a panel with sliders for all 7 parameters.</dd>
+              </dl>
+
+              <h4>Audio Ducking</h4>
+              <dl>
+                <dt>Enable</dt><dd>"enable ducking" — automatically reduces music volume when speech is detected.</dd>
+                <dt>Adjust</dt><dd>"set ducking to 50" — sets the reduction percentage.</dd>
+                <dt>Disable</dt><dd>"disable ducking"</dd>
+                <dt>GUI</dt><dd>Toggle and slider are in the Settings section under Audio Ducking.</dd>
+              </dl>
+
+              <h4>Snapping</h4>
+              <dl>
+                <dt>Toggle</dt><dd>"snap on" / "snap off" / "snap toggle". When enabled, clips snap to other clip edges, the playhead, markers, and the timeline start.</dd>
+                <dt>GUI</dt><dd>The Snap button in the edit toolbar toggles snapping on and off.</dd>
+              </dl>
+
+              <h4>Title Templates</h4>
+              <dl>
+                <dt>Add</dt><dd>"add lower third title", "add opening credits", "add news banner". Available: Simple Title, Lower Third, Opening Credits, End Credits, Chapter Title, Subtitle Card, Bold Intro, Minimalist, News Banner, Quote, Countdown, Social Handle.</dd>
+                <dt>GUI</dt><dd>The Title Template button in the main toolbar opens a list of all templates you can click to add.</dd>
+              </dl>
+
+              <h4>Auto-Save</h4>
+              <dl>
+                <dt>Enable</dt><dd>Toggle the Auto-Save checkbox in Settings. When enabled, your project is automatically saved every 5 minutes.</dd>
+                <dt>Recovery</dt><dd>Auto-saved projects are stored as "_autosave" in your project library.</dd>
               </dl>
             </div>
 
@@ -683,7 +1101,13 @@
 
             <div class="guide-section" id="guide-photo-editor">
               <h3>Photo Editor</h3>
-              <p>The Photo Editor lets you open images, crop, resize, rotate, flip, adjust brightness and contrast, apply filter presets, add text overlays, and save in different formats.</p>
+              <p>The Photo Editor lets you open images, crop, resize, rotate, flip, adjust brightness and contrast, apply filter presets, add text overlays, remove or blur backgrounds, insert images, and save in different formats (PNG, JPG, WebP, BMP, GIF, TIFF).</p>
+              <dl>
+                <dt>Remove Background</dt><dd>Removes the background from an image based on edge color detection. Choose transparent or mirror fill mode. Adjust tolerance for wider or tighter selection.</dd>
+                <dt>Blur Background</dt><dd>Blurs the background while keeping the foreground sharp, creating a portrait/bokeh effect.</dd>
+                <dt>Insert Image</dt><dd>Overlays another image on top of your photo, like a sticker or watermark.</dd>
+                <dt>Filter Presets</dt><dd>One-click presets including grayscale, sepia, vintage, noir, warm, cool, old-film, golden, teal, sunset, winter, dreamy, moody, retro-80s, VHS, and more.</dd>
+              </dl>
             </div>
 
             <div class="guide-section" id="guide-screen-reader">
@@ -695,7 +1119,10 @@
                 <li>The status bar at the bottom announces important changes.</li>
                 <li>Dialog boxes trap focus so you stay inside them until you close with Escape or the Close button.</li>
                 <li>The assistant bar at the bottom lets you type commands anytime. Responses appear inline above the input. Click the X button or type a new command to dismiss.</li>
-                <li>The clip list at the bottom shows all your clips. Press Enter to jump to a clip, or use the Actions button for copy, cut, and remove.</li>
+                <li>The clip list at the bottom shows all clips on the left and detached clips on the right. Select a clip to see its properties, including rename, fade in/out, and layer controls.</li>
+                <li>Markers on the timeline are accessible via chatbot commands: "next marker", "previous marker", "list markers".</li>
+                <li>All new feature dialogs (Chroma Key, Keyframe, Speed Ramp, Ken Burns, PIP, Title Templates, Color Correction) have proper aria-labels, aria-modal, and focus trapping for full screen reader support.</li>
+                <li>Clip indicators (chroma key, ken burns, keyframes, speed ramp, PIP, freeze frame) are shown as text badges in the clip list items for screen reader visibility.</li>
               </ul>
             </div>
 
@@ -763,6 +1190,14 @@
             </select>
           </div>
 
+          <div class="setting-row">
+            <label for="slider-orientation-select">Slider Orientation:</label>
+            <select id="slider-orientation-select" aria-label="Choose whether volume and brightness sliders are horizontal or vertical">
+              <option value="horizontal" selected>Horizontal (default)</option>
+              <option value="vertical">Vertical</option>
+            </select>
+          </div>
+
           <button id="btn-apply-theme" aria-label="Apply the selected appearance settings">Apply Changes</button>
           <button id="btn-reset-theme" aria-label="Reset appearance settings to defaults">Reset to Defaults</button>
         </div>
@@ -800,6 +1235,20 @@
               <input type="checkbox" id="announce-actions-toggle" checked aria-label="Have the screen reader announce actions as they happen">
               Announce actions to screen reader
             </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="audio-ducking-toggle">
+              <input type="checkbox" id="audio-ducking-toggle" aria-label="Automatically lower music volume when speech is detected in video clips">
+              Audio Ducking (lower music when speech plays)
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="duck-amount">Ducking Amount:</label>
+            <input type="range" id="duck-amount" min="10" max="90" value="30" step="5"
+                   aria-label="How much to reduce music volume during speech, currently 30 percent" aria-valuetext="30%">
+            <span id="duck-amount-val" aria-hidden="true">30%</span>
           </div>
 
           <div class="setting-row">
@@ -944,6 +1393,10 @@
             <tr><td>Where Am I? (announce playhead position)</td><td>W key</td></tr>
             <tr><td>Volume up</td><td>Up Arrow</td></tr>
             <tr><td>Volume down</td><td>Down Arrow</td></tr>
+            <tr><td>Paste copied clip at playhead</td><td>Control plus V</td></tr>
+            <tr><td>Save project</td><td>Control plus S</td></tr>
+            <tr><td>Focus assistant bar</td><td>Control plus B</td></tr>
+            <tr><td>Show keyboard shortcuts</td><td>F1</td></tr>
             <tr><td>Move between items</td><td>Tab or Shift plus Tab</td></tr>
             <tr><td>Activate a button</td><td>Enter or Space bar</td></tr>
             <tr><td>Close any dialog</td><td>Escape key</td></tr>
@@ -1002,7 +1455,7 @@
     </div>
 
     <!-- Hidden dialog kept for screen reader compatibility -->
-    <div id="chat-response-dialog" class="modal hidden" role="dialog" aria-labelledby="chat-response-title" aria-modal="true" style="display:none">
+    <div id="chat-response-dialog" class="modal hidden" role="dialog" aria-labelledby="chat-response-title" aria-modal="true">
       <div class="modal-content" id="chat-response-content">
         <h2 id="chat-response-title">Assistant</h2>
         <div role="region" aria-label="Assistant response" tabindex="0"></div>
@@ -1022,6 +1475,16 @@
   <!-- Scripts -->
   <script src="js/accessibility.js"></script>
   <script src="js/timeline.js"></script>
+  <!-- About Dialog -->
+  <div id="about-dialog" class="modal hidden" role="dialog" aria-labelledby="about-title" aria-modal="true">
+    <h2 id="about-title">About Accessible Studio</h2>
+    <p>Accessible Studio v2.0 — An NVDA-accessible video editor, photo editor, and file converter.</p>
+    <p>Built with accessibility first. All features work with screen readers.</p>
+    <div class="dialog-buttons">
+      <button id="about-close" aria-label="Close about dialog">Close</button>
+    </div>
+  </div>
+
   <script src="js/player.js"></script>
   <script src="js/effects.js"></script>
   <script src="js/photoeditor.js"></script>

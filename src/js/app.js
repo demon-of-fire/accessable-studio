@@ -481,6 +481,23 @@ const App = (() => {
       if (dialog) Accessibility.showModal(dialog);
     });
 
+    // Normalize brightness/volume across all clips
+    document.getElementById('btn-normalize')?.addEventListener('click', () => {
+      const clips = Timeline.getClips();
+      if (clips.length === 0) {
+        Accessibility.announce('No clips to normalize');
+        return;
+      }
+      // Normalize volume: set all clips to 100%
+      clips.forEach(c => {
+        Timeline.updateClipProperty(c.id, 'volume', 100);
+      });
+      // Reset brightness filter to neutral
+      Effects.setFilter('brightness', 100);
+      Effects.setFilter('contrast', 100);
+      Accessibility.announce(`Normalized ${clips.length} clips: all volumes set to 100%, brightness and contrast reset to neutral.`);
+    });
+
     // Undo / Redo
     document.getElementById('btn-undo')?.addEventListener('click', () => Timeline.undo());
     document.getElementById('btn-redo')?.addEventListener('click', () => Timeline.redo());
@@ -494,10 +511,480 @@ const App = (() => {
     });
     document.getElementById('btn-duplicate-clip')?.addEventListener('click', () => Timeline.duplicateClip());
 
+    // Add caption
+    document.getElementById('btn-add-caption')?.addEventListener('click', () => {
+      const playheadTime = Player.getCurrentTime();
+      const startInput = document.getElementById('caption-start-input');
+      const multiStart = document.getElementById('caption-multi-start');
+      if (startInput) startInput.value = playheadTime.toFixed(1);
+      if (multiStart) multiStart.value = playheadTime.toFixed(1);
+      const dialog = document.getElementById('caption-dialog');
+      if (dialog) Accessibility.showModal(dialog);
+    });
+
+    // Caption mode toggle
+    document.getElementById('caption-mode-select')?.addEventListener('change', (e) => {
+      const isMulti = e.target.value === 'multi';
+      const singleMode = document.getElementById('caption-single-mode');
+      const multiMode = document.getElementById('caption-multi-mode');
+      if (singleMode) singleMode.classList.toggle('hidden', isMulti);
+      if (multiMode) multiMode.classList.toggle('hidden', !isMulti);
+    });
+
+    document.getElementById('btn-caption-add')?.addEventListener('click', () => {
+      const mode = document.getElementById('caption-mode-select')?.value || 'single';
+      const position = document.getElementById('caption-position-select')?.value || 'bottom';
+      const fontSize = parseInt(document.getElementById('caption-size-input')?.value) || 32;
+      const color = document.getElementById('caption-color-input')?.value || '#ffffff';
+
+      if (mode === 'single') {
+        const text = document.getElementById('caption-text-input')?.value || 'Caption';
+        const startTime = parseFloat(document.getElementById('caption-start-input')?.value) || 0;
+        const duration = parseFloat(document.getElementById('caption-duration-input')?.value) || 3;
+
+        Timeline.addClip({
+          name: 'Caption: ' + text.substring(0, 25),
+          type: 'text', text, fontSize, textColor: color, textPosition: position,
+          duration, startTime,
+        });
+        Accessibility.announce(`Caption added at ${Accessibility.formatTime(startTime)} for ${duration} seconds`);
+        document.getElementById('caption-text-input').value = '';
+      } else {
+        // Multi-line mode: one caption per line, placed sequentially
+        const multiText = document.getElementById('caption-multi-text')?.value || '';
+        const lines = multiText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length === 0) {
+          Accessibility.announce('No caption lines entered');
+          return;
+        }
+        const startTime = parseFloat(document.getElementById('caption-multi-start')?.value) || 0;
+        const lineDuration = parseFloat(document.getElementById('caption-line-duration')?.value) || 3;
+        const gap = parseFloat(document.getElementById('caption-gap-duration')?.value) || 0.25;
+
+        let currentTime = startTime;
+        lines.forEach((line, i) => {
+          Timeline.addClip({
+            name: `Caption ${i + 1}: ${line.substring(0, 20)}`,
+            type: 'text', text: line, fontSize, textColor: color, textPosition: position,
+            duration: lineDuration, startTime: currentTime,
+          });
+          currentTime += lineDuration + gap;
+        });
+        Accessibility.announce(`Added ${lines.length} captions starting at ${Accessibility.formatTime(startTime)}, ${lineDuration} seconds each`);
+        document.getElementById('caption-multi-text').value = '';
+      }
+
+      Accessibility.hideModal(document.getElementById('caption-dialog'));
+    });
+
+    document.getElementById('btn-caption-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('caption-dialog'));
+    });
+
+    // Dynamically populate transition type dropdown
+    const transSelect = document.getElementById('transition-type-select');
+    if (transSelect) {
+      Timeline.getTransitionTypes().forEach(type => {
+        const opt = document.createElement('option');
+        opt.value = type;
+        const displayName = type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        opt.textContent = `${displayName} — ${Timeline.getTransitionDescription(type)}`;
+        transSelect.appendChild(opt);
+      });
+    }
+
+    function openTransitionDialog() {
+      const clip = Timeline.getSelectedClip();
+      if (!clip) {
+        Accessibility.announce('Select a clip first to add a transition');
+        return;
+      }
+      const typeSelect = document.getElementById('transition-type-select');
+      const durInput = document.getElementById('transition-duration-input');
+      if (typeSelect) typeSelect.value = clip.transition ? clip.transition.type : 'none';
+      if (durInput) durInput.value = clip.transition ? clip.transition.duration : 1;
+      const dialog = document.getElementById('transition-dialog');
+      if (dialog) Accessibility.showModal(dialog);
+    }
+
+    // Add transition button
+    document.getElementById('btn-add-transition')?.addEventListener('click', openTransitionDialog);
+
+    // Change transition button (in clip properties)
+    document.getElementById('btn-change-transition')?.addEventListener('click', openTransitionDialog);
+
+    document.getElementById('btn-transition-apply')?.addEventListener('click', () => {
+      const type = document.getElementById('transition-type-select')?.value || 'none';
+      const duration = parseFloat(document.getElementById('transition-duration-input')?.value) || 1;
+      Timeline.setTransition(null, type, duration);
+      Accessibility.hideModal(document.getElementById('transition-dialog'));
+      updateTransitionButton();
+    });
+
+    document.getElementById('btn-transition-remove')?.addEventListener('click', () => {
+      Timeline.setTransition(null, 'none');
+      Accessibility.hideModal(document.getElementById('transition-dialog'));
+      updateTransitionButton();
+    });
+
+    document.getElementById('btn-transition-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('transition-dialog'));
+    });
+
+    // Show/hide "Change Transition" button based on selected clip
+    function updateTransitionButton() {
+      const clip = Timeline.getSelectedClip();
+      const btn = document.getElementById('btn-change-transition');
+      if (btn) {
+        btn.classList.toggle('hidden', !clip || !clip.transition);
+        if (clip && clip.transition) {
+          btn.textContent = `Change Transition (${clip.transition.type})`;
+        }
+      }
+    }
+    // Update when clips change
+    Timeline.onChange(updateTransitionButton);
+
     // Add text
     document.getElementById('btn-add-text')?.addEventListener('click', () => {
       const dialog = document.getElementById('text-dialog');
       if (dialog) Accessibility.showModal(dialog);
+    });
+
+    // ==========================================
+    // CHROMA KEY (GREEN SCREEN)
+    // ==========================================
+    document.getElementById('btn-chroma-key')?.addEventListener('click', () => {
+      const clip = Timeline.getSelectedClip();
+      if (!clip) { Accessibility.announce('Select a clip first'); return; }
+      // Pre-fill from existing chroma key
+      if (clip.chromaKey) {
+        document.getElementById('chroma-color').value = clip.chromaKey.color;
+        document.getElementById('chroma-tolerance').value = clip.chromaKey.tolerance;
+        document.getElementById('chroma-softness').value = clip.chromaKey.softness;
+      }
+      Accessibility.showModal(document.getElementById('chroma-dialog'));
+    });
+    document.getElementById('chroma-tolerance')?.addEventListener('input', (e) => {
+      document.getElementById('chroma-tolerance-val').textContent = e.target.value;
+      e.target.setAttribute('aria-valuetext', e.target.value);
+    });
+    document.getElementById('chroma-softness')?.addEventListener('input', (e) => {
+      document.getElementById('chroma-softness-val').textContent = e.target.value;
+      e.target.setAttribute('aria-valuetext', e.target.value);
+    });
+    document.getElementById('btn-chroma-apply')?.addEventListener('click', () => {
+      const color = document.getElementById('chroma-color')?.value || '#00ff00';
+      const tolerance = parseInt(document.getElementById('chroma-tolerance')?.value) || 40;
+      const softness = parseInt(document.getElementById('chroma-softness')?.value) || 10;
+      Timeline.setChromaKey(null, color, tolerance, softness);
+      Accessibility.hideModal(document.getElementById('chroma-dialog'));
+    });
+    document.getElementById('btn-chroma-remove')?.addEventListener('click', () => {
+      Timeline.clearChromaKey();
+      Accessibility.hideModal(document.getElementById('chroma-dialog'));
+    });
+    document.getElementById('btn-chroma-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('chroma-dialog'));
+    });
+
+    // ==========================================
+    // KEYFRAME ANIMATION
+    // ==========================================
+    document.getElementById('btn-keyframe')?.addEventListener('click', () => {
+      const clip = Timeline.getSelectedClip();
+      if (!clip) { Accessibility.announce('Select a clip first'); return; }
+      updateKeyframeDisplay();
+      Accessibility.showModal(document.getElementById('keyframe-dialog'));
+    });
+    function updateKeyframeDisplay() {
+      const clip = Timeline.getSelectedClip();
+      const prop = document.getElementById('keyframe-property')?.value || 'opacity';
+      const display = document.getElementById('keyframe-list-display');
+      if (!clip || !display) return;
+      const kfs = Timeline.getKeyframes(clip.id, prop);
+      if (kfs.length === 0) {
+        display.textContent = `No ${prop} keyframes set.`;
+      } else {
+        display.textContent = `${prop} keyframes: ` + kfs.map(k => `${k.time}s→${k.value}`).join(', ');
+      }
+    }
+    document.getElementById('keyframe-property')?.addEventListener('change', updateKeyframeDisplay);
+    document.getElementById('btn-keyframe-add')?.addEventListener('click', () => {
+      const prop = document.getElementById('keyframe-property')?.value;
+      const time = parseFloat(document.getElementById('keyframe-time')?.value) || 0;
+      const value = parseFloat(document.getElementById('keyframe-value')?.value) || 0;
+      Timeline.addKeyframe(null, prop, time, value);
+      updateKeyframeDisplay();
+    });
+    document.getElementById('btn-keyframe-clear')?.addEventListener('click', () => {
+      const clip = Timeline.getSelectedClip();
+      const prop = document.getElementById('keyframe-property')?.value;
+      if (clip && clip.keyframes && clip.keyframes[prop]) {
+        const kfs = [...clip.keyframes[prop]];
+        kfs.forEach(k => Timeline.removeKeyframe(clip.id, prop, k.time));
+      }
+      updateKeyframeDisplay();
+    });
+    document.getElementById('btn-keyframe-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('keyframe-dialog'));
+    });
+
+    // ==========================================
+    // SPEED RAMPING
+    // ==========================================
+    let tempSpeedPoints = [];
+    document.getElementById('btn-speed-ramp')?.addEventListener('click', () => {
+      const clip = Timeline.getSelectedClip();
+      if (!clip) { Accessibility.announce('Select a clip first'); return; }
+      tempSpeedPoints = clip.speedRamp ? [...clip.speedRamp] : [];
+      renderSpeedRampPoints();
+      Accessibility.showModal(document.getElementById('speedramp-dialog'));
+    });
+    function renderSpeedRampPoints() {
+      const container = document.getElementById('speedramp-points');
+      if (!container) return;
+      if (tempSpeedPoints.length === 0) {
+        container.innerHTML = '<p class="help-text">No speed ramp points yet. Add points below.</p>';
+        return;
+      }
+      container.innerHTML = '';
+      tempSpeedPoints.sort((a, b) => a.time - b.time).forEach((p, i) => {
+        const el = document.createElement('div');
+        el.className = 'speedramp-point';
+        el.setAttribute('role', 'listitem');
+        el.innerHTML = `<span>At ${p.time}s: ${p.speed}x speed</span>`;
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Remove';
+        removeBtn.setAttribute('aria-label', `Remove speed point at ${p.time} seconds`);
+        removeBtn.addEventListener('click', () => { tempSpeedPoints.splice(i, 1); renderSpeedRampPoints(); });
+        el.appendChild(removeBtn);
+        container.appendChild(el);
+      });
+    }
+    document.getElementById('btn-speedramp-add-point')?.addEventListener('click', () => {
+      const time = parseFloat(document.getElementById('speedramp-time')?.value) || 0;
+      const speed = parseFloat(document.getElementById('speedramp-speed')?.value) || 1;
+      tempSpeedPoints.push({ time, speed });
+      renderSpeedRampPoints();
+    });
+    document.getElementById('btn-speedramp-apply')?.addEventListener('click', () => {
+      if (tempSpeedPoints.length > 0) Timeline.setSpeedRamp(null, tempSpeedPoints);
+      Accessibility.hideModal(document.getElementById('speedramp-dialog'));
+    });
+    document.getElementById('btn-speedramp-clear')?.addEventListener('click', () => {
+      tempSpeedPoints = [];
+      const clip = Timeline.getSelectedClip();
+      if (clip) Timeline.updateClipProperty(clip.id, 'speedRamp', null);
+      renderSpeedRampPoints();
+      Accessibility.announce('Speed ramp cleared');
+    });
+    document.getElementById('btn-speedramp-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('speedramp-dialog'));
+    });
+
+    // ==========================================
+    // KEN BURNS EFFECT
+    // ==========================================
+    document.getElementById('btn-ken-burns')?.addEventListener('click', () => {
+      const clip = Timeline.getSelectedClip();
+      if (!clip) { Accessibility.announce('Select a clip first'); return; }
+      if (clip.kenBurns) {
+        document.getElementById('kb-start-x').value = clip.kenBurns.startX;
+        document.getElementById('kb-start-y').value = clip.kenBurns.startY;
+        document.getElementById('kb-start-scale').value = clip.kenBurns.startScale;
+        document.getElementById('kb-end-x').value = clip.kenBurns.endX;
+        document.getElementById('kb-end-y').value = clip.kenBurns.endY;
+        document.getElementById('kb-end-scale').value = clip.kenBurns.endScale;
+      }
+      Accessibility.showModal(document.getElementById('kenburns-dialog'));
+    });
+    document.getElementById('btn-kb-zoom-in')?.addEventListener('click', () => {
+      document.getElementById('kb-start-x').value = 50;
+      document.getElementById('kb-start-y').value = 50;
+      document.getElementById('kb-start-scale').value = 1;
+      document.getElementById('kb-end-x').value = 50;
+      document.getElementById('kb-end-y').value = 50;
+      document.getElementById('kb-end-scale').value = 1.5;
+      Accessibility.announce('Zoom in preset loaded');
+    });
+    document.getElementById('btn-kb-zoom-out')?.addEventListener('click', () => {
+      document.getElementById('kb-start-scale').value = 1.5;
+      document.getElementById('kb-end-scale').value = 1;
+      Accessibility.announce('Zoom out preset loaded');
+    });
+    document.getElementById('btn-kb-pan-left')?.addEventListener('click', () => {
+      document.getElementById('kb-start-x').value = 70;
+      document.getElementById('kb-end-x').value = 30;
+      Accessibility.announce('Pan left preset loaded');
+    });
+    document.getElementById('btn-kb-pan-right')?.addEventListener('click', () => {
+      document.getElementById('kb-start-x').value = 30;
+      document.getElementById('kb-end-x').value = 70;
+      Accessibility.announce('Pan right preset loaded');
+    });
+    document.getElementById('btn-kb-apply')?.addEventListener('click', () => {
+      Timeline.setKenBurns(null,
+        parseFloat(document.getElementById('kb-start-x').value),
+        parseFloat(document.getElementById('kb-start-y').value),
+        parseFloat(document.getElementById('kb-start-scale').value),
+        parseFloat(document.getElementById('kb-end-x').value),
+        parseFloat(document.getElementById('kb-end-y').value),
+        parseFloat(document.getElementById('kb-end-scale').value)
+      );
+      Accessibility.hideModal(document.getElementById('kenburns-dialog'));
+    });
+    document.getElementById('btn-kb-remove')?.addEventListener('click', () => {
+      Timeline.clearKenBurns();
+      Accessibility.hideModal(document.getElementById('kenburns-dialog'));
+    });
+    document.getElementById('btn-kb-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('kenburns-dialog'));
+    });
+
+    // ==========================================
+    // FREEZE FRAME
+    // ==========================================
+    document.getElementById('btn-freeze-frame')?.addEventListener('click', () => {
+      const clip = Timeline.getSelectedClip();
+      if (!clip) { Accessibility.announce('Select a clip first'); return; }
+      const playheadTime = Player.getCurrentTime();
+      Timeline.freezeFrame(clip.id, playheadTime, 3);
+    });
+
+    // ==========================================
+    // SNAP TOGGLE
+    // ==========================================
+    document.getElementById('btn-toggle-snap')?.addEventListener('click', () => {
+      Timeline.toggleSnap();
+      const btn = document.getElementById('btn-toggle-snap');
+      // We don't have direct access to snapEnabled, but the announce tells us
+      btn.textContent = btn.textContent.includes('On') ? 'Snap: Off' : 'Snap: On';
+    });
+
+    // ==========================================
+    // MARKERS
+    // ==========================================
+    document.getElementById('btn-add-marker')?.addEventListener('click', () => {
+      const timeDisplay = document.getElementById('marker-time-display');
+      const playheadTime = Player.getCurrentTime();
+      if (timeDisplay) timeDisplay.textContent = `Marker will be placed at ${Accessibility.formatTime(playheadTime)}`;
+      Accessibility.showModal(document.getElementById('marker-dialog'));
+    });
+    document.getElementById('btn-marker-add')?.addEventListener('click', () => {
+      const label = document.getElementById('marker-label')?.value?.trim() || 'Marker';
+      const color = document.getElementById('marker-color')?.value || '#ffcc00';
+      const playheadTime = Player.getCurrentTime();
+      Timeline.addMarker(playheadTime, label, color);
+      Accessibility.hideModal(document.getElementById('marker-dialog'));
+      document.getElementById('marker-label').value = '';
+    });
+    document.getElementById('btn-marker-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('marker-dialog'));
+    });
+
+    // ==========================================
+    // COLOR CORRECTION PANEL
+    // ==========================================
+    document.getElementById('btn-color-correct')?.addEventListener('click', () => {
+      const panel = document.getElementById('color-correction-panel');
+      if (panel) {
+        const isHidden = panel.classList.contains('hidden');
+        panel.classList.toggle('hidden');
+        Accessibility.announce(isHidden ? 'Color correction panel opened' : 'Color correction panel closed');
+      }
+    });
+    document.getElementById('btn-close-cc')?.addEventListener('click', () => {
+      document.getElementById('color-correction-panel')?.classList.add('hidden');
+      Accessibility.announce('Color correction panel closed');
+    });
+    document.getElementById('btn-reset-cc')?.addEventListener('click', () => {
+      Effects.resetColorCorrection();
+    });
+    // CC slider listeners
+    ['redBalance', 'greenBalance', 'blueBalance', 'temperature', 'tint', 'shadows', 'highlights'].forEach(name => {
+      const slider = document.getElementById(`cc-${name}-slider`);
+      if (slider) {
+        slider.addEventListener('input', (e) => {
+          const val = e.target.value;
+          const display = document.getElementById(`cc-${name}-val`);
+          if (display) display.textContent = val + (name === 'temperature' || name === 'tint' || name === 'shadows' || name === 'highlights' ? '' : '%');
+          e.target.setAttribute('aria-valuetext', val + '%');
+          Effects.setColorCorrection(name, parseFloat(val));
+        });
+      }
+    });
+
+    // ==========================================
+    // TITLE TEMPLATES
+    // ==========================================
+    document.getElementById('btn-add-title')?.addEventListener('click', () => {
+      const list = document.getElementById('title-template-list');
+      if (list && list.children.length === 0) {
+        // Populate on first open
+        Timeline.getTitleTemplates().forEach((tmpl, i) => {
+          const item = document.createElement('div');
+          item.className = 'title-template-item';
+          item.setAttribute('role', 'listitem');
+          item.setAttribute('tabindex', '0');
+          item.setAttribute('aria-label', `${tmpl.name}: ${tmpl.text.substring(0, 40)}, ${tmpl.duration} seconds`);
+          item.innerHTML = `<strong>${tmpl.name}</strong><span>"${tmpl.text.substring(0, 50)}" — ${tmpl.duration}s</span>`;
+          item.addEventListener('click', () => {
+            const customText = document.getElementById('title-custom-text')?.value?.trim();
+            Timeline.addTitleFromTemplate(i, Player.getCurrentTime(), customText || null);
+            Accessibility.hideModal(document.getElementById('title-dialog'));
+          });
+          item.addEventListener('keydown', (e) => { if (e.key === 'Enter') item.click(); });
+          list.appendChild(item);
+        });
+      }
+      Accessibility.showModal(document.getElementById('title-dialog'));
+    });
+    document.getElementById('btn-title-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('title-dialog'));
+    });
+
+    // ==========================================
+    // PIP PRESETS
+    // ==========================================
+    document.getElementById('btn-pip-preset')?.addEventListener('click', () => {
+      const list = document.getElementById('pip-preset-list');
+      if (list && list.children.length === 0) {
+        Timeline.getPipPresets().forEach(name => {
+          const btn = document.createElement('button');
+          btn.className = 'pip-preset-btn';
+          btn.setAttribute('role', 'listitem');
+          const displayName = name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          btn.textContent = displayName;
+          btn.setAttribute('aria-label', `Position clip at ${displayName}`);
+          btn.addEventListener('click', () => {
+            const clipId = getSelectedClipId('detached-clip-select');
+            if (clipId) {
+              Timeline.setPipPreset(clipId, name);
+              renderClipList();
+            }
+            Accessibility.hideModal(document.getElementById('pip-dialog'));
+          });
+          list.appendChild(btn);
+        });
+      }
+      Accessibility.showModal(document.getElementById('pip-dialog'));
+    });
+    document.getElementById('btn-pip-cancel')?.addEventListener('click', () => {
+      Accessibility.hideModal(document.getElementById('pip-dialog'));
+    });
+
+    // ==========================================
+    // AUDIO DUCKING (settings)
+    // ==========================================
+    document.getElementById('audio-ducking-toggle')?.addEventListener('change', (e) => {
+      Effects.setAudioDucking(e.target.checked);
+    });
+    document.getElementById('duck-amount')?.addEventListener('input', (e) => {
+      const val = e.target.value;
+      document.getElementById('duck-amount-val').textContent = val + '%';
+      e.target.setAttribute('aria-valuetext', val + '%');
+      Effects.setAudioDucking(document.getElementById('audio-ducking-toggle')?.checked, parseInt(val));
     });
 
     // Filters panel toggle
@@ -558,6 +1045,23 @@ const App = (() => {
     // Filter scope dialog - tracks pending filter preset
     let pendingFilterPreset = null;
 
+    // Dynamically build filter preset buttons
+    const filterList = document.getElementById('filter-list');
+    if (filterList) {
+      const presetNames = Effects.getPresetNames();
+      presetNames.forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-option';
+        btn.setAttribute('role', 'listitem');
+        btn.dataset.preset = name;
+        const displayName = name === 'none' ? 'None (Original)' : name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const desc = Effects.getPresetDescription(name);
+        btn.setAttribute('aria-label', `${displayName}: ${desc}`);
+        btn.innerHTML = `<strong>${displayName}</strong><span class="filter-desc">${desc}</span>`;
+        filterList.appendChild(btn);
+      });
+    }
+
     // Filter list items - show scope dialog
     document.querySelectorAll('.filter-option').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -574,8 +1078,8 @@ const App = (() => {
         // Show scope dialog
         pendingFilterPreset = preset;
         const scopeDialog = document.getElementById('filter-scope-dialog');
-        const desc = document.getElementById('filter-scope-desc');
-        if (desc) desc.textContent = `Apply the "${btn.querySelector('strong').textContent}" filter to:`;
+        const scopeDesc = document.getElementById('filter-scope-desc');
+        if (scopeDesc) scopeDesc.textContent = `Apply the "${btn.querySelector('strong').textContent}" filter to:`;
         if (scopeDialog) Accessibility.showModal(scopeDialog);
       });
     });
@@ -699,8 +1203,33 @@ const App = (() => {
     // Remove background
     document.getElementById('btn-photo-remove-bg')?.addEventListener('click', async () => {
       if (!PhotoEditor.hasImage) { Accessibility.announce('No image loaded'); return; }
+      // Ask for fill mode
+      const fillMode = await new Promise((resolve) => {
+        const dialog = document.createElement('div');
+        dialog.className = 'modal';
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-label', 'Choose background removal mode');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.innerHTML = `<div class="modal-content">
+          <h2>Remove Background</h2>
+          <p>Choose how to fill the removed area:</p>
+          <div class="modal-actions">
+            <button id="bg-remove-transparent" aria-label="Make background transparent">Transparent</button>
+            <button id="bg-remove-mirror" aria-label="Fill background with mirrored content from the foreground">Mirror Fill</button>
+            <button id="bg-remove-cancel" aria-label="Cancel">Cancel</button>
+          </div>
+        </div>`;
+        document.body.appendChild(dialog);
+        document.getElementById('bg-remove-transparent').focus();
+        const cleanup = (val) => { dialog.remove(); resolve(val); };
+        document.getElementById('bg-remove-transparent').addEventListener('click', () => cleanup('transparent'));
+        document.getElementById('bg-remove-mirror').addEventListener('click', () => cleanup('mirror'));
+        document.getElementById('bg-remove-cancel').addEventListener('click', () => cleanup(null));
+        dialog.addEventListener('keydown', (e) => { if (e.key === 'Escape') cleanup(null); });
+      });
+      if (!fillMode) return;
       Accessibility.announce('Removing background, please wait...');
-      await PhotoEditor.removeBackground(70);
+      await PhotoEditor.removeBackground(70, fillMode);
     });
 
     // Blur background
@@ -889,12 +1418,17 @@ const App = (() => {
       document.body.classList.remove('font-small', 'font-normal', 'font-large', 'font-very-large');
       document.body.classList.add(`font-${fontSize.replace(' ', '-')}`);
 
+      // Apply slider orientation
+      const sliderOrientation = document.getElementById('slider-orientation-select')?.value || 'horizontal';
+      document.body.classList.toggle('vertical-sliders', sliderOrientation === 'vertical');
+
       // Save to localStorage
       localStorage.setItem('as-theme', theme);
       localStorage.setItem('as-contrast', contrast);
       localStorage.setItem('as-font-size', fontSize);
+      localStorage.setItem('as-slider-orientation', sliderOrientation);
 
-      Accessibility.announce(`Theme applied: ${theme} mode, ${contrast} contrast, ${fontSize} text size`);
+      Accessibility.announce(`Theme applied: ${theme} mode, ${contrast} contrast, ${fontSize} text size, ${sliderOrientation} sliders`);
     });
 
     document.getElementById('btn-reset-theme')?.addEventListener('click', () => {
@@ -952,9 +1486,16 @@ const App = (() => {
     else if (savedContrast === 'very-high') document.body.classList.add('very-high-contrast');
     if (savedFontSize) document.body.classList.add(`font-${savedFontSize.replace(' ', '-')}`);
 
+    const savedSliderOrientation = localStorage.getItem('as-slider-orientation');
+    if (savedSliderOrientation === 'vertical') document.body.classList.add('vertical-sliders');
+
     if (savedTheme) document.getElementById('theme-mode-select').value = savedTheme;
     if (savedContrast) document.getElementById('contrast-level-select').value = savedContrast;
     if (savedFontSize) document.getElementById('font-size-select').value = savedFontSize;
+    if (savedSliderOrientation) {
+      const sliderSelect = document.getElementById('slider-orientation-select');
+      if (sliderSelect) sliderSelect.value = savedSliderOrientation;
+    }
 
   }
 
@@ -1228,6 +1769,27 @@ const App = (() => {
     initClipList();
     loadProjectList();
 
+    // ==========================================
+    // AUTO-SAVE (every 5 minutes)
+    // ==========================================
+    let autoSaveInterval = null;
+    function startAutoSave() {
+      if (autoSaveInterval) clearInterval(autoSaveInterval);
+      autoSaveInterval = setInterval(async () => {
+        const toggle = document.getElementById('autosave-toggle');
+        if (!toggle || !toggle.checked) return;
+        if (!window.api) return;
+        const clips = Timeline.getClips();
+        if (clips.length === 0) return;
+        try {
+          const projectData = { timeline: Timeline.serialize(), mediaLibrary };
+          await window.api.saveProjectToLibrary({ name: '_autosave', data: projectData });
+          Accessibility.announceStatus('Auto-saved');
+        } catch (e) { /* silent fail */ }
+      }, 5 * 60 * 1000); // 5 minutes
+    }
+    startAutoSave();
+
     Accessibility.setStatus('Ready. Use the sidebar to navigate between sections.');
     Accessibility.announce('Accessible Studio loaded. Use the sidebar buttons to switch between Video Editor, Photo Editor, File Converter, User Guide, and Settings.');
   }
@@ -1240,13 +1802,14 @@ const App = (() => {
 
   function renderClipList() {
     const allClips = Timeline.getClips();
-    const videoClips = allClips.filter(c => c.type === 'video' || c.type === 'image').sort((a, b) => a.startTime - b.startTime);
-    const audioClips = allClips.filter(c => c.type === 'audio').sort((a, b) => a.startTime - b.startTime);
+    const mainClips = allClips.filter(c => !c.detached).sort((a, b) => a.startTime - b.startTime);
+    const detachedClips = allClips.filter(c => c.detached).sort((a, b) => a.startTime - b.startTime);
     const selectedClip = Timeline.getSelectedClip();
 
-    renderClipSelect('video-clip-select', videoClips, selectedClip, 'No video clips yet');
-    renderClipSelect('audio-clip-select', audioClips, selectedClip, 'No audio clips yet');
+    renderClipSelect('all-clip-select', mainClips, selectedClip, 'No clips yet');
+    renderClipSelect('detached-clip-select', detachedClips, selectedClip, 'No detached clips');
     updateClipActionButtons();
+    updateClipProperties();
   }
 
   function renderClipSelect(selectId, clips, selectedClip, emptyMsg) {
@@ -1271,7 +1834,12 @@ const App = (() => {
       const startStr = Accessibility.formatTimeDisplay(clip.startTime);
       const endTime = clip.startTime + clip.duration;
       const endStr = Accessibility.formatTimeDisplay(endTime);
-      opt.textContent = `Clip ${i + 1}: ${clip.name} — ${startStr} to ${endStr}`;
+      const typeLabel = clip.type === 'video' ? 'V' : clip.type === 'audio' ? 'A' : clip.type === 'image' ? 'I' : 'T';
+      const layerInfo = clip.layer > 0 ? ` [L${clip.layer}]` : '';
+      const transInfo = clip.transition ? ` [${clip.transition.type}]` : '';
+      const chromaInfo = clip.chromaKey ? ' [GS]' : '';
+      const kbInfo = clip.kenBurns ? ' [KB]' : '';
+      opt.textContent = `${typeLabel} ${i + 1}: ${clip.name} — ${startStr} to ${endStr}${layerInfo}${transInfo}${chromaInfo}${kbInfo}`;
       if (selectedClip && selectedClip.id === clip.id) {
         opt.selected = true;
       }
@@ -1290,17 +1858,41 @@ const App = (() => {
   }
 
   function updateClipActionButtons() {
-    const videoId = getSelectedClipId('video-clip-select');
-    const audioId = getSelectedClipId('audio-clip-select');
+    const allId = getSelectedClipId('all-clip-select');
+    const detachedId = getSelectedClipId('detached-clip-select');
 
-    ['btn-video-clip-jump', 'btn-video-clip-copy', 'btn-video-clip-cut', 'btn-video-clip-remove'].forEach(id => {
+    ['btn-clip-jump', 'btn-clip-copy', 'btn-clip-remove', 'btn-clip-detach', 'btn-clip-freeze'].forEach(id => {
       const btn = document.getElementById(id);
-      if (btn) btn.disabled = !videoId;
+      if (btn) btn.disabled = !allId;
     });
-    ['btn-audio-clip-jump', 'btn-audio-clip-copy', 'btn-audio-clip-cut', 'btn-audio-clip-remove'].forEach(id => {
+    ['btn-clip-attach', 'btn-clip-layer-up', 'btn-clip-layer-down', 'btn-pip-preset'].forEach(id => {
       const btn = document.getElementById(id);
-      if (btn) btn.disabled = !audioId;
+      if (btn) btn.disabled = !detachedId;
     });
+  }
+
+  function updateClipProperties() {
+    const selectedClip = Timeline.getSelectedClip();
+    const panel = document.getElementById('clip-properties');
+    if (!panel) return;
+
+    if (!selectedClip) {
+      panel.classList.add('hidden');
+      return;
+    }
+
+    panel.classList.remove('hidden');
+    document.getElementById('clip-name-input').value = selectedClip.name || '';
+    document.getElementById('clip-fade-in-video').value = selectedClip.fadeIn?.video || selectedClip.fadeIn || 0;
+    document.getElementById('clip-fade-in-audio').value = selectedClip.fadeIn?.audio || selectedClip.fadeIn || 0;
+    document.getElementById('clip-fade-out-video').value = selectedClip.fadeOut?.video || selectedClip.fadeOut || 0;
+    document.getElementById('clip-fade-out-audio').value = selectedClip.fadeOut?.audio || selectedClip.fadeOut || 0;
+    document.getElementById('clip-layer-display').textContent = selectedClip.layer || 0;
+    document.getElementById('clip-detach-status').textContent = selectedClip.detached ? 'Detached' : 'Attached';
+    const transDisplay = document.getElementById('clip-transition-display');
+    if (transDisplay) {
+      transDisplay.textContent = selectedClip.transition ? `${selectedClip.transition.type} (${selectedClip.transition.duration}s)` : 'None';
+    }
   }
 
   function jumpToClip(clipId) {
@@ -1348,22 +1940,100 @@ const App = (() => {
 
   function initClipList() {
     // Select change events
-    const videoSelect = document.getElementById('video-clip-select');
-    const audioSelect = document.getElementById('audio-clip-select');
-    if (videoSelect) videoSelect.addEventListener('change', updateClipActionButtons);
-    if (audioSelect) audioSelect.addEventListener('change', updateClipActionButtons);
+    const allSelect = document.getElementById('all-clip-select');
+    const detachedSelect = document.getElementById('detached-clip-select');
+    if (allSelect) allSelect.addEventListener('change', () => {
+      const clipId = allSelect.value;
+      if (clipId) Timeline.selectClip(clipId);
+      updateClipActionButtons();
+      updateClipProperties();
+    });
+    if (detachedSelect) detachedSelect.addEventListener('change', () => {
+      const clipId = detachedSelect.value;
+      if (clipId) Timeline.selectClip(clipId);
+      updateClipActionButtons();
+      updateClipProperties();
+    });
 
-    // Video clip action buttons
-    document.getElementById('btn-video-clip-jump')?.addEventListener('click', () => clipAction('video-clip-select', 'jump'));
-    document.getElementById('btn-video-clip-copy')?.addEventListener('click', () => clipAction('video-clip-select', 'copy'));
-    document.getElementById('btn-video-clip-cut')?.addEventListener('click', () => clipAction('video-clip-select', 'cut'));
-    document.getElementById('btn-video-clip-remove')?.addEventListener('click', () => clipAction('video-clip-select', 'remove'));
+    // All clips action buttons
+    document.getElementById('btn-clip-jump')?.addEventListener('click', () => clipAction('all-clip-select', 'jump'));
+    document.getElementById('btn-clip-copy')?.addEventListener('click', () => clipAction('all-clip-select', 'copy'));
+    document.getElementById('btn-clip-remove')?.addEventListener('click', () => clipAction('all-clip-select', 'remove'));
+    document.getElementById('btn-clip-detach')?.addEventListener('click', () => {
+      const clipId = getSelectedClipId('all-clip-select');
+      if (clipId) {
+        Timeline.detachClip(clipId);
+        renderClipList();
+      }
+    });
 
-    // Audio clip action buttons
-    document.getElementById('btn-audio-clip-jump')?.addEventListener('click', () => clipAction('audio-clip-select', 'jump'));
-    document.getElementById('btn-audio-clip-copy')?.addEventListener('click', () => clipAction('audio-clip-select', 'copy'));
-    document.getElementById('btn-audio-clip-cut')?.addEventListener('click', () => clipAction('audio-clip-select', 'cut'));
-    document.getElementById('btn-audio-clip-remove')?.addEventListener('click', () => clipAction('audio-clip-select', 'remove'));
+    document.getElementById('btn-clip-freeze')?.addEventListener('click', () => {
+      const clipId = getSelectedClipId('all-clip-select');
+      if (clipId) {
+        const playheadTime = Player.getCurrentTime();
+        Timeline.freezeFrame(clipId, playheadTime, 3);
+        renderClipList();
+      }
+    });
+
+    // Detached clips action buttons
+    document.getElementById('btn-clip-attach')?.addEventListener('click', () => {
+      const clipId = getSelectedClipId('detached-clip-select');
+      if (clipId) {
+        Timeline.attachClip(clipId);
+        renderClipList();
+      }
+    });
+    document.getElementById('btn-clip-layer-up')?.addEventListener('click', () => {
+      const clipId = getSelectedClipId('detached-clip-select');
+      if (clipId) {
+        const clip = Timeline.getClips().find(c => c.id === clipId);
+        if (clip) Timeline.setClipLayer(clipId, (clip.layer || 0) + 1);
+        renderClipList();
+      }
+    });
+    document.getElementById('btn-clip-layer-down')?.addEventListener('click', () => {
+      const clipId = getSelectedClipId('detached-clip-select');
+      if (clipId) {
+        const clip = Timeline.getClips().find(c => c.id === clipId);
+        if (clip) Timeline.setClipLayer(clipId, Math.max(0, (clip.layer || 0) - 1));
+        renderClipList();
+      }
+    });
+
+    // Clip rename
+    document.getElementById('btn-clip-rename')?.addEventListener('click', () => {
+      const selectedClip = Timeline.getSelectedClip();
+      if (!selectedClip) return;
+      const newName = document.getElementById('clip-name-input').value.trim();
+      if (newName) {
+        Timeline.updateClipProperty(selectedClip.id, 'name', newName);
+        Accessibility.announce(`Clip renamed to "${newName}"`);
+        renderClipList();
+      }
+    });
+
+    // Fade controls
+    document.getElementById('btn-apply-fade')?.addEventListener('click', () => {
+      const selectedClip = Timeline.getSelectedClip();
+      if (!selectedClip) return;
+      const fadeIn = {
+        video: parseFloat(document.getElementById('clip-fade-in-video').value) || 0,
+        audio: parseFloat(document.getElementById('clip-fade-in-audio').value) || 0,
+      };
+      const fadeOut = {
+        video: parseFloat(document.getElementById('clip-fade-out-video').value) || 0,
+        audio: parseFloat(document.getElementById('clip-fade-out-audio').value) || 0,
+      };
+      Timeline.setFade(selectedClip.id, fadeIn, fadeOut);
+      renderClipList();
+    });
+    document.getElementById('btn-clear-fade')?.addEventListener('click', () => {
+      const selectedClip = Timeline.getSelectedClip();
+      if (!selectedClip) return;
+      Timeline.setFade(selectedClip.id, 0, 0);
+      renderClipList();
+    });
 
     // Paste with Ctrl+V
     document.addEventListener('keydown', (e) => {

@@ -70,13 +70,20 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     title: 'Accessible Studio',
+    backgroundColor: '#000000',
+    show: false, // Don't show until ready — prevents white flash
     icon: path.join(__dirname, 'src', 'assets', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      webSecurity: false,  // Allow file:// images on canvas without tainting (needed for photo editor)
+      webSecurity: false,
     },
+  });
+
+  // Show window only after content is fully rendered — prevents white flash
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
   });
 
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
@@ -284,9 +291,51 @@ ipcMain.handle('convert-document', async (event, { inputPath, outputPath, inputE
     if (inputExt === 'html' || inputExt === 'htm') {
       return { html: raw, text: raw.replace(/<[^>]*>/g, '') };
     }
-    // txt, md, rtf, csv, etc — treat as plain text
-    const escaped = raw.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return { html: `<pre>${escaped}</pre>`, text: raw };
+    // txt, md, rtf, csv, etc — treat as plain text, converting to structured HTML
+    const text = raw;
+    const lines = text.split('\n');
+    let html = '';
+    let inList = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        if (inList) { html += '</ul>\n'; inList = false; }
+        continue;
+      }
+      // Markdown-style headings
+      if (trimmed.startsWith('### ')) {
+        if (inList) { html += '</ul>\n'; inList = false; }
+        html += `<h3>${trimmed.slice(4)}</h3>\n`;
+      } else if (trimmed.startsWith('## ')) {
+        if (inList) { html += '</ul>\n'; inList = false; }
+        html += `<h2>${trimmed.slice(3)}</h2>\n`;
+      } else if (trimmed.startsWith('# ')) {
+        if (inList) { html += '</ul>\n'; inList = false; }
+        html += `<h1>${trimmed.slice(2)}</h1>\n`;
+      }
+      // ALL CAPS short lines = heading
+      else if (trimmed.length < 80 && trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed)) {
+        if (inList) { html += '</ul>\n'; inList = false; }
+        html += `<h2>${trimmed}</h2>\n`;
+      }
+      // Bullet/dash list items
+      else if (/^[-*•]\s+/.test(trimmed)) {
+        if (!inList) { html += '<ul>\n'; inList = true; }
+        html += `<li>${trimmed.replace(/^[-*•]\s+/, '')}</li>\n`;
+      }
+      // Numbered list items
+      else if (/^\d+[.)]\s+/.test(trimmed)) {
+        if (!inList) { html += '<ol>\n'; inList = true; }
+        html += `<li>${trimmed.replace(/^\d+[.)]\s+/, '')}</li>\n`;
+      }
+      // Regular paragraph
+      else {
+        if (inList) { html += '</ul>\n'; inList = false; }
+        html += `<p>${trimmed.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>\n`;
+      }
+    }
+    if (inList) html += '</ul>\n';
+    return { html, text };
   }
 
   const src = await getSourceContent();
@@ -299,7 +348,15 @@ ipcMain.handle('convert-document', async (event, { inputPath, outputPath, inputE
     }
     case 'html': {
       const fullHtml = src.html.startsWith('<!DOCTYPE') ? src.html
-        : `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Converted</title></head><body>${src.html}</body></html>`;
+        : `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Converted</title><style>
+body { font-family: Arial, Helvetica, sans-serif; max-width: 800px; margin: 2em auto; padding: 0 1em; line-height: 1.6; color: #222; }
+h1 { font-size: 2em; border-bottom: 2px solid #333; padding-bottom: 0.3em; }
+h2 { font-size: 1.5em; border-bottom: 1px solid #999; padding-bottom: 0.2em; }
+h3 { font-size: 1.2em; }
+p { margin: 0.8em 0; }
+ul, ol { margin: 0.5em 0; padding-left: 2em; }
+li { margin: 0.3em 0; }
+</style></head><body>${src.html}</body></html>`;
       fs.writeFileSync(outputPath, fullHtml, 'utf-8');
       return outputPath;
     }

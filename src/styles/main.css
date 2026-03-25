@@ -332,7 +332,6 @@ html, body {
 .nav-button:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
-  border-color: var(--border);
 }
 .nav-button.active,
 .nav-button[aria-pressed="true"] {
@@ -354,7 +353,7 @@ html, body {
   padding: 8px 14px;
   background: var(--bg-primary);
   color: var(--text-secondary);
-  border: 1px solid var(--border-bright);
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.9em;
@@ -456,7 +455,7 @@ button {
   padding: 8px 16px;
   background: var(--bg-primary);
   color: var(--text-primary);
-  border: 1px solid var(--border-bright);
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.95em;
@@ -479,11 +478,11 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Toolbar buttons - OLED style with bright borders */
+/* Toolbar buttons - clean borderless */
 [role="toolbar"] button {
   background: var(--bg-primary);
   color: var(--text-primary);
-  border: 1px solid var(--border-bright);
+  border: 1px solid transparent;
   padding: 6px 12px;
   font-size: 0.9em;
 }
@@ -497,7 +496,7 @@ button:disabled {
 .photo-preset-btn {
   background: var(--bg-primary);
   color: var(--text-primary);
-  border: 1px solid var(--border-bright);
+  border: 1px solid transparent;
   padding: 6px 12px;
   margin: 3px;
 }
@@ -576,6 +575,15 @@ input[type="checkbox"] {
   margin-right: 8px;
   accent-color: var(--accent);
   cursor: pointer;
+}
+
+/* Vertical slider mode */
+body.vertical-sliders input[type="range"] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 8px;
+  height: 120px;
+  max-width: none;
 }
 
 input[type="color"] {
@@ -719,7 +727,7 @@ input[type="color"] {
 #playback-controls button {
   background: var(--bg-primary);
   color: var(--text-primary);
-  border: 1px solid var(--border-bright);
+  border: 1px solid transparent;
   padding: 6px 10px;
   font-size: 0.85em;
 }
@@ -1162,6 +1170,24 @@ input[type="color"] {
 .clip-handle-right { right: 0; }
 .clip-handle:hover { background: rgba(255, 255, 255, 0.3); }
 
+/* Transition indicator on clips */
+.clip-transition-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,215,0,0.6), transparent);
+  color: #000;
+  font-size: 0.7em;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
 /* Clip Properties */
 #clip-properties {
   padding: 8px 14px;
@@ -1205,18 +1231,20 @@ input[type="color"] {
    ========================================== */
 #clip-list-section {
   display: flex;
+  flex-wrap: wrap;
   gap: 2px;
   border-top: 2px solid var(--border);
   background: var(--bg-panel);
   min-height: 80px;
   overflow: hidden;
 }
-#clip-list-video,
-#clip-list-audio {
+#clip-list-all,
+#clip-list-detached {
   flex: 1;
   padding: 6px 10px;
 }
-#clip-list-video {
+#clip-list-all {
+  flex: 2;
   border-right: 1px solid var(--border);
 }
 #clip-list-section h3 {
@@ -1226,8 +1254,8 @@ input[type="color"] {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-#video-clip-select,
-#audio-clip-select {
+#all-clip-select,
+#detached-clip-select {
   width: 100%;
   font-size: 0.9em;
   background: var(--bg-input);
@@ -1236,14 +1264,62 @@ input[type="color"] {
   border-radius: var(--radius-sm);
   padding: 2px;
 }
-#video-clip-select:focus,
-#audio-clip-select:focus {
+#all-clip-select:focus,
+#detached-clip-select:focus {
   outline: 2px solid var(--border-focus);
   outline-offset: 1px;
 }
-#video-clip-select option,
-#audio-clip-select option {
+#all-clip-select option,
+#detached-clip-select option {
   padding: 4px 6px;
+}
+#clip-properties {
+  border-top: 1px solid var(--border);
+  padding: 8px 10px;
+  width: 100%;
+}
+#clip-properties h3 {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.clip-prop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.clip-prop-row label {
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+.clip-prop-row input[type="text"],
+.clip-prop-row input[type="number"] {
+  padding: 3px 6px;
+  font-size: 0.85em;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.clip-prop-row input[type="number"] {
+  width: 60px;
+}
+.clip-prop-row button {
+  padding: 3px 10px;
+  font-size: 0.8em;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.clip-prop-row button:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
 }
 .clip-select-actions {
   display: flex;
@@ -1788,6 +1864,190 @@ input[type="color"] {
   font-size: 0.85em;
   color: var(--text-muted);
   flex-shrink: 0;
+}
+
+/* ==========================================
+   NEW FEATURE INDICATORS ON CLIPS
+   ========================================== */
+/* Chroma key border indicator */
+.clip-chroma-indicator {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border: 2px dashed;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Ken Burns indicator badge */
+.clip-kenburns-indicator,
+.clip-speedramp-indicator,
+.clip-pip-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  font-size: 0.6em;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 3;
+}
+.clip-kenburns-indicator { background: rgba(255,165,0,0.8); }
+.clip-speedramp-indicator { background: rgba(138,43,226,0.8); top: auto; bottom: 2px; }
+.clip-pip-indicator { background: rgba(0,150,255,0.8); top: auto; bottom: 2px; right: auto; left: 2px; }
+
+/* Freeze frame clip */
+.freeze-frame-clip {
+  background: repeating-linear-gradient(45deg, #555, #555 4px, #666 4px, #666 8px) !important;
+  border: 2px dashed #aaa !important;
+}
+
+/* Keyframe dots on clips */
+.clip-keyframe-dots {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  pointer-events: none;
+}
+.keyframe-dot {
+  position: absolute;
+  bottom: 0;
+  width: 6px;
+  height: 6px;
+  background: #ffcc00;
+  border-radius: 50%;
+  border: 1px solid #000;
+  transform: translateX(-3px);
+}
+
+/* ==========================================
+   AUDIO WAVEFORM
+   ========================================== */
+.clip-name {
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+.clip-waveform {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.7;
+  z-index: 0;
+}
+
+/* ==========================================
+   TIMELINE MARKERS
+   ========================================== */
+.timeline-marker {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: transparent;
+  border-left: 2px dashed;
+  z-index: 8;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.timeline-marker:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.marker-flag {
+  position: absolute;
+  top: 0;
+  left: 2px;
+  padding: 1px 6px;
+  font-size: 0.65em;
+  font-weight: bold;
+  color: #000;
+  border-radius: 0 3px 3px 0;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================
+   TITLE TEMPLATE LIST
+   ========================================== */
+.title-template-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  margin-bottom: 4px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.title-template-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+.title-template-item:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+.title-template-item strong {
+  font-size: 0.95em;
+  color: var(--text-primary);
+}
+.title-template-item span {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* PIP preset buttons */
+.pip-preset-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 4px;
+  text-align: left;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.9em;
+}
+.pip-preset-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+.pip-preset-btn:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+/* Speed ramp point list item */
+.speedramp-point {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+  font-size: 0.85em;
+}
+.speedramp-point button {
+  padding: 2px 8px;
+  font-size: 0.75em;
+  margin: 0;
 }
 
 /* ==========================================
