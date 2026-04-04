@@ -17,20 +17,21 @@
          ============================================ -->
     <nav id="sidebar" role="navigation" aria-label="Main navigation">
       <h1 id="app-title">Accessible Studio</h1>
-      <div id="nav-buttons" role="group" aria-label="Application sections">
-        <button id="nav-video-editor" class="nav-button active" aria-pressed="true" aria-label="Video Editor section">
+      <p id="mode-label" style="padding: 8px 14px 2px; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin: 0;">Mode</p>
+      <div id="nav-buttons" role="group" aria-label="Switch between application modes">
+        <button id="nav-video-editor" class="nav-button active" aria-pressed="true" aria-label="Video Editor mode">
           Video Editor
         </button>
-        <button id="nav-photo-editor" class="nav-button" aria-pressed="false" aria-label="Photo Editor section">
+        <button id="nav-photo-editor" class="nav-button" aria-pressed="false" aria-label="Photo Editor mode">
           Photo Editor
         </button>
-        <button id="nav-file-converter" class="nav-button" aria-pressed="false" aria-label="File Converter section">
+        <button id="nav-file-converter" class="nav-button" aria-pressed="false" aria-label="File Converter mode">
           File Converter
         </button>
-        <button id="nav-user-guide" class="nav-button" aria-pressed="false" aria-label="User guide with all commands and instructions">
+        <button id="nav-user-guide" class="nav-button" aria-pressed="false" aria-label="User Guide mode">
           User Guide
         </button>
-        <button id="nav-settings" class="nav-button" aria-pressed="false" aria-label="Application settings and themes">
+        <button id="nav-settings" class="nav-button" aria-pressed="false" aria-label="Settings mode">
           Settings
         </button>
       </div>
@@ -50,37 +51,63 @@
            ========================================== -->
       <section id="section-video-editor" class="app-section active" role="region" aria-label="Video Editor">
 
-        <!-- Step 1: Getting media in -->
-        <div id="video-toolbar-main" role="group" aria-label="Main actions: import and manage your project">
-          <button id="btn-import-media" aria-label="Import video or image files">Import Media</button>
-          <button id="btn-import-audio" aria-label="Import audio or music file, adds at playhead position">Import Audio</button>
-          <button id="btn-show-filters" aria-label="Add a filter to the selected clip">Add Filter</button>
-          <button id="btn-add-caption" aria-label="Add a caption or subtitle to the video">Add Caption</button>
-          <button id="btn-normalize" aria-label="Normalize video brightness and audio volume to be consistent throughout">Normalize</button>
-          <button id="btn-color-correct" aria-label="Open color correction panel with RGB balance and temperature controls">Color Correct</button>
-          <button id="btn-add-title" aria-label="Add a title from the built-in template library">Title Template</button>
-          <button id="btn-add-marker" aria-label="Add a marker or bookmark at the current playhead position">Add Marker</button>
-          <button id="btn-new-project" aria-label="Start a new empty project">New Project</button>
-          <button id="btn-save-project" aria-label="Save your current project">Save Project</button>
-          <button id="btn-export-video" aria-label="Export your finished video">Export Video</button>
-        </div>
-
-        <!-- Step 2: Editing tools - only shown when a clip is selected -->
-        <div id="video-toolbar-edit" role="group" aria-label="Editing tools. Select a clip on the timeline to use these." class="hidden">
-          <p id="edit-tools-label" class="toolbar-label">Editing selected clip:</p>
-          <button id="btn-split-clip" aria-label="Split this clip at the current playhead position">Split</button>
-          <button id="btn-delete-clip" aria-label="Delete this clip from the timeline">Delete</button>
-          <button id="btn-duplicate-clip" aria-label="Make a copy of this clip">Duplicate</button>
-          <button id="btn-add-text" aria-label="Add text that appears over the video">Add Text</button>
-          <button id="btn-add-transition" aria-label="Add a transition to the selected clip">Add Transition</button>
-          <button id="btn-chroma-key" aria-label="Apply green screen or chroma key to the selected clip">Green Screen</button>
-          <button id="btn-keyframe" aria-label="Add keyframe animation to the selected clip">Keyframe</button>
-          <button id="btn-speed-ramp" aria-label="Add variable speed ramping to the selected clip">Speed Ramp</button>
-          <button id="btn-ken-burns" aria-label="Add Ken Burns zoom and pan effect to an image clip">Ken Burns</button>
-          <button id="btn-freeze-frame" aria-label="Insert a freeze frame at the playhead position">Freeze Frame</button>
-          <button id="btn-toggle-snap" aria-label="Toggle clip snapping on the timeline">Snap: On</button>
-          <button id="btn-undo" aria-label="Undo last action">Undo</button>
-          <button id="btn-redo" aria-label="Redo">Redo</button>
+        <!-- Menu Bar -->
+        <div id="video-menu-bar" class="menu-bar" role="menubar" aria-label="Video editor menus">
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">File</button>
+            <div class="menu-dropdown" role="menu" aria-label="File menu">
+              <button id="btn-new-project" role="menuitem" aria-label="Start a new empty project">New Project</button>
+              <button id="btn-save-project" role="menuitem" aria-label="Save your current project">Save Project</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-import-media" role="menuitem" aria-label="Import video or image files">Import Media</button>
+              <button id="btn-import-audio" role="menuitem" aria-label="Import audio or music file">Import Audio</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-export-video" role="menuitem" aria-label="Export your finished video">Export Video</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Edit</button>
+            <div class="menu-dropdown" role="menu" aria-label="Edit menu">
+              <button id="btn-undo" role="menuitem" aria-label="Undo last action">Undo</button>
+              <button id="btn-redo" role="menuitem" aria-label="Redo">Redo</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-split-clip" role="menuitem" aria-label="Split clip at playhead">Split Clip</button>
+              <button id="btn-delete-clip" role="menuitem" aria-label="Delete selected clip">Delete Clip</button>
+              <button id="btn-duplicate-clip" role="menuitem" aria-label="Duplicate selected clip">Duplicate Clip</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-toggle-snap" role="menuitem" aria-label="Toggle clip snapping">Snap: On</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Effects</button>
+            <div class="menu-dropdown" role="menu" aria-label="Effects menu">
+              <button id="btn-show-filters" role="menuitem" aria-label="Add a filter to the selected clip">Add Filter</button>
+              <button id="btn-add-transition" role="menuitem" aria-label="Add a transition to the selected clip">Add Transition</button>
+              <button id="btn-color-correct" role="menuitem" aria-label="Color correction panel">Color Correct</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-chroma-key" role="menuitem" aria-label="Green screen / chroma key">Green Screen</button>
+              <button id="btn-keyframe" role="menuitem" aria-label="Keyframe animation">Keyframe</button>
+              <button id="btn-speed-ramp" role="menuitem" aria-label="Variable speed ramping">Speed Ramp</button>
+              <button id="btn-ken-burns" role="menuitem" aria-label="Ken Burns zoom/pan effect">Ken Burns</button>
+              <button id="btn-freeze-frame" role="menuitem" aria-label="Freeze frame at playhead">Freeze Frame</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Insert</button>
+            <div class="menu-dropdown" role="menu" aria-label="Insert menu">
+              <button id="btn-add-text" role="menuitem" aria-label="Add text overlay">Add Text</button>
+              <button id="btn-add-caption" role="menuitem" aria-label="Add captions or subtitles">Add Caption</button>
+              <button id="btn-add-title" role="menuitem" aria-label="Title from template library">Title Template</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-add-marker" role="menuitem" aria-label="Add marker at playhead">Add Marker</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Tools</button>
+            <div class="menu-dropdown" role="menu" aria-label="Tools menu">
+              <button id="btn-normalize" role="menuitem" aria-label="Normalize brightness and volume">Normalize</button>
+            </div>
+          </div>
         </div>
 
         <!-- Video editor main layout -->
@@ -587,28 +614,51 @@
            PHOTO EDITOR SECTION
            ========================================== -->
       <section id="section-photo-editor" class="app-section" role="region" aria-label="Photo Editor" style="display:none">
-        <div id="photo-toolbar" role="toolbar" aria-label="Photo editor toolbar">
-          <button id="btn-photo-open" aria-label="Open an image file to edit">Open Image</button>
-          <button id="btn-photo-save" aria-label="Save the edited image">Save Image</button>
-          <button id="btn-photo-save-as" aria-label="Save the image as a new file in a different format">Save As</button>
-          <span class="toolbar-separator" aria-hidden="true"></span>
-          <button id="btn-photo-undo" aria-label="Undo last photo edit">Undo</button>
-          <button id="btn-photo-redo" aria-label="Redo last undone photo edit">Redo</button>
-          <span class="toolbar-separator" aria-hidden="true"></span>
-          <button id="btn-photo-crop" aria-label="Crop the image">Crop</button>
-          <button id="btn-photo-resize" aria-label="Resize the image dimensions">Resize</button>
-          <button id="btn-photo-rotate-left" aria-label="Rotate image 90 degrees counter-clockwise">Rotate Left</button>
-          <button id="btn-photo-rotate-right" aria-label="Rotate image 90 degrees clockwise">Rotate Right</button>
-          <button id="btn-photo-flip-h" aria-label="Flip image horizontally, left to right">Flip Horizontal</button>
-          <button id="btn-photo-flip-v" aria-label="Flip image vertically, top to bottom">Flip Vertical</button>
-          <span class="toolbar-separator" aria-hidden="true"></span>
-          <button id="btn-photo-filters" aria-label="Open photo filters and adjustments">Filters</button>
-          <button id="btn-photo-text" aria-label="Add text to the image">Add Text</button>
-          <span class="toolbar-separator" aria-hidden="true"></span>
-          <button id="btn-photo-remove-bg" aria-label="Remove the background from the image">Remove Background</button>
-          <button id="btn-photo-blur-bg" aria-label="Blur the background of the image while keeping the foreground sharp">Blur Background</button>
-          <span class="toolbar-separator" aria-hidden="true"></span>
-          <button id="btn-photo-insert-image" aria-label="Insert another image on top of the current photo, like a sticker or overlay">Insert Image</button>
+        <div id="photo-menu-bar" class="menu-bar" role="menubar" aria-label="Photo editor menus">
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">File</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo file menu">
+              <button id="btn-photo-open" role="menuitem" aria-label="Open an image file to edit">Open Image</button>
+              <button id="btn-photo-save" role="menuitem" aria-label="Save the edited image">Save Image</button>
+              <button id="btn-photo-save-as" role="menuitem" aria-label="Save as a new file">Save As</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Edit</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo edit menu">
+              <button id="btn-photo-undo" role="menuitem" aria-label="Undo last photo edit">Undo</button>
+              <button id="btn-photo-redo" role="menuitem" aria-label="Redo last undone photo edit">Redo</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-photo-crop" role="menuitem" aria-label="Crop the image">Crop</button>
+              <button id="btn-photo-resize" role="menuitem" aria-label="Resize the image">Resize</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Transform</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo transform menu">
+              <button id="btn-photo-rotate-left" role="menuitem" aria-label="Rotate 90 degrees left">Rotate Left</button>
+              <button id="btn-photo-rotate-right" role="menuitem" aria-label="Rotate 90 degrees right">Rotate Right</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-photo-flip-h" role="menuitem" aria-label="Flip horizontally">Flip Horizontal</button>
+              <button id="btn-photo-flip-v" role="menuitem" aria-label="Flip vertically">Flip Vertical</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Effects</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo effects menu">
+              <button id="btn-photo-filters" role="menuitem" aria-label="Filters and adjustments">Filters &amp; Adjustments</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-photo-remove-bg" role="menuitem" aria-label="Remove background">Remove Background</button>
+              <button id="btn-photo-blur-bg" role="menuitem" aria-label="Blur background">Blur Background</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Insert</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo insert menu">
+              <button id="btn-photo-text" role="menuitem" aria-label="Add text to the image">Add Text</button>
+              <button id="btn-photo-insert-image" role="menuitem" aria-label="Insert another image as overlay">Insert Image</button>
+            </div>
+          </div>
         </div>
 
         <div id="photo-editor-layout">
@@ -809,10 +859,11 @@
             <div class="guide-section" id="guide-getting-started">
               <h3>Getting Started</h3>
               <ol>
-                <li>Use the sidebar buttons on the left to switch between Video Editor, Photo Editor, File Converter, User Guide, and Settings.</li>
-                <li>In the Video Editor, click <strong>Import Media</strong> (or press Ctrl+I) to add video or image files. Click <strong>Import Audio</strong> for music and sound effects.</li>
+                <li>Use the <strong>Mode</strong> sidebar on the left to switch between Video Editor, Photo Editor, File Converter, User Guide, and Settings.</li>
+                <li>In each mode, use the <strong>dropdown menus</strong> at the top (File, Edit, Effects, Insert, Tools) to access all editing options.</li>
+                <li>In the Video Editor, open <strong>File &gt; Import Media</strong> (or press Ctrl+I) to add video or image files. Use <strong>File &gt; Import Audio</strong> for music and sound effects.</li>
                 <li>Each imported file prompts you to choose where on the timeline it goes (start of track, playhead position, end of track, etc.).</li>
-                <li>Edit your clips using the toolbar buttons (Split, Delete, Duplicate, Add Text) or type commands in the <strong>assistant bar at the bottom</strong> of the screen.</li>
+                <li>Edit your clips using the menus or type commands in the <strong>assistant bar at the bottom</strong> of the screen.</li>
                 <li>Use the playback controls to preview your video. Press Space to play/pause.</li>
                 <li>Click <strong>Save Project</strong> to save your work. Your projects appear in the <strong>Projects panel</strong> on the right side, where you can reopen them anytime.</li>
                 <li>When finished, click <strong>Export Video</strong> (or press Ctrl+E) to render your final video.</li>

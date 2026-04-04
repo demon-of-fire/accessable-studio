@@ -976,16 +976,20 @@ const PhotoEditor = (() => {
 
     if (hasPreciseCoords) {
       // Gemini gave us exact coordinates — just remove the rectangle, no color detection needed.
-      // This is the most reliable approach: Gemini sees the image, tells us exactly where.
-      for (let py = ry; py < ry + rh && py < h; py++) {
-        for (let px = rx; px < rx + rw && px < w; px++) {
+      // Expand the region by a few pixels (feather margin) so edge pixels of the object are also removed.
+      const feather = Math.max(4, Math.round(Math.min(rw, rh) * 0.08));
+      const fx0 = Math.max(0, rx - feather);
+      const fy0 = Math.max(0, ry - feather);
+      const fx1 = Math.min(w - 1, rx + rw - 1 + feather);
+      const fy1 = Math.min(h - 1, ry + rh - 1 + feather);
+      for (let py = fy0; py <= fy1; py++) {
+        for (let px = fx0; px <= fx1; px++) {
           toRemove[py * w + px] = 1;
           removedCount++;
         }
       }
-      bx0 = rx; by0 = ry;
-      bx1 = Math.min(w - 1, rx + rw - 1);
-      by1 = Math.min(h - 1, ry + rh - 1);
+      bx0 = fx0; by0 = fy0;
+      bx1 = fx1; by1 = fy1;
     } else {
       // No precise coords — use color-based detection as fallback
       // Sample colors at center of region
@@ -1194,7 +1198,8 @@ const PhotoEditor = (() => {
     ctx.putImageData(imageData, 0, 0);
 
     // Smooth the filled region with CSS blur to blend seams
-    const pad = 4;
+    // Use a larger pad and stronger blur, plus feathered alpha-blend at edges
+    const pad = 8;
     const sx0 = Math.max(0, bx0 - pad), sy0 = Math.max(0, by0 - pad);
     const sx1 = Math.min(w - 1, bx1 + pad), sy1 = Math.min(h - 1, by1 + pad);
     const bw = sx1 - sx0 + 1, bh = sy1 - sy0 + 1;
@@ -1204,19 +1209,39 @@ const PhotoEditor = (() => {
       patchCanvas.height = bh;
       const patchCtx = patchCanvas.getContext('2d');
       patchCtx.drawImage(canvas, sx0, sy0, bw, bh, 0, 0, bw, bh);
-      patchCtx.filter = 'blur(2px)';
+      // Two-pass blur for stronger smoothing (4px each pass)
+      patchCtx.filter = 'blur(4px)';
       patchCtx.drawImage(patchCanvas, 0, 0);
+      patchCtx.drawImage(patchCanvas, 0, 0);
+      patchCtx.filter = 'none';
       const smoothed = patchCtx.getImageData(0, 0, bw, bh);
       const origPatch = ctx.getImageData(sx0, sy0, bw, bh);
-      // Blend smoothed version into removed pixels (full blend at edges, less in center)
+
+      // Feathered blend: fully replace removed pixels in center,
+      // alpha-blend at the boundary so there's no hard seam
+      const featherDist = 6; // pixels over which to blend from original → filled
       for (let py = 0; py < bh; py++) {
         for (let px = 0; px < bw; px++) {
-          const gi = (sy0 + py) * w + (sx0 + px);
+          const gx = sx0 + px, gy = sy0 + py;
+          const gi = gy * w + gx;
+          const li = (py * bw + px) * 4;
           if (toRemove[gi]) {
-            const li = (py * bw + px) * 4;
-            origPatch.data[li] = smoothed.data[li];
-            origPatch.data[li + 1] = smoothed.data[li + 1];
-            origPatch.data[li + 2] = smoothed.data[li + 2];
+            // Find distance to nearest non-removed pixel for feathering
+            let minDist = featherDist + 1;
+            for (let dy = -featherDist; dy <= featherDist && minDist > 1; dy++) {
+              for (let dx = -featherDist; dx <= featherDist && minDist > 1; dx++) {
+                const nx = gx + dx, ny = gy + dy;
+                if (nx >= 0 && nx < w && ny >= 0 && ny < h && !toRemove[ny * w + nx]) {
+                  const d = Math.sqrt(dx * dx + dy * dy);
+                  if (d < minDist) minDist = d;
+                }
+              }
+            }
+            // Blend factor: 1.0 = fully smoothed (center), 0.0 = fully original (edge)
+            const blend = Math.min(1, minDist / featherDist);
+            origPatch.data[li]     = Math.round(smoothed.data[li] * blend + origPatch.data[li] * (1 - blend));
+            origPatch.data[li + 1] = Math.round(smoothed.data[li + 1] * blend + origPatch.data[li + 1] * (1 - blend));
+            origPatch.data[li + 2] = Math.round(smoothed.data[li + 2] * blend + origPatch.data[li + 2] * (1 - blend));
             origPatch.data[li + 3] = 255;
           }
         }

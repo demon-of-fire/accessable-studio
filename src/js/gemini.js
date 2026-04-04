@@ -151,7 +151,15 @@ APP:
 - blurBackground is ONLY for making background blurry. It does NOT remove anything.
 - removeObject is for REMOVING specific things from the image and patching the hole.
 - removeBackground is for making the entire background transparent.
-- For removeObject, ALWAYS pass x, y, w, h percentage coordinates. LOOK at the image carefully and estimate where the object is. Be PRECISE — a small notification popup needs small w/h (like 5-10%), not a huge region.`;
+- For removeObject, ALWAYS pass x, y, w, h percentage coordinates. LOOK at the image carefully and estimate where the object is. Be PRECISE — a small notification popup needs small w/h (like 5-10%), not a huge region.
+
+=== COLORS ===
+You can use ANY valid CSS color for drawRect, drawText, fillRegion. This includes:
+- Hex codes: #ff0000, #00ff00, #0000ff, #FFD700, #FF69B4, #8B4513, #000000, #ffffff, #333333, #808080, etc.
+- Named colors: red, blue, green, yellow, orange, purple, pink, cyan, magenta, lime, teal, navy, maroon, olive, coral, salmon, gold, silver, indigo, violet, turquoise, crimson, tomato, chocolate, sienna, peru, tan, wheat, ivory, beige, lavender, plum, orchid, hotpink, deeppink, fuchsia, aqua, aquamarine, springgreen, limegreen, forestgreen, darkgreen, seagreen, mediumseagreen, lightgreen, palegreen, darkslategray, slategray, lightslategray, steelblue, royalblue, dodgerblue, deepskyblue, lightskyblue, cornflowerblue, midnightblue, darkblue, mediumblue, darkviolet, darkorchid, mediumpurple, blueviolet, rebeccapurple, slateblue, darkslateblue, firebrick, darkred, orangered, darkorange, sandybrown, goldenrod, darkgoldenrod, khaki, darkkhaki, rosybrown, mistyrose, lemonchiffon, lightyellow, honeydew, mintcream, azure, aliceblue, ghostwhite, whitesmoke, gainsboro, lightgray, darkgray, dimgray, black, white
+- RGB: rgb(255, 0, 0), rgba(0, 0, 0, 0.5)
+- HSL: hsl(210, 100%, 50%)
+Always pick the BEST matching color for what the user asks. If they say "make it red", use #ff0000. If they say "dark blue", use #00008B. Be creative with color choices.`;
   }
 
   // ==========================================

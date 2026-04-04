@@ -2,6 +2,8 @@
 
 An NVDA-accessible video editor, photo editor, and file converter built with Electron. Fully keyboard-navigable, screen reader friendly, and controlled via natural language commands. Optionally powered by Google Gemini 2.5 Pro for intelligent image descriptions, context-aware editing, and real-time project control.
 
+The app is organized into **modes** (Video Editor, Photo Editor, File Converter, User Guide, Settings) accessible from the sidebar, with each mode featuring organized **dropdown menus** (File, Edit, Effects, Insert, Tools/Transform) for quick access to all editing options.
+
 ## Download
 
 Head to the [Releases](https://github.com/demon-of-fire/accessable-studio/releases) page and download the latest `.zip` for Windows. Extract it and run **Accessible Studio.exe** — no install required.
@@ -33,11 +35,14 @@ Or download it from [ffmpeg.org](https://ffmpeg.org/download.html) and add it to
 
 ### Step 3: Start editing
 
-1. **Open the app** — you land on the Video Editor tab by default.
-2. **Import media** — click **Import Media** (or press `Ctrl+I`) to add video or image files. Click **Import Audio** for music and sound effects. Each file will prompt you to choose where on the timeline it goes.
-3. **Edit your video** — use the toolbar buttons (Split, Delete, Duplicate, Add Text) or type natural language commands in the assistant bar at the bottom (e.g., "trim the first 5 seconds", "make it cinematic").
-4. **Save your project** — click **Save Project**, give it a name, and it appears in the Projects panel on the right. You can reopen it anytime.
-5. **Export** — click **Export Video** (or press `Ctrl+E`), pick a format and quality, and save your finished video.
+1. **Open the app** — you land on the Video Editor mode by default.
+2. **Switch modes** — use the sidebar on the left (labeled **Mode**) to switch between Video Editor, Photo Editor, File Converter, User Guide, and Settings.
+3. **Use the menus** — each mode has a menu bar at the top (File, Edit, Effects, Insert, Tools) with dropdown menus grouping all the editing options. Click a menu name to open it, hover to switch between menus.
+4. **Import media** — open **File > Import Media** (or press `Ctrl+I`) to add video or image files. Use **File > Import Audio** for music and sound effects.
+5. **Edit your video** — use the dropdown menus or type natural language commands in the assistant bar at the bottom (e.g., "trim the first 5 seconds", "make it cinematic").
+6. **Add transitions** — open **Effects > Add Transition** to add transitions (fade, dissolve, wipe, slide, zoom, etc.) between clips.
+7. **Save your project** — open **File > Save Project**, give it a name, and it appears in the Projects panel on the right.
+8. **Export** — open **File > Export Video** (or press `Ctrl+E`), pick a format and quality, and save your finished video.
 
 ### Step 4: Explore the other tools
 
@@ -140,8 +145,9 @@ Your projects are saved to the app's data folder and listed in the **Projects** 
 
 ## Features
 
+- **Organized Menu System** — dropdown menus (File, Edit, Effects, Insert, Tools) in each mode, with a sidebar **Mode** menu to switch between all sections of the app
 - **Video Editor** — timeline-based editing with trim, split, 35+ filter presets, 20+ transition types, text overlays, captions (single/multi-line), fade in/out (video and audio separately), clip layering and detaching, normalize brightness/volume, undo/redo, drag-to-move clips, and multi-track support (video, audio, text)
-- **Photo Editor** — canvas-based editing with crop, rotate, flip, resize, brightness/contrast/saturation/sharpness sliders, filter presets, background removal, background blur, region removal, and image overlay/insert
+- **Photo Editor** — canvas-based editing with crop, rotate, flip, resize, brightness/contrast/saturation/sharpness sliders, filter presets, background removal, background blur, smart object removal with feathered edges, and image overlay/insert
 - **File Converter** — convert between video, audio, image, and document formats powered by FFmpeg and Mammoth
 - **AI Assistant** — natural language control powered by Google Gemini 2.5 Pro (free), with persistent memory across sessions, context-aware suggestions, inline responses, image vision, and real-time project editing. Gemini has full access to your timeline and photos — it can split, delete, trim, move clips, apply filters, add transitions, set fades, rename clips, detach/reattach clips, remove backgrounds, and more. Automatically falls back to Gemini 3 Flash or 2.5 Flash if rate limited. Works with built-in keyword matching when no API key is set
 - **Full Accessibility** — ARIA labels on every control, live announcements, keyboard navigation, focus trapping, high-contrast themes, vertical slider option, and a "Where Am I?" button

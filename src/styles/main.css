@@ -413,7 +413,83 @@ html, body {
 }
 
 /* ==========================================
-   TOOLBAR
+   MENU BAR (dropdown menus)
+   ========================================== */
+.menu-bar {
+  display: flex;
+  gap: 0;
+  padding: 0 4px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  align-items: stretch;
+  height: 36px;
+}
+.menu-item {
+  position: relative;
+}
+.menu-trigger {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  height: 100%;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 0;
+  font-size: 0.9em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+.menu-trigger:hover,
+.menu-trigger[aria-expanded="true"] {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 180px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-bright);
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  z-index: 1000;
+  padding: 4px 0;
+  flex-direction: column;
+}
+.menu-dropdown.open {
+  display: flex;
+}
+.menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  border-radius: 0;
+  font-size: 0.9em;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.menu-dropdown button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+.menu-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 8px;
+}
+
+/* ==========================================
+   TOOLBAR (legacy)
    ========================================== */
 [role="toolbar"],
 [role="group"][id*="toolbar"] {

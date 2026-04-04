@@ -1740,8 +1740,60 @@ const App = (() => {
   // ==========================================
   // INITIALIZATION
   // ==========================================
+  function initMenuBar() {
+    // Dropdown menu system — click to open, click outside to close
+    document.querySelectorAll('.menu-bar').forEach(bar => {
+      bar.querySelectorAll('.menu-trigger').forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const dropdown = trigger.nextElementSibling;
+          const wasOpen = dropdown.classList.contains('open');
+          // Close all dropdowns first
+          document.querySelectorAll('.menu-dropdown.open').forEach(d => {
+            d.classList.remove('open');
+            d.previousElementSibling.setAttribute('aria-expanded', 'false');
+          });
+          if (!wasOpen) {
+            dropdown.classList.add('open');
+            trigger.setAttribute('aria-expanded', 'true');
+          }
+        });
+        // Hover to switch between menus when one is already open
+        trigger.addEventListener('mouseenter', () => {
+          const anyOpen = document.querySelector('.menu-dropdown.open');
+          if (anyOpen) {
+            document.querySelectorAll('.menu-dropdown.open').forEach(d => {
+              d.classList.remove('open');
+              d.previousElementSibling.setAttribute('aria-expanded', 'false');
+            });
+            const dropdown = trigger.nextElementSibling;
+            dropdown.classList.add('open');
+            trigger.setAttribute('aria-expanded', 'true');
+          }
+        });
+      });
+    });
+    // Close dropdowns when clicking a menu item or clicking outside
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.menu-dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        d.previousElementSibling.setAttribute('aria-expanded', 'false');
+      });
+    });
+    // Prevent menu item clicks from closing before the action fires
+    document.querySelectorAll('.menu-dropdown button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.menu-dropdown.open').forEach(d => {
+          d.classList.remove('open');
+          d.previousElementSibling.setAttribute('aria-expanded', 'false');
+        });
+      });
+    });
+  }
+
   function init() {
     initNavigation();
+    initMenuBar();
     initVideoToolbar();
     initPhotoToolbar();
     initExportDialog();
