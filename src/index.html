@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessible Studio</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <div id="sr-announcer" aria-live="assertive" aria-atomic="true" class="sr-only" role="alert"></div>
+  <div id="sr-status" aria-live="polite" aria-atomic="true" class="sr-only" role="status"></div>
+
+  <!-- Update available banner -->
+  <div id="update-banner" class="hidden" role="alert" aria-live="assertive">
+    <span id="update-banner-text"></span>
+    <button id="btn-update-dismiss" aria-label="Dismiss update notification">&times;</button>
+  </div>
+
+  <div id="app">
+    <nav id="sidebar" role="navigation" aria-label="Main navigation">
+      <h1 id="app-title">Accessible Studio</h1>
+      <p id="app-version" style="padding: 0 14px 8px; font-size: 0.7em; color: var(--text-muted);"></p>
+      <p id="mode-label" style="padding: 8px 14px 2px; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin: 0;">Mode</p>
+      <div id="nav-buttons" role="group" aria-label="Switch between application modes">
+        <button id="nav-video-editor" class="nav-button active" aria-pressed="true" aria-label="Video Editor mode">
+          Video Editor
+        </button>
+        <button id="nav-photo-editor" class="nav-button" aria-pressed="false" aria-label="Photo Editor mode">
+          Photo Editor
+        </button>
+        <button id="nav-music-studio" class="nav-button" aria-pressed="false" aria-label="Music Studio mode">
+          Music Studio
+        </button>
+        <button id="nav-podcast-studio" class="nav-button" aria-pressed="false" aria-label="Podcast Studio mode">
+          Podcast Studio
+        </button>
+        <button id="nav-live-stream" class="nav-button" aria-pressed="false" aria-label="Live Stream mode">
+          Live Stream
+        </button>
+        <button id="nav-file-converter" class="nav-button" aria-pressed="false" aria-label="File Converter mode">
+          File Converter
+        </button>
+        <button id="nav-user-guide" class="nav-button" aria-pressed="false" aria-label="User Guide mode">
+          User Guide
+        </button>
+        <button id="nav-settings" class="nav-button" aria-pressed="false" aria-label="Settings mode">
+          Settings
+        </button>
+      </div>
+      <div id="sidebar-bottom">
+      </div>
+    </nav>
+
+    <div id="main-wrapper">
+    <div id="main-content-row">
+    <div id="main-area">
+
+      <section id="section-video-editor" class="app-section active" role="region" aria-label="Video Editor">
+
+        <div id="video-menu-bar" class="menu-bar" role="menubar" aria-label="Video editor menus">
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">File</button>
+            <div class="menu-dropdown" role="menu" aria-label="File menu">
+              <button id="btn-new-project" role="menuitem" aria-label="Start a new empty project">New Project</button>
+              <button id="btn-save-project" role="menuitem" aria-label="Save your current project">Save Project</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-import-media" role="menuitem" aria-label="Import video or image files">Import Media</button>
+              <button id="btn-import-audio" role="menuitem" aria-label="Import audio or music file">Import Audio</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-export-video" role="menuitem" aria-label="Export your finished video">Export Video</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Edit</button>
+            <div class="menu-dropdown" role="menu" aria-label="Edit menu">
+              <button id="btn-undo" role="menuitem" aria-label="Undo last action">Undo</button>
+              <button id="btn-redo" role="menuitem" aria-label="Redo">Redo</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-split-clip" role="menuitem" aria-label="Split clip at playhead">Split Clip</button>
+              <button id="btn-delete-clip" role="menuitem" aria-label="Delete selected clip">Delete Clip</button>
+              <button id="btn-duplicate-clip" role="menuitem" aria-label="Duplicate selected clip">Duplicate Clip</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-toggle-snap" role="menuitem" aria-label="Toggle clip snapping">Snap: On</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Effects</button>
+            <div class="menu-dropdown" role="menu" aria-label="Effects menu">
+              <button id="btn-show-filters" role="menuitem" aria-label="Add a filter to the selected clip">Add Filter</button>
+              <button id="btn-add-transition" role="menuitem" aria-label="Add a transition to the selected clip">Add Transition</button>
+              <button id="btn-color-correct" role="menuitem" aria-label="Color correction panel">Color Correct</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-chroma-key" role="menuitem" aria-label="Green screen / chroma key">Green Screen</button>
+              <button id="btn-keyframe" role="menuitem" aria-label="Keyframe animation">Keyframe</button>
+              <button id="btn-speed-ramp" role="menuitem" aria-label="Variable speed ramping">Speed Ramp</button>
+              <button id="btn-ken-burns" role="menuitem" aria-label="Ken Burns zoom/pan effect">Ken Burns</button>
+              <button id="btn-freeze-frame" role="menuitem" aria-label="Freeze frame at playhead">Freeze Frame</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Insert</button>
+            <div class="menu-dropdown" role="menu" aria-label="Insert menu">
+              <button id="btn-add-text" role="menuitem" aria-label="Add text overlay">Add Text</button>
+              <button id="btn-add-caption" role="menuitem" aria-label="Add captions or subtitles">Add Caption</button>
+              <button id="btn-add-title" role="menuitem" aria-label="Title from template library">Title Template</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-add-marker" role="menuitem" aria-label="Add marker at playhead">Add Marker</button>
+              <button id="btn-prev-marker" role="menuitem" aria-label="Jump to previous marker">Prev Marker</button>
+              <button id="btn-next-marker" role="menuitem" aria-label="Jump to next marker">Next Marker</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Tools</button>
+            <div class="menu-dropdown" role="menu" aria-label="Tools menu">
+              <button id="btn-normalize" role="menuitem" aria-label="Normalize brightness and volume">Normalize</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-accessibility-score" role="menuitem" aria-label="Check content accessibility score before export">Accessibility Score</button>
+              <button id="btn-lut-browser" role="menuitem" aria-label="Open color grading LUT browser">Color Grading (LUTs)</button>
+              <button id="btn-document-templates" role="menuitem" aria-label="Open document templates">Document Templates</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-picture-lock" role="menuitem" aria-label="Toggle picture lock mode">Picture Lock: Off</button>
+              <button id="btn-toggle-grid" role="menuitem" aria-label="Toggle rule of thirds grid overlay">Grid: Off</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-batch-rename" role="menuitem" aria-label="Open batch rename tool">Batch Rename</button>
+              <button id="btn-readability" role="menuitem" aria-label="Open readability analyser">Readability Analyser</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="video-editor-layout">
+          <div id="media-library" role="region" aria-label="Your imported media files">
+            <h2 id="media-library-heading">Media Library</h2>
+            <div id="media-list" role="list" aria-label="List of imported media files" tabindex="0">
+              <p id="media-empty-message" class="help-text">No media imported yet. Use the Import Media or Import Audio button above. Files are automatically added to the timeline at the playhead position.</p>
+            </div>
+            <button id="btn-add-to-timeline" aria-label="Add selected media file to the timeline">Add to Timeline</button>
+          </div>
+
+          <div id="preview-area" role="region" aria-label="Video preview and playback controls">
+            <h2 class="sr-only">Video Preview</h2>
+            <div id="no-video-message" class="placeholder-message">
+              <p>No video loaded</p>
+              <p>Import media files to begin editing</p>
+            </div>
+            <div id="video-player-wrapper" class="hidden">
+              <div id="video-container">
+                <video id="video-player" aria-label="Video preview. Use playback controls below to control playback." tabindex="0">
+                  Your browser does not support video playback.
+                </video>
+              </div>
+
+              <div id="playback-controls" role="group" aria-label="Video playback controls">
+                <button id="btn-skip-back" aria-label="Skip backward 5 seconds">Back 5s</button>
+                <button id="btn-frame-back" aria-label="Go back 1 frame">Back 1 Frame</button>
+                <button id="btn-play-pause" aria-label="Play video">Play</button>
+                <button id="btn-frame-forward" aria-label="Go forward 1 frame">Forward 1 Frame</button>
+                <button id="btn-skip-forward" aria-label="Skip forward 5 seconds">Forward 5s</button>
+                <button id="btn-stop" aria-label="Stop playback and return to beginning">Stop</button>
+                <button id="btn-where-am-i" aria-label="Announce the current playhead position and what clips are here">Where Am I?</button>
+                <button id="btn-describe-scene" aria-label="Describe what is happening in the current frame">Describe Scene</button>
+              </div>
+
+              <div id="playhead-info" role="status" aria-live="polite" aria-label="Playhead position information">
+                <span id="playhead-position-text">Playhead at 0 seconds. No clips at this position.</span>
+              </div>
+
+              <div id="scrubber-area" role="group" aria-label="Video scrubber showing thumbnail frames with a playhead line">
+                <span id="time-display" aria-label="Current playback time" role="timer">00:00 / 00:00</span>
+                <div id="filmstrip-container" aria-hidden="true">
+                  <canvas id="filmstrip-canvas"></canvas>
+                  <div id="filmstrip-playhead"></div>
+                </div>
+                <label for="seek-slider" class="sr-only">Scrub through video frames</label>
+                <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.01"
+                       aria-label="Scrub through video frames. Use left and right arrow keys to move frame by frame."
+                       aria-valuetext="0 seconds of 0 seconds">
+              </div>
+
+              <div id="volume-controls" role="group" aria-label="Volume controls">
+                <label for="volume-slider" id="volume-label">Volume:</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="100" step="1"
+                       aria-label="Volume, currently 100 percent" aria-valuetext="100 percent">
+                <button id="btn-mute" aria-label="Mute audio">Mute</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="filters-panel" class="collapsible-panel hidden" role="region" aria-label="Video filters and effects">
+          <h2>Add Filter</h2>
+          <p class="help-text">Adjust brightness and contrast, or choose a filter preset. Changes apply to the selected clip.</p>
+
+          <div id="filter-adjustments" role="group" aria-label="Manual adjustments">
+            <div class="filter-adjust-row">
+              <label for="filter-brightness-slider">Brightness:</label>
+              <input type="range" id="filter-brightness-slider" min="0" max="200" value="100" step="5"
+                     aria-label="Brightness, currently 100 percent" aria-valuetext="100 percent">
+              <span id="filter-brightness-val" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="filter-contrast-slider">Contrast:</label>
+              <input type="range" id="filter-contrast-slider" min="0" max="200" value="100" step="5"
+                     aria-label="Contrast, currently 100 percent" aria-valuetext="100 percent">
+              <span id="filter-contrast-val" aria-hidden="true">100%</span>
+            </div>
+          </div>
+
+          <h3 style="padding: 0 12px; margin: 8px 0 4px; font-size: 0.9em; color: var(--text-muted);">Filter Presets</h3>
+          <div id="filter-list" role="list" aria-label="Available filters">
+          </div>
+          <button id="btn-close-filters" aria-label="Close the filters panel">Close</button>
+        </div>
+
+        <div id="filter-scope-dialog" class="modal hidden" role="dialog" aria-labelledby="filter-scope-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="filter-scope-title">Apply Filter To</h2>
+            <p id="filter-scope-desc">Where do you want to apply this filter?</p>
+            <div class="modal-actions">
+              <button id="filter-scope-clip" aria-label="Apply filter to just the selected clip">Selected Clip Only</button>
+              <button id="filter-scope-all" aria-label="Apply filter to the entire video, all clips">Entire Video (All Clips)</button>
+              <button id="filter-scope-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="caption-dialog" class="modal hidden" role="dialog" aria-labelledby="caption-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="caption-title">Add Captions / Subtitles</h2>
+
+            <div role="group" aria-label="Caption mode">
+              <label for="caption-mode-select">Mode:</label>
+              <select id="caption-mode-select" aria-label="Choose single caption or multi-line mode">
+                <option value="single">Single Caption</option>
+                <option value="multi">Multi-Line (one caption per line, set duration per line)</option>
+              </select>
+            </div>
+
+            <div id="caption-single-mode">
+              <label for="caption-text-input">Caption Text:</label>
+              <textarea id="caption-text-input" rows="3" aria-label="Enter the caption or subtitle text" placeholder="Enter caption text..."></textarea>
+              <label for="caption-start-input">Start Time (seconds):</label>
+              <input type="number" id="caption-start-input" step="0.1" min="0" value="0" aria-label="When this caption appears">
+              <label for="caption-duration-input">Duration (seconds):</label>
+              <input type="number" id="caption-duration-input" step="0.1" min="0.5" value="3" aria-label="How long the caption stays on screen">
+            </div>
+
+            <div id="caption-multi-mode" class="hidden">
+              <p class="help-text" style="padding: 4px 0;">Type or paste your captions below — one line per caption. Set the duration each line stays on screen, then they'll be placed sequentially from the start time.</p>
+              <label for="caption-multi-text">Captions (one per line):</label>
+              <textarea id="caption-multi-text" rows="8" aria-label="Enter captions, one per line. Each line becomes a separate caption." placeholder="Line 1: Welcome to my video&#10;Line 2: Today we are going to...&#10;Line 3: Let's get started!"></textarea>
+              <label for="caption-multi-start">Start Time (seconds):</label>
+              <input type="number" id="caption-multi-start" step="0.1" min="0" value="0" aria-label="When the first caption appears">
+              <label for="caption-line-duration">Duration Per Line (seconds):</label>
+              <input type="number" id="caption-line-duration" step="0.25" min="0.5" value="3" aria-label="How long each line stays on screen before the next one appears">
+              <label for="caption-gap-duration">Gap Between Lines (seconds):</label>
+              <input type="number" id="caption-gap-duration" step="0.1" min="0" value="0.25" aria-label="Pause between captions">
+            </div>
+
+            <label for="caption-position-select">Position:</label>
+            <select id="caption-position-select" aria-label="Where the caption appears on screen">
+              <option value="bottom">Bottom (standard subtitles)</option>
+              <option value="top">Top</option>
+              <option value="center">Center</option>
+            </select>
+            <label for="caption-size-input">Font Size:</label>
+            <input type="number" id="caption-size-input" min="12" max="120" value="32" aria-label="Caption font size in pixels">
+            <label for="caption-color-input">Text Color:</label>
+            <input type="color" id="caption-color-input" value="#ffffff" aria-label="Caption text color">
+            <div class="modal-actions">
+              <button id="btn-caption-add" aria-label="Add caption or captions to the timeline">Add Captions</button>
+              <button id="btn-caption-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="transition-dialog" class="modal hidden" role="dialog" aria-labelledby="transition-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="transition-title">Add / Change Transition</h2>
+            <p>Choose a transition from the built-in library. The transition plays as the clip begins.</p>
+            <div role="group" aria-label="Transition type">
+              <label for="transition-type-select">Transition Type:</label>
+              <select id="transition-type-select" aria-label="Choose a transition type">
+                <option value="none">None (Remove Transition)</option>
+              </select>
+            </div>
+            <div role="group" aria-label="Transition duration">
+              <label for="transition-duration-input">Duration (seconds):</label>
+              <input type="number" id="transition-duration-input" min="0.25" max="5" step="0.25" value="1" aria-label="Transition duration in seconds">
+            </div>
+            <div class="modal-actions">
+              <button id="btn-transition-apply" aria-label="Apply this transition">Apply</button>
+              <button id="btn-transition-remove" aria-label="Remove the transition from this clip">Remove Transition</button>
+              <button id="btn-transition-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="timeline-section" role="region" aria-label="Video timeline. This is where your clips are arranged.">
+          <div id="timeline-header">
+            <h2>Timeline</h2>
+            <div role="group" aria-label="Timeline zoom controls">
+              <button id="btn-zoom-in" aria-label="Zoom in on the timeline to see more detail">Zoom In</button>
+              <button id="btn-zoom-out" aria-label="Zoom out on the timeline to see the full project">Zoom Out</button>
+              <span id="zoom-level" aria-live="polite" aria-label="Current zoom level">100%</span>
+            </div>
+          </div>
+
+          <div id="timeline-container">
+            <div id="time-ruler" aria-hidden="true"><canvas id="ruler-canvas"></canvas></div>
+            <div id="playhead" aria-hidden="true"></div>
+
+            <div id="video-track" class="track" role="list" aria-label="Video track. Contains your video and image clips.">
+              <div class="track-label" aria-hidden="true"><span>Video</span></div>
+              <div class="track-clips" id="video-track-clips"></div>
+            </div>
+            <div id="audio-track" class="track" role="list" aria-label="Audio track. Contains your music and sound effect clips.">
+              <div class="track-label" aria-hidden="true"><span>Audio</span></div>
+              <div class="track-clips" id="audio-track-clips"></div>
+            </div>
+            <div id="text-track" class="track" role="list" aria-label="Text overlay track. Contains text that appears over your video.">
+              <div class="track-label" aria-hidden="true"><span>Text</span></div>
+              <div class="track-clips" id="text-track-clips"></div>
+            </div>
+          </div>
+
+          <div id="clip-properties" class="hidden" role="region" aria-label="Properties for the currently selected clip">
+            <h3>Selected Clip Properties</h3>
+            <div id="clip-props-content">
+              <label for="clip-name-input">Clip Name:</label>
+              <input type="text" id="clip-name-input" aria-label="Edit the name of this clip" placeholder="Clip name">
+              <button id="btn-clip-rename" aria-label="Apply the new name to this clip">Rename</button>
+
+              <label for="clip-start-input">Start Time (seconds):</label>
+              <input type="number" id="clip-start-input" step="0.1" min="0" aria-label="When this clip starts on the timeline, in seconds">
+
+              <label for="clip-duration-input">Duration (seconds):</label>
+              <input type="number" id="clip-duration-input" step="0.1" min="0.5" aria-label="How long this clip lasts, in seconds">
+
+              <label for="clip-volume-slider">Clip Volume:</label>
+              <input type="range" id="clip-volume-slider" min="0" max="200" value="100"
+                     aria-label="Volume of this clip, currently 100 percent" aria-valuetext="100 percent">
+              <span id="clip-volume-display" aria-hidden="true">100%</span>
+
+              <label for="clip-speed-select">Playback Speed:</label>
+              <select id="clip-speed-select" aria-label="How fast this clip plays">
+                <option value="0.25">0.25x (Very Slow)</option>
+                <option value="0.5">0.5x (Slow)</option>
+                <option value="0.75">0.75x (Slightly Slow)</option>
+                <option value="1" selected>1x (Normal Speed)</option>
+                <option value="1.25">1.25x (Slightly Fast)</option>
+                <option value="1.5">1.5x (Fast)</option>
+                <option value="2">2x (Double Speed)</option>
+                <option value="4">4x (Very Fast)</option>
+              </select>
+
+              <div class="clip-prop-row">
+                <label>Fade In:</label>
+                <label for="clip-fade-in-video">Video <input type="number" id="clip-fade-in-video" min="0" max="30" step="0.1" value="0" aria-label="Video fade in duration in seconds"> s</label>
+                <label for="clip-fade-in-audio">Audio <input type="number" id="clip-fade-in-audio" min="0" max="30" step="0.1" value="0" aria-label="Audio fade in duration in seconds"> s</label>
+              </div>
+              <div class="clip-prop-row">
+                <label>Fade Out:</label>
+                <label for="clip-fade-out-video">Video <input type="number" id="clip-fade-out-video" min="0" max="30" step="0.1" value="0" aria-label="Video fade out duration in seconds"> s</label>
+                <label for="clip-fade-out-audio">Audio <input type="number" id="clip-fade-out-audio" min="0" max="30" step="0.1" value="0" aria-label="Audio fade out duration in seconds"> s</label>
+              </div>
+              <div class="clip-prop-row">
+                <button id="btn-apply-fade" aria-label="Apply fade in and out settings to the selected clip">Apply Fade</button>
+                <button id="btn-clear-fade" aria-label="Remove all fades from the selected clip">Clear Fade</button>
+              </div>
+              <div class="clip-prop-row">
+                <label>Layer: <span id="clip-layer-display">0</span></label>
+                <label>Status: <span id="clip-detach-status">Attached</span></label>
+                <label>Transition: <span id="clip-transition-display">None</span></label>
+              </div>
+
+              <button id="btn-remove-clip-audio" aria-label="Remove audio from this video clip">Remove Audio from Clip</button>
+              <button id="btn-change-transition" class="hidden" aria-label="Change or remove the transition on this clip">Change Transition</button>
+              <button id="btn-apply-clip-changes" aria-label="Apply changes to this clip">Apply Changes</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="clip-list-section" role="region" aria-label="Clip lists and properties">
+          <div id="clip-list-all" role="region" aria-label="All clips on timeline">
+            <label for="all-clip-select"><h3>All Clips</h3></label>
+            <select id="all-clip-select" aria-label="All clips on the timeline. Select a clip to view its properties or jump to it." size="6">
+              <option value="" disabled selected>No clips yet</option>
+            </select>
+            <div class="clip-select-actions">
+              <button id="btn-clip-jump" aria-label="Jump to the selected clip on the timeline" disabled>Jump to Clip</button>
+              <button id="btn-clip-copy" aria-label="Duplicate the selected clip" disabled>Copy</button>
+              <button id="btn-clip-remove" aria-label="Remove the selected clip from the timeline" disabled>Remove</button>
+              <button id="btn-clip-detach" aria-label="Detach the selected clip from the main timeline" disabled>Detach</button>
+              <button id="btn-clip-freeze" aria-label="Insert a freeze frame at the playhead position on this clip" disabled>Freeze Frame</button>
+            </div>
+          </div>
+          <div id="clip-list-detached" role="region" aria-label="Detached and overlay clips">
+            <label for="detached-clip-select"><h3>Detached / Overlay Clips</h3></label>
+            <select id="detached-clip-select" aria-label="Detached clips that are separate from the main timeline. Select to reattach or adjust layer." size="4">
+              <option value="" disabled selected>No detached clips</option>
+            </select>
+            <div class="clip-select-actions">
+              <button id="btn-clip-attach" aria-label="Reattach the selected clip to the main timeline" disabled>Reattach</button>
+              <button id="btn-clip-layer-up" aria-label="Move detached clip to a higher layer" disabled>Layer Up</button>
+              <button id="btn-clip-layer-down" aria-label="Move detached clip to a lower layer" disabled>Layer Down</button>
+              <button id="btn-pip-preset" aria-label="Choose a picture-in-picture position for this clip" disabled>PIP Position</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="chroma-dialog" class="modal hidden" role="dialog" aria-labelledby="chroma-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="chroma-title">Chroma Key (Green Screen)</h2>
+            <p>Remove a background color from the video. The removed area becomes transparent, revealing clips on lower layers.</p>
+            <label for="chroma-color">Key Color:</label>
+            <input type="color" id="chroma-color" value="#00ff00" aria-label="Choose the color to remove, default is green">
+            <label for="chroma-tolerance">Tolerance (how much color variation to remove):</label>
+            <input type="range" id="chroma-tolerance" min="5" max="100" value="40" step="5"
+                   aria-label="Chroma key tolerance, currently 40" aria-valuetext="40">
+            <span id="chroma-tolerance-val" aria-hidden="true">40</span>
+            <label for="chroma-softness">Edge Softness:</label>
+            <input type="range" id="chroma-softness" min="0" max="50" value="10" step="5"
+                   aria-label="Edge softness, currently 10" aria-valuetext="10">
+            <span id="chroma-softness-val" aria-hidden="true">10</span>
+            <div class="modal-actions">
+              <button id="btn-chroma-apply" aria-label="Apply chroma key to the selected clip">Apply</button>
+              <button id="btn-chroma-remove" aria-label="Remove chroma key from this clip">Remove Chroma Key</button>
+              <button id="btn-chroma-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="keyframe-dialog" class="modal hidden" role="dialog" aria-labelledby="keyframe-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="keyframe-title">Add Keyframe</h2>
+            <p>Keyframes let you animate properties over time. Set a value at different points and the property smoothly transitions between them.</p>
+            <label for="keyframe-property">Property:</label>
+            <select id="keyframe-property" aria-label="Choose which property to animate">
+              <option value="opacity">Opacity (visibility)</option>
+              <option value="volume">Volume</option>
+              <option value="x">X Position</option>
+              <option value="y">Y Position</option>
+              <option value="scale">Scale (size)</option>
+              <option value="rotation">Rotation</option>
+            </select>
+            <label for="keyframe-time">Time (seconds from clip start):</label>
+            <input type="number" id="keyframe-time" min="0" step="0.1" value="0" aria-label="When this keyframe occurs relative to the clip start">
+            <label for="keyframe-value">Value:</label>
+            <input type="number" id="keyframe-value" step="0.1" value="100" aria-label="The value at this keyframe">
+            <p id="keyframe-list-display" aria-live="polite" style="padding: 8px 20px; font-size: 0.85em; color: var(--text-muted);">No keyframes set.</p>
+            <div class="modal-actions">
+              <button id="btn-keyframe-add" aria-label="Add this keyframe">Add Keyframe</button>
+              <button id="btn-keyframe-clear" aria-label="Remove all keyframes from this property">Clear All</button>
+              <button id="btn-keyframe-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="speedramp-dialog" class="modal hidden" role="dialog" aria-labelledby="speedramp-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="speedramp-title">Speed Ramping</h2>
+            <p>Create variable speed within a clip. Add points where the speed changes, and it will smoothly transition between them.</p>
+            <div id="speedramp-points" role="list" aria-label="Speed ramp points">
+              <p class="help-text">No speed ramp points yet. Add points below.</p>
+            </div>
+            <div class="clip-prop-row">
+              <label for="speedramp-time">Time (sec):</label>
+              <input type="number" id="speedramp-time" min="0" step="0.1" value="0" aria-label="Time within the clip">
+              <label for="speedramp-speed">Speed:</label>
+              <input type="number" id="speedramp-speed" min="0.1" max="8" step="0.1" value="1" aria-label="Playback speed at this point">
+              <button id="btn-speedramp-add-point" aria-label="Add this speed point">Add Point</button>
+            </div>
+            <p class="help-text" style="padding: 4px 20px;">Common ramp: 1x normal → 0.25x slow motion → 1x normal. Speed 0.25 = quarter speed, 2 = double speed.</p>
+            <div class="modal-actions">
+              <button id="btn-speedramp-apply" aria-label="Apply speed ramp to the selected clip">Apply</button>
+              <button id="btn-speedramp-clear" aria-label="Remove speed ramp">Clear</button>
+              <button id="btn-speedramp-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="kenburns-dialog" class="modal hidden" role="dialog" aria-labelledby="kenburns-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="kenburns-title">Ken Burns Effect (Zoom/Pan on Images)</h2>
+            <p>Slowly zoom and pan across an image clip to create dynamic motion from a still photo.</p>
+            <div class="clip-prop-row">
+              <label>Start: X <input type="number" id="kb-start-x" value="50" min="0" max="100" aria-label="Start X position percent"> %</label>
+              <label>Y <input type="number" id="kb-start-y" value="50" min="0" max="100" aria-label="Start Y position percent"> %</label>
+              <label>Zoom <input type="number" id="kb-start-scale" value="1" min="0.5" max="3" step="0.1" aria-label="Start zoom level"> x</label>
+            </div>
+            <div class="clip-prop-row">
+              <label>End: X <input type="number" id="kb-end-x" value="50" min="0" max="100" aria-label="End X position percent"> %</label>
+              <label>Y <input type="number" id="kb-end-y" value="50" min="0" max="100" aria-label="End Y position percent"> %</label>
+              <label>Zoom <input type="number" id="kb-end-scale" value="1.5" min="0.5" max="3" step="0.1" aria-label="End zoom level"> x</label>
+            </div>
+            <p class="help-text" style="padding: 4px 20px;">Preset: Zoom In = start 1x end 1.5x. Zoom Out = start 1.5x end 1x. Pan = change X/Y positions.</p>
+            <div class="modal-actions">
+              <button id="btn-kb-zoom-in" aria-label="Apply zoom in preset">Zoom In Preset</button>
+              <button id="btn-kb-zoom-out" aria-label="Apply zoom out preset">Zoom Out Preset</button>
+              <button id="btn-kb-pan-left" aria-label="Apply pan left preset">Pan Left</button>
+              <button id="btn-kb-pan-right" aria-label="Apply pan right preset">Pan Right</button>
+            </div>
+            <div class="modal-actions">
+              <button id="btn-kb-apply" aria-label="Apply Ken Burns effect">Apply</button>
+              <button id="btn-kb-remove" aria-label="Remove Ken Burns effect">Remove</button>
+              <button id="btn-kb-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="title-dialog" class="modal hidden" role="dialog" aria-labelledby="title-template-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="title-template-title">Title Templates</h2>
+            <p>Choose a pre-built title template. You can edit the text after adding it.</p>
+            <div id="title-template-list" role="list" aria-label="Available title templates">
+            </div>
+            <label for="title-custom-text">Custom Text (optional, replaces template text):</label>
+            <textarea id="title-custom-text" rows="3" aria-label="Enter custom text for the title, or leave blank to use the template text" placeholder="Leave blank to use template text..."></textarea>
+            <div class="modal-actions">
+              <button id="btn-title-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="pip-dialog" class="modal hidden" role="dialog" aria-labelledby="pip-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="pip-title">Picture-in-Picture Position</h2>
+            <p>Choose where the overlay clip appears on screen.</p>
+            <div id="pip-preset-list" role="list" aria-label="PIP position presets">
+            </div>
+            <div class="modal-actions">
+              <button id="btn-pip-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="marker-dialog" class="modal hidden" role="dialog" aria-labelledby="marker-title" aria-modal="true">
+          <div class="modal-content">
+            <h2 id="marker-title">Add Marker / Bookmark</h2>
+            <p>Place a marker on the timeline to bookmark an important moment.</p>
+            <label for="marker-label">Marker Label:</label>
+            <input type="text" id="marker-label" placeholder="e.g. Intro starts here" aria-label="Name or description for this marker">
+            <label for="marker-color">Marker Color:</label>
+            <input type="color" id="marker-color" value="#ffcc00" aria-label="Choose a color for this marker">
+            <p id="marker-time-display" aria-live="polite" style="padding: 4px 20px; font-size: 0.9em;">Marker will be placed at the current playhead position.</p>
+            <div class="modal-actions">
+              <button id="btn-marker-add" aria-label="Add this marker at the playhead position">Add Marker</button>
+              <button id="btn-marker-cancel" aria-label="Cancel">Cancel</button>
+            </div>
+            <hr>
+            <h3>Existing Markers</h3>
+            <div id="marker-list" role="list" aria-label="List of existing markers" tabindex="0">
+              <p id="marker-list-empty" class="help-text">No markers yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="color-correction-panel" class="collapsible-panel hidden" role="region" aria-label="Color correction and RGB balance">
+          <h2>Color Correction</h2>
+          <p class="help-text">Fine-tune color balance, temperature, and tonal range.</p>
+          <div id="cc-adjustments" role="group" aria-label="Color correction sliders">
+            <div class="filter-adjust-row">
+              <label for="cc-redBalance-slider">Red:</label>
+              <input type="range" id="cc-redBalance-slider" min="0" max="200" value="100" step="5" aria-label="Red channel balance, currently 100 percent" aria-valuetext="100%">
+              <span id="cc-redBalance-val" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-greenBalance-slider">Green:</label>
+              <input type="range" id="cc-greenBalance-slider" min="0" max="200" value="100" step="5" aria-label="Green channel balance, currently 100 percent" aria-valuetext="100%">
+              <span id="cc-greenBalance-val" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-blueBalance-slider">Blue:</label>
+              <input type="range" id="cc-blueBalance-slider" min="0" max="200" value="100" step="5" aria-label="Blue channel balance, currently 100 percent" aria-valuetext="100%">
+              <span id="cc-blueBalance-val" aria-hidden="true">100%</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-temperature-slider">Temperature:</label>
+              <input type="range" id="cc-temperature-slider" min="-100" max="100" value="0" step="5" aria-label="Color temperature, currently 0" aria-valuetext="0">
+              <span id="cc-temperature-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-tint-slider">Tint:</label>
+              <input type="range" id="cc-tint-slider" min="-100" max="100" value="0" step="5" aria-label="Color tint, currently 0" aria-valuetext="0">
+              <span id="cc-tint-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-shadows-slider">Shadows:</label>
+              <input type="range" id="cc-shadows-slider" min="-50" max="50" value="0" step="5" aria-label="Shadow adjustment, currently 0" aria-valuetext="0">
+              <span id="cc-shadows-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-adjust-row">
+              <label for="cc-highlights-slider">Highlights:</label>
+              <input type="range" id="cc-highlights-slider" min="-50" max="50" value="0" step="5" aria-label="Highlight adjustment, currently 0" aria-valuetext="0">
+              <span id="cc-highlights-val" aria-hidden="true">0</span>
+            </div>
+          </div>
+          <button id="btn-reset-cc" aria-label="Reset all color correction to defaults">Reset Color Correction</button>
+          <button id="btn-close-cc" aria-label="Close color correction panel">Close</button>
+        </div>
+      </section>
+
+      <section id="section-photo-editor" class="app-section" role="region" aria-label="Photo Editor" style="display:none">
+        <div id="photo-menu-bar" class="menu-bar" role="menubar" aria-label="Photo editor menus">
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">File</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo file menu">
+              <button id="btn-photo-open" role="menuitem" aria-label="Open an image file to edit">Open Image</button>
+              <button id="btn-photo-save" role="menuitem" aria-label="Save the edited image">Save Image</button>
+              <button id="btn-photo-save-as" role="menuitem" aria-label="Save as a new file">Save As</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Edit</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo edit menu">
+              <button id="btn-photo-undo" role="menuitem" aria-label="Undo last photo edit">Undo</button>
+              <button id="btn-photo-redo" role="menuitem" aria-label="Redo last undone photo edit">Redo</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-photo-crop" role="menuitem" aria-label="Crop the image">Crop</button>
+              <button id="btn-photo-resize" role="menuitem" aria-label="Resize the image">Resize</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Transform</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo transform menu">
+              <button id="btn-photo-rotate-left" role="menuitem" aria-label="Rotate 90 degrees left">Rotate Left</button>
+              <button id="btn-photo-rotate-right" role="menuitem" aria-label="Rotate 90 degrees right">Rotate Right</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-photo-flip-h" role="menuitem" aria-label="Flip horizontally">Flip Horizontal</button>
+              <button id="btn-photo-flip-v" role="menuitem" aria-label="Flip vertically">Flip Vertical</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Effects</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo effects menu">
+              <button id="btn-photo-filters" role="menuitem" aria-label="Filters and adjustments">Filters &amp; Adjustments</button>
+              <div class="menu-separator" role="separator"></div>
+              <button id="btn-photo-remove-bg" role="menuitem" aria-label="Remove background">Remove Background</button>
+              <button id="btn-photo-blur-bg" role="menuitem" aria-label="Blur background">Blur Background</button>
+            </div>
+          </div>
+          <div class="menu-item" role="none">
+            <button class="menu-trigger" role="menuitem" aria-haspopup="true" aria-expanded="false">Insert</button>
+            <div class="menu-dropdown" role="menu" aria-label="Photo insert menu">
+              <button id="btn-photo-text" role="menuitem" aria-label="Add text to the image">Add Text</button>
+              <button id="btn-photo-insert-image" role="menuitem" aria-label="Insert another image as overlay">Insert Image</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="photo-editor-layout">
+          <div id="photo-canvas-area" role="img" aria-label="Image editing canvas. Open an image to begin editing.">
+            <canvas id="photo-canvas" tabindex="0" aria-label="Image canvas"></canvas>
+            <div id="no-photo-message" class="placeholder-message">
+              <p>No image loaded</p>
+              <p>Use the Open Image button to load a photo for editing</p>
+            </div>
+          </div>
+
+          <div id="photo-adjustments" role="region" aria-label="Photo adjustments panel" class="hidden">
+            <h2>Photo Adjustments</h2>
+            <div class="filter-row">
+              <label for="photo-brightness">Brightness:</label>
+              <input type="range" id="photo-brightness" min="-100" max="100" value="0"
+                     aria-label="Photo brightness adjustment" aria-valuetext="0">
+              <span id="photo-brightness-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-row">
+              <label for="photo-contrast">Contrast:</label>
+              <input type="range" id="photo-contrast" min="-100" max="100" value="0"
+                     aria-label="Photo contrast adjustment" aria-valuetext="0">
+              <span id="photo-contrast-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-row">
+              <label for="photo-saturation">Saturation:</label>
+              <input type="range" id="photo-saturation" min="-100" max="100" value="0"
+                     aria-label="Photo saturation adjustment" aria-valuetext="0">
+              <span id="photo-saturation-val" aria-hidden="true">0</span>
+            </div>
+            <div class="filter-row">
+              <label for="photo-sharpness">Sharpness:</label>
+              <input type="range" id="photo-sharpness" min="0" max="100" value="0"
+                     aria-label="Photo sharpness adjustment" aria-valuetext="0">
+              <span id="photo-sharpness-val" aria-hidden="true">0</span>
+            </div>
+
+            <h3>Quick Filters</h3>
+            <div role="group" aria-label="Photo filter presets">
+              <button class="photo-preset-btn" data-preset="none" aria-label="Remove all photo filters">Original</button>
+              <button class="photo-preset-btn" data-preset="grayscale" aria-label="Convert to black and white">Grayscale</button>
+              <button class="photo-preset-btn" data-preset="sepia" aria-label="Apply sepia brown tone">Sepia</button>
+              <button class="photo-preset-btn" data-preset="vintage" aria-label="Apply vintage photo look">Vintage</button>
+              <button class="photo-preset-btn" data-preset="warm" aria-label="Apply warm tones">Warm</button>
+              <button class="photo-preset-btn" data-preset="cool" aria-label="Apply cool tones">Cool</button>
+              <button class="photo-preset-btn" data-preset="vivid" aria-label="Boost all colors">Vivid</button>
+              <button class="photo-preset-btn" data-preset="noir" aria-label="High contrast black and white">Noir</button>
+            </div>
+            <div style="padding:8px 20px;">
+              <button id="btn-photo-restore" aria-label="Restore old or damaged photos with auto enhancement">Restore Photo</button>
+              <span id="photo-restore-status" aria-live="polite" style="font-size:0.85em;color:var(--text-muted);padding-left:8px;"></span>
+            </div>
+            <div style="padding:8px 20px;border-top:1px solid var(--border);">
+              <h4>Raw Photo Import</h4>
+              <p class="help-text">Open professional camera raw files (CR2, CR3, NEF, ARW, DNG, RAF, ORF). Requires dcraw or FFmpeg.</p>
+              <button id="btn-raw-open" aria-label="Open a raw camera photo for editing">Open Raw Photo...</button>
+              <div id="raw-formats-list" style="font-size:0.85em;color:var(--text-muted);padding:4px 0;"></div>
+              <span id="raw-status" aria-live="polite" style="font-size:0.85em;color:var(--text-muted);padding-left:8px;"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-file-converter" class="app-section" role="region" aria-label="File Converter" style="display:none">
+        <h2>File Converter</h2>
+        <p class="help-text">Convert between video, audio, image, and document formats. Select a file, choose the output format, and click Convert.</p>
+
+        <div id="converter-media" role="group" aria-label="Video and audio file conversion">
+          <h3>Video & Audio Conversion</h3>
+          <button id="btn-conv-select-media" aria-label="Select a video or audio file to convert">Select Video or Audio File</button>
+          <p id="conv-media-file-display" aria-live="polite">No file selected</p>
+          <label for="conv-media-format">Convert To:</label>
+          <select id="conv-media-format" aria-label="Choose the output format for video or audio conversion">
+            <optgroup label="Video Formats">
+              <option value="mp4">MP4 (most compatible)</option>
+              <option value="avi">AVI</option>
+              <option value="mkv">MKV</option>
+              <option value="mov">MOV (Apple)</option>
+              <option value="webm">WebM (web)</option>
+              <option value="wmv">WMV (Windows)</option>
+              <option value="gif">GIF (animated image)</option>
+              <option value="flv">FLV (Flash)</option>
+              <option value="mpeg">MPEG</option>
+              <option value="m4v">M4V (iTunes)</option>
+              <option value="ts">TS (MPEG-TS)</option>
+            </optgroup>
+            <optgroup label="Audio Formats">
+              <option value="mp3">MP3</option>
+              <option value="wav">WAV (uncompressed)</option>
+              <option value="ogg">OGG</option>
+              <option value="flac">FLAC (lossless)</option>
+              <option value="aac">AAC</option>
+              <option value="wma">WMA (Windows Media)</option>
+              <option value="m4a">M4A (Apple audio)</option>
+              <option value="opus">OPUS (modern, efficient)</option>
+            </optgroup>
+          </select>
+          <label for="conv-media-quality">Quality:</label>
+          <select id="conv-media-quality" aria-label="Choose output quality, higher means bigger file size">
+            <option value="high">High Quality (larger file)</option>
+            <option value="medium" selected>Medium Quality (balanced)</option>
+            <option value="low">Low Quality (smaller file)</option>
+          </select>
+          <button id="btn-conv-media-start" aria-label="Start converting the selected media file" disabled>Convert File</button>
+          <div id="conv-media-progress" class="progress-bar hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Conversion progress">
+            <div id="conv-media-progress-fill"></div>
+            <span id="conv-media-progress-text">0%</span>
+          </div>
+          <p id="conv-media-status" aria-live="polite"></p>
+        </div>
+
+        <div id="converter-image" role="group" aria-label="Image file conversion">
+          <h3>Image Conversion</h3>
+          <button id="btn-conv-select-image" aria-label="Select an image file to convert">Select Image File</button>
+          <p id="conv-image-file-display" aria-live="polite">No file selected</p>
+          <label for="conv-image-format">Convert To:</label>
+          <select id="conv-image-format" aria-label="Choose the output image format">
+            <option value="png">PNG (high quality, larger)</option>
+            <option value="jpg">JPG (compressed, smaller)</option>
+            <option value="webp">WebP (modern web format)</option>
+            <option value="bmp">BMP (uncompressed)</option>
+            <option value="gif">GIF</option>
+            <option value="tiff">TIFF (print quality)</option>
+            <option value="ico">ICO (icon)</option>
+            <option value="svg">SVG (vector)</option>
+            <option value="avif">AVIF (modern, efficient)</option>
+            <option value="eps">EPS (print)</option>
+          </select>
+          <button id="btn-conv-image-start" aria-label="Start converting the selected image" disabled>Convert Image</button>
+          <p id="conv-image-status" aria-live="polite"></p>
+        </div>
+
+        <div id="converter-document" role="group" aria-label="Document file conversion">
+          <h3>Document Conversion</h3>
+          <p class="help-text">Convert between PDF, Word, text, HTML, and other document formats.</p>
+          <button id="btn-conv-select-doc" aria-label="Select a document file to convert">Select Document</button>
+          <p id="conv-doc-file-display" aria-live="polite">No file selected</p>
+          <label for="conv-doc-format">Convert To:</label>
+          <select id="conv-doc-format" aria-label="Choose the document output format">
+            <option value="pdf">PDF</option>
+            <option value="docx">Word Document (DOCX)</option>
+            <option value="txt">Plain Text</option>
+            <option value="html">HTML Web Page</option>
+            <option value="rtf">RTF (Rich Text)</option>
+            <option value="md">MD (Markdown)</option>
+            <option value="csv">CSV (table data)</option>
+            <option value="epub">EPUB (e-book)</option>
+            <option value="odt">ODT (OpenDocument)</option>
+          </select>
+          <button id="btn-conv-doc-start" aria-label="Start converting the selected document" disabled>Convert Document</button>
+          <p id="conv-doc-status" aria-live="polite"></p>
+        </div>
+
+        <!-- PDF Form Filler -->
+        <div id="converter-pdf-form" role="group" aria-label="PDF form filler" style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px;">
+          <h3>PDF Form Filler</h3>
+          <p class="help-text">Open a PDF form, fill in the fields, and save a filled copy.</p>
+          <div class="setting-row">
+            <button id="btn-pdf-form-open" aria-label="Open a PDF form to fill">Open PDF Form...</button>
+            <span id="pdf-form-file-display" aria-live="polite" style="padding-left:8px;">No file selected</span>
+          </div>
+          <div id="pdf-form-fields" style="max-height:300px;overflow-y:auto;padding:8px 0;"></div>
+          <div class="setting-row">
+            <button id="btn-pdf-form-save" aria-label="Save the filled PDF form" disabled>Save Filled PDF...</button>
+            <span id="pdf-form-status" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <!-- EPUB Reader -->
+        <div id="converter-epub" role="group" aria-label="EPUB reader" style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px;">
+          <h3>EPUB Reader</h3>
+          <p class="help-text">Open an EPUB ebook to read its metadata and contents.</p>
+          <div class="setting-row">
+            <button id="btn-epub-open" aria-label="Open an EPUB file to read">Open EPUB...</button>
+            <span id="epub-file-display" aria-live="polite" style="padding-left:8px;">No file selected</span>
+          </div>
+          <div id="epub-metadata" style="padding:8px 0;"></div>
+          <div id="epub-contents" style="max-height:300px;overflow-y:auto;padding:8px 0;"></div>
+          <div id="epub-content-display" style="padding:8px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);min-height:100px;"></div>
+        </div>
+      </section>
+
+      <section id="section-music-studio" class="app-section" role="region" aria-label="Music Studio" style="display:none">
+        <h2>Music Studio</h2>
+        <p class="help-text">Create music with MIDI sequencing, step sequencer, and stem separation. Requires FFmpeg.</p>
+
+        <div role="tablist" aria-label="Music Studio tools">
+          <button class="music-tab-btn active" data-music-tab="midi" aria-selected="true">MIDI Editor</button>
+          <button class="music-tab-btn" data-music-tab="sequencer" aria-selected="false">Step Sequencer</button>
+          <button class="music-tab-btn" data-music-tab="stems" aria-selected="false">Stems Separator</button>
+          <button class="music-tab-btn" data-music-tab="plugins" aria-selected="false">VST Plugins</button>
+        </div>
+
+        <!-- MIDI Editor -->
+        <div id="music-midi" class="music-tab-panel" role="tabpanel">
+          <h3>MIDI Piano Roll Editor</h3>
+          <p class="help-text">Add, edit, and remove MIDI notes on the virtual piano roll.</p>
+          <div class="setting-row">
+            <label for="midi-clip-select">MIDI Clip:</label>
+            <select id="midi-clip-select" aria-label="Select a MIDI clip to edit" style="flex:1;">
+              <option value="">-- Select or create a clip --</option>
+            </select>
+            <button id="btn-midi-new-clip" aria-label="Create new MIDI clip">New Clip</button>
+          </div>
+          <div id="midi-piano-roll" style="overflow-x:auto;padding:8px 0;min-height:200px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);">
+            <p class="help-text" style="padding:8px;">Select a clip above to view its MIDI notes. Notes are shown as pitch vs. time on the piano roll.</p>
+            <div id="midi-notes-list" aria-live="polite" style="max-height:300px;overflow-y:auto;"></div>
+          </div>
+          <div class="setting-row" style="margin-top:8px;">
+            <label for="midi-note-pitch">Note (MIDI pitch 0-127):</label>
+            <input type="number" id="midi-note-pitch" value="60" min="0" max="127" aria-label="MIDI note pitch number">
+            <label for="midi-note-velocity">Velocity (0-127):</label>
+            <input type="number" id="midi-note-velocity" value="100" min="0" max="127" aria-label="MIDI note velocity" style="width:80px;">
+            <label for="midi-note-duration">Duration (beats):</label>
+            <input type="number" id="midi-note-duration" value="1.0" min="0.1" step="0.1" aria-label="MIDI note duration in beats" style="width:80px;">
+            <button id="btn-midi-add-note" aria-label="Add MIDI note to the current clip">Add Note</button>
+          </div>
+          <div class="setting-row">
+            <label for="midi-key-signature">Key Signature:</label>
+            <select id="midi-key-signature" aria-label="MIDI key signature">
+              <option value="C major">C major</option>
+              <option value="G major">G major</option>
+              <option value="D major">D major</option>
+              <option value="A major">A major</option>
+              <option value="E major">E major</option>
+              <option value="F major">F major</option>
+              <option value="A minor">A minor</option>
+              <option value="E minor">E minor</option>
+            </select>
+            <label for="midi-time-signature">Time Signature:</label>
+            <select id="midi-time-signature" aria-label="MIDI time signature">
+              <option value="4/4">4/4</option>
+              <option value="3/4">3/4</option>
+              <option value="6/8">6/8</option>
+              <option value="2/4">2/4</option>
+            </select>
+          </div>
+          <div id="midi-daw-tracks" style="padding:8px 0;">
+            <h4>DAW Tracks</h4>
+            <div id="daw-tracks-list" aria-live="polite" style="max-height:200px;overflow-y:auto;"></div>
+            <button id="btn-daw-add-track" aria-label="Add a new DAW track">Add Track</button>
+          </div>
+        </div>
+
+        <!-- Step Sequencer -->
+        <div id="music-sequencer" class="music-tab-panel hidden" role="tabpanel">
+          <h3>Step Sequencer</h3>
+          <p class="help-text">Program rhythmic patterns using a grid of step buttons.</p>
+          <div class="setting-row">
+            <label for="sequencer-pattern-select">Pattern:</label>
+            <select id="sequencer-pattern-select" aria-label="Select a step sequencer pattern" style="flex:1;">
+              <option value="">-- Select or create a pattern --</option>
+            </select>
+            <button id="btn-seq-new-pattern" aria-label="Create new step sequencer pattern">New Pattern</button>
+          </div>
+          <div class="setting-row">
+            <label for="sequencer-bpm">BPM:</label>
+            <input type="number" id="sequencer-bpm" value="120" min="20" max="300" aria-label="Sequencer beats per minute" style="width:80px;">
+            <label for="sequencer-swing">Swing (%):</label>
+            <input type="number" id="sequencer-swing" value="0" min="0" max="100" aria-label="Sequencer swing percentage" style="width:80px;">
+          </div>
+          <div id="sequencer-grid" style="overflow-x:auto;padding:8px 0;min-height:100px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);">
+            <p class="help-text" style="padding:8px;">Select or create a pattern to edit its step grid.</p>
+            <div id="sequencer-steps-list" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- Stems Separator -->
+        <div id="music-stems" class="music-tab-panel hidden" role="tabpanel">
+          <h3>Stems Separator</h3>
+          <p class="help-text">Split an audio file into vocal, drum, bass, and other stems using FFmpeg filters.</p>
+          <div class="setting-row">
+            <button id="btn-stems-select" aria-label="Select an audio file to split into stems">Select Audio File...</button>
+            <span id="stems-file-display" aria-live="polite" style="padding-left:8px;">No file selected</span>
+          </div>
+          <fieldset style="border:1px solid var(--border);padding:12px;margin:8px 0;border-radius:var(--radius-sm);">
+            <legend>Stems to generate:</legend>
+            <label style="display:block;padding:4px 0;"><input type="checkbox" id="stem-vocals" checked aria-label="Extract vocals stem"> Vocals (center channel)</label>
+            <label style="display:block;padding:4px 0;"><input type="checkbox" id="stem-drums" checked aria-label="Extract drums stem"> Drums (low-mid)</label>
+            <label style="display:block;padding:4px 0;"><input type="checkbox" id="stem-bass" aria-label="Extract bass stem"> Bass (low frequencies)</label>
+            <label style="display:block;padding:4px 0;"><input type="checkbox" id="stem-other" aria-label="Extract other frequencies stem"> Other (everything else)</label>
+          </fieldset>
+          <div class="setting-row">
+            <button id="btn-stems-separate" aria-label="Start separating audio into stems">Separate Stems</button>
+            <span id="stems-status" aria-live="polite" style="padding-left:8px;"></span>
+          </div>
+          <div id="stems-results" aria-live="polite" style="padding:4px 0;"></div>
+        </div>
+
+        <!-- VST Plugins -->
+        <div id="music-plugins" class="music-tab-panel hidden" role="tabpanel">
+          <h3>VST Plugin Scanner</h3>
+          <p class="help-text">Scan a folder for VST/AU plugins. Plugin support requires the actual VST files to be present on your system.</p>
+          <div class="setting-row">
+            <button id="btn-vst-scan" aria-label="Scan a directory for VST plugins">Scan Folder for VSTs...</button>
+            <span id="vst-scan-status" aria-live="polite" style="padding-left:8px;"></span>
+          </div>
+          <div id="vst-plugins-list" aria-live="polite" style="max-height:250px;overflow-y:auto;padding:4px 0;"></div>
+        </div>
+      </section>
+
+      <!-- Podcast Studio -->
+      <section id="section-podcast-studio" class="app-section" role="region" aria-label="Podcast Studio" style="display:none">
+        <h2>Podcast Studio</h2>
+        <p class="help-text">Record remote podcasts, edit ID3 tags, and generate RSS feeds — all offline.</p>
+
+        <div role="tablist" aria-label="Podcast Studio tools">
+          <button class="podcast-tab-btn active" data-podcast-tab="recording" aria-selected="true">Recording</button>
+          <button class="podcast-tab-btn" data-podcast-tab="episodes" aria-selected="false">Episodes</button>
+          <button class="podcast-tab-btn" data-podcast-tab="id3" aria-selected="false">ID3 Tags</button>
+          <button class="podcast-tab-btn" data-podcast-tab="rss" aria-selected="false">RSS Feed</button>
+          <button class="podcast-tab-btn" data-podcast-tab="settings" aria-selected="false">Settings</button>
+        </div>
+
+        <!-- Recording -->
+        <div id="podcast-recording" class="podcast-tab-panel" role="tabpanel">
+          <h3>Record Episode</h3>
+          <p class="help-text">Record audio from your microphone or system audio (what you hear) directly into an MP3 file. Defaults to system audio for accessibility.</p>
+          <div class="setting-row">
+            <label for="podcast-audio-device">Audio Input:</label>
+            <select id="podcast-audio-device" aria-label="Select audio input device. Default records what you hear." style="flex:1;">
+              <option value="">System Audio (what you hear)</option>
+            </select>
+            <button id="btn-podcast-refresh-devices" aria-label="Refresh list of available audio input devices">Refresh</button>
+          </div>
+          <div class="setting-row">
+            <button id="btn-podcast-record" aria-label="Start or stop podcast recording">
+              <span id="podcast-record-label">Start Recording</span>
+            </button>
+            <span id="podcast-record-status" aria-live="polite">Ready</span>
+          </div>
+          <div class="setting-row">
+            <label for="podcast-recording-dir">Output Directory:</label>
+            <input type="text" id="podcast-recording-dir" aria-label="Directory for podcast recordings" style="flex:1;font-family:monospace;">
+            <button id="btn-podcast-browse-dir" aria-label="Browse for recording directory">Browse</button>
+          </div>
+        </div>
+
+        <!-- Episodes -->
+        <div id="podcast-episodes" class="podcast-tab-panel hidden" role="tabpanel">
+          <h3>Episode List</h3>
+          <div id="podcast-episodes-list" aria-live="polite" style="max-height:250px;overflow-y:auto;">
+            <p class="help-text">No episodes yet. Record your first episode to see it here.</p>
+          </div>
+        </div>
+
+        <!-- ID3 Tags -->
+        <div id="podcast-id3" class="podcast-tab-panel hidden" role="tabpanel">
+          <h3>ID3 Tag Editor</h3>
+          <p class="help-text">Edit metadata tags on an MP3 file. This rewrites the file's ID3 tags using FFmpeg.</p>
+          <div class="setting-row">
+            <button id="btn-id3-select" aria-label="Select an MP3 file to edit ID3 tags">Select MP3 File...</button>
+            <span id="id3-file-display" aria-live="polite">No file selected</span>
+          </div>
+          <div class="setting-row">
+            <label for="id3-title">Title:</label>
+            <input type="text" id="id3-title" aria-label="Song or episode title" style="flex:1;">
+          </div>
+          <div class="setting-row">
+            <label for="id3-artist">Artist:</label>
+            <input type="text" id="id3-artist" aria-label="Artist or host name" style="flex:1;">
+          </div>
+          <div class="setting-row">
+            <label for="id3-album">Album:</label>
+            <input type="text" id="id3-album" aria-label="Album or show name" style="flex:1;">
+          </div>
+          <div class="setting-row">
+            <label for="id3-year">Year:</label>
+            <input type="text" id="id3-year" aria-label="Release year" style="width:100px;">
+          </div>
+          <div class="setting-row">
+            <label for="id3-genre">Genre:</label>
+            <input type="text" id="id3-genre" aria-label="Genre of the recording" style="flex:1;">
+          </div>
+          <div class="setting-row">
+            <button id="btn-id3-write" aria-label="Write ID3 tags to the selected file">Write Tags</button>
+            <span id="id3-status" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <!-- RSS Feed -->
+        <div id="podcast-rss" class="podcast-tab-panel hidden" role="tabpanel">
+          <h3>RSS Feed Generator</h3>
+          <p class="help-text">Generate an RSS 2.0 feed from your podcast episodes. Requires configured show settings.</p>
+          <div class="setting-row">
+            <button id="btn-rss-generate" aria-label="Generate RSS feed from episodes">Generate RSS Feed...</button>
+            <span id="rss-status" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <!-- Podcast Settings -->
+        <div id="podcast-settings" class="podcast-tab-panel hidden" role="tabpanel">
+          <h3>Podcast Settings</h3>
+          <div class="setting-row">
+            <label for="podcast-show-name">Show Name:</label>
+            <input type="text" id="podcast-show-name" aria-label="Your podcast show name" style="flex:1;">
+          </div>
+          <div class="setting-row">
+            <label for="podcast-host-name">Host Name:</label>
+            <input type="text" id="podcast-host-name" aria-label="Host name" style="flex:1;">
+          </div>
+          <div class="setting-row">
+            <label for="podcast-show-email">Contact Email:</label>
+            <input type="email" id="podcast-show-email" aria-label="Contact email for the podcast" style="flex:1;">
+          </div>
+          <div class="setting-row">
+            <label for="podcast-show-category">Category:</label>
+            <select id="podcast-show-category" aria-label="Podcast category">
+              <option value="Technology">Technology</option>
+              <option value="Arts">Arts</option>
+              <option value="Business">Business</option>
+              <option value="Comedy">Comedy</option>
+              <option value="Education">Education</option>
+              <option value="Music">Music</option>
+              <option value="News">News & Politics</option>
+              <option value="Science">Science</option>
+              <option value="Sports">Sports</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <button id="btn-podcast-save-settings" aria-label="Save podcast settings">Save Settings</button>
+            <span id="podcast-settings-status" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-live-stream" class="app-section" role="region" aria-label="Live Stream" style="display:none">
+        <h2>Live Stream</h2>
+        <p>Stream your content to RTMP destinations with adaptive bitrate and automatic backup failover.</p>
+
+        <div id="stream-setup" role="group" aria-label="Stream setup">
+          <div class="setting-row">
+            <label for="stream-input-file">Input File:</label>
+            <input type="text" id="stream-input-file" placeholder="Path to the video file to stream..." aria-label="Path to the video or audio file" readonly style="flex:1;">
+            <button id="btn-browse-stream-input" aria-label="Browse for a file to stream">Browse</button>
+          </div>
+
+          <div class="setting-row">
+            <label for="stream-primary-url">Primary RTMP URL:</label>
+            <input type="text" id="stream-primary-url" placeholder="rtmp://live.twitch.tv/app/streamkey" aria-label="Primary RTMP stream destination URL" style="flex:1;">
+          </div>
+
+          <div class="setting-row">
+            <label for="stream-backup-url">Backup RTMP URL (optional):</label>
+            <input type="text" id="stream-backup-url" placeholder="rtmp://a.rtmp.youtube.com/live2/streamkey" aria-label="Backup RTMP stream destination for automatic failover" style="flex:1;">
+          </div>
+
+          <div class="setting-row">
+            <label for="stream-bitrate-input">Bitrate (kbps):</label>
+            <input type="number" id="stream-bitrate-input" value="6000" min="500" max="50000" step="500" aria-label="Stream bitrate in kilobits per second">
+            <span style="padding:0 8px;font-size:0.85em;color:var(--text-muted);">Typical: 6000 for 1080p, 4000 for 720p, 2000 for 480p</span>
+          </div>
+
+          <div class="setting-row">
+            <label for="stream-overlay-file">Overlay Image (optional):</label>
+            <input type="text" id="stream-overlay-file" placeholder="Path to a PNG overlay to composite on the stream" aria-label="Path to overlay image" readonly style="flex:1;">
+            <button id="btn-browse-overlay" aria-label="Browse for an overlay image">Browse</button>
+          </div>
+        </div>
+
+        <div id="stream-controls" role="group" aria-label="Stream controls" style="padding: 12px 0;">
+          <button id="btn-test-connection" aria-label="Test connection to the RTMP server">Test Connection</button>
+          <button id="btn-run-checklist" aria-label="Run pre-stream checklist">Pre-stream Checklist</button>
+          <button id="btn-start-stream" aria-label="Start streaming to the configured destinations">Start Stream</button>
+          <button id="btn-stop-stream" aria-label="Stop the current stream" disabled>Stop Stream</button>
+        </div>
+
+        <div id="stream-checklist-results" aria-live="polite" style="padding: 8px 0;"></div>
+
+        <div id="stream-status-area" class="hidden" style="padding: 12px; border: 1px solid var(--border); margin: 8px 0;" role="alert" aria-live="assertive">
+          <h3>Stream Status</h3>
+          <p id="stream-status-text" style="font-weight:bold;">Not streaming.</p>
+          <div id="stream-stats" style="padding: 8px 0; font-size:0.9em;">
+            <p>Destination: <span id="stream-stat-dest">—</span></p>
+            <p>Bitrate: <span id="stream-stat-bitrate">—</span></p>
+            <p>FPS: <span id="stream-stat-fps">—</span></p>
+            <p>Uptime: <span id="stream-stat-uptime">—</span></p>
+          </div>
+          <div id="stream-progress-bar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="height:6px;margin:4px 0;">
+            <div id="stream-progress-fill" style="width:0%;height:100%;background:var(--success);"></div>
+          </div>
+        </div>
+
+        <div id="stream-advanced" role="region" aria-label="Advanced streaming options" style="padding:8px 0;border-top:1px solid var(--border);margin-top:12px;">
+          <h3>Advanced Source & Output</h3>
+          <div class="setting-row">
+            <label for="stream-source-type">Source Type:</label>
+            <select id="stream-source-type" aria-label="Select streaming source type">
+              <option value="file">Media File</option>
+              <option value="rtsp">RTSP Camera Stream</option>
+              <option value="srt">SRT Stream</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label for="stream-output-mode">Output Mode:</label>
+            <select id="stream-output-mode" aria-label="Select output mode">
+              <option value="rtmp">RTMP (Twitch, YouTube, etc.)</option>
+              <option value="hls">HLS (HTTP Live Streaming)</option>
+            </select>
+          </div>
+          <div id="stream-quality-ladder" style="padding:4px 0;">
+            <h4>Quality Ladder</h4>
+            <p class="help-text" style="font-size:0.85em;">Configure one or more quality levels. Multiple levels are used for HLS adaptive streaming or multi-destination RTMP.</p>
+            <div id="quality-ladder-list" style="max-height:200px;overflow-y:auto;"></div>
+            <div class="setting-row">
+              <button id="btn-add-quality-tier" aria-label="Add a quality tier to the ladder">Add Quality Tier</button>
+            </div>
+          </div>
+          <div id="stream-multi-lang" style="padding:4px 0;">
+            <h4>Multi-Language Audio</h4>
+            <p class="help-text" style="font-size:0.85em;">Add alternate audio tracks. Each track maps to a different language.</p>
+            <div id="stream-lang-list"></div>
+            <div class="setting-row">
+              <button id="btn-add-lang-track" aria-label="Add a language audio track">Add Language Track</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="stream-overlay-section" style="padding: 8px 0;">
+          <h3>Overlays</h3>
+          <p>Overlays are composited onto your stream in real time. Create a simple text overlay or use a PNG image.</p>
+          <div class="setting-row">
+            <label for="overlay-type-select">Overlay Type:</label>
+            <select id="overlay-type-select" aria-label="Choose overlay type">
+              <option value="none">No overlay</option>
+              <option value="image">Image overlay (PNG)</option>
+              <option value="countdown">Countdown timer</option>
+              <option value="brb">BRB / Intermission screen</option>
+            </select>
+          </div>
+          <div id="overlay-image-row" class="setting-row hidden">
+            <label for="overlay-image-path">Image Path:</label>
+            <input type="text" id="overlay-image-path" placeholder="Path to PNG overlay image" readonly style="flex:1;">
+            <button id="btn-browse-overlay-img" aria-label="Browse for overlay image">Browse</button>
+          </div>
+          <div id="overlay-countdown-row" class="setting-row hidden">
+            <label for="overlay-countdown-minutes">Countdown minutes:</label>
+            <input type="number" id="overlay-countdown-minutes" value="5" min="1" max="60" aria-label="Countdown duration in minutes">
+            <button id="btn-generate-countdown" aria-label="Generate countdown overlay">Generate Countdown</button>
+          </div>
+          <p id="overlay-status" aria-live="polite" style="font-size:0.85em;color:var(--text-muted);padding:4px 0;">No overlay active.</p>
+        </div>
+      </section>
+
+      <section id="section-user-guide" class="app-section" role="region" aria-label="User Guide" style="display:none">
+        <h2>User Guide</h2>
+        <div class="guide-search-wrapper">
+          <label for="guide-search" class="sr-only">Search the user guide</label>
+          <input type="text" id="guide-search" placeholder="Search the guide..." aria-label="Search the user guide for a topic">
+          <span id="guide-search-status" aria-live="polite" class="sr-only"></span>
+        </div>
+        <div class="guide-layout">
+          <div class="guide-content" id="guide-content">
+            <p>Welcome to Accessible Studio. Use the sidebar to switch between modes. Press F1 for keyboard shortcuts at any time. The assistant bar at the bottom accepts natural language commands.</p>
+            <p>Key areas: <strong>Video Editor</strong> for timeline editing, <strong>Photo Editor</strong> for image editing, <strong>Music Studio</strong> for MIDI/sequencer/audio, <strong>Podcast Studio</strong> for recording/RSS, <strong>Live Stream</strong> for RTMP/HLS streaming, <strong>File Converter</strong> for format conversion, and <strong>Settings</strong> for configuration.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-settings" class="app-section" role="region" aria-label="Application Settings" style="display:none">
+        <h2>Settings</h2>
+
+        <div id="settings-theme" role="group" aria-label="Theme and appearance settings">
+          <h3>Appearance</h3>
+
+          <div class="setting-row">
+            <label for="theme-mode-select">Color Theme:</label>
+            <select id="theme-mode-select" aria-label="Choose between dark mode and light mode">
+              <option value="dark">Dark Mode (default)</option>
+              <option value="light">Light Mode</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <label for="contrast-level-select">Contrast Level:</label>
+            <select id="contrast-level-select" aria-label="Choose the contrast level for better visibility">
+              <option value="normal">Normal Contrast</option>
+              <option value="high">High Contrast</option>
+              <option value="very-high">Very High Contrast (maximum readability)</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <label for="font-size-select">Text Size:</label>
+            <select id="font-size-select" aria-label="Choose how large the text appears">
+              <option value="small">Small</option>
+              <option value="normal" selected>Normal</option>
+              <option value="large">Large</option>
+              <option value="very-large">Very Large</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <label for="slider-orientation-select">Slider Orientation:</label>
+            <select id="slider-orientation-select" aria-label="Choose whether volume and brightness sliders are horizontal or vertical">
+              <option value="horizontal" selected>Horizontal (default)</option>
+              <option value="vertical">Vertical</option>
+            </select>
+          </div>
+
+          <button id="btn-apply-theme" aria-label="Apply the selected appearance settings">Apply Changes</button>
+          <button id="btn-reset-theme" aria-label="Reset appearance settings to defaults">Reset to Defaults</button>
+        </div>
+
+        <div id="settings-gemini" role="group" aria-label="Gemini AI assistant settings">
+          <h3>AI Assistant (Gemini)</h3>
+          <p class="help-text" style="padding: 0 20px 8px;">Connect Google Gemini to get intelligent image descriptions, context-aware editing suggestions, and natural language control. Get a free API key from <a href="#" id="link-gemini-api" style="color: var(--accent);">Google AI Studio</a>.</p>
+
+          <div class="setting-row">
+            <label for="gemini-api-key">Gemini API Key:</label>
+            <input type="password" id="gemini-api-key" placeholder="Paste your API key here"
+                   aria-label="Enter your Google Gemini API key" style="flex:1; max-width: 400px;">
+            <button id="btn-save-gemini-key" aria-label="Save the Gemini API key">Save Key</button>
+          </div>
+          <p class="help-text" style="padding: 0 20px 4px; font-size: 0.8em;">Uses Gemini 2.5 Pro by default. Automatically falls back to Gemini 3 Flash or 2.5 Flash if rate limited.</p>
+          <div class="setting-row">
+            <span id="gemini-status" aria-live="polite" style="font-size: 0.85em; color: var(--text-muted);">No API key set. The assistant will use basic keyword matching.</span>
+          </div>
+        </div>
+
+        <div id="settings-accounts" role="group" aria-label="Connected platform accounts">
+          <h3>Linked Accounts</h3>
+          <p class="help-text" style="padding: 0 20px 8px;">Connect your platform accounts to unlock live streaming, uploads, analytics, and chat features. OAuth tokens are encrypted and stored locally. You can disconnect at any time.</p>
+          <div id="accounts-list" aria-live="polite">
+            <div class="account-item" data-platform="youtube">
+              <span class="account-name">YouTube</span>
+              <span class="account-status" id="account-status-youtube">Not connected</span>
+              <button class="btn-connect-account" data-platform="youtube" aria-label="Connect YouTube account">Connect</button>
+              <button class="btn-disconnect-account hidden" data-platform="youtube" aria-label="Disconnect YouTube account">Disconnect</button>
+              <div class="account-details hidden" id="account-details-youtube" aria-live="polite"></div>
+            </div>
+            <div class="account-item" data-platform="twitch">
+              <span class="account-name">Twitch</span>
+              <span class="account-status" id="account-status-twitch">Not connected</span>
+              <button class="btn-connect-account" data-platform="twitch" aria-label="Connect Twitch account">Connect</button>
+              <button class="btn-disconnect-account hidden" data-platform="twitch" aria-label="Disconnect Twitch account">Disconnect</button>
+              <div class="account-details hidden" id="account-details-twitch" aria-live="polite"></div>
+            </div>
+            <div class="account-item" data-platform="facebook">
+              <span class="account-name">Facebook</span>
+              <span class="account-status" id="account-status-facebook">Not connected</span>
+              <button class="btn-connect-account" data-platform="facebook" aria-label="Connect Facebook account">Connect</button>
+              <button class="btn-disconnect-account hidden" data-platform="facebook" aria-label="Disconnect Facebook account">Disconnect</button>
+              <div class="account-details hidden" id="account-details-facebook" aria-live="polite"></div>
+            </div>
+            <div class="account-item" data-platform="tiktok">
+              <span class="account-name">TikTok</span>
+              <span class="account-status" id="account-status-tiktok">Not connected</span>
+              <button class="btn-connect-account" data-platform="tiktok" aria-label="Connect TikTok account">Connect</button>
+              <button class="btn-disconnect-account hidden" data-platform="tiktok" aria-label="Disconnect TikTok account">Disconnect</button>
+              <div class="account-details hidden" id="account-details-tiktok" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="settings-api-keys" role="group" aria-label="API keys and secrets">
+          <h3>API Keys</h3>
+          <p class="help-text">Set API keys for services. All keys are encrypted with your system's secure storage.</p>
+          <div class="setting-row">
+            <label for="api-key-youtube">YouTube API Key</label>
+            <input type="password" id="api-key-youtube" aria-label="Enter YouTube API key" style="flex:1;font-family:monospace;">
+            <button id="btn-save-api-key-youtube" aria-label="Save YouTube API key">Save</button>
+            <button id="btn-reveal-api-key-youtube" aria-label="Reveal YouTube API key">Show</button>
+          </div>
+          <div class="setting-row">
+            <label for="api-key-twitch">Twitch Client Secret</label>
+            <input type="password" id="api-key-twitch" aria-label="Enter Twitch client secret" style="flex:1;font-family:monospace;">
+            <button id="btn-save-api-key-twitch" aria-label="Save Twitch client secret">Save</button>
+            <button id="btn-reveal-api-key-twitch" aria-label="Reveal Twitch client secret">Show</button>
+          </div>
+          <div class="setting-row">
+            <label for="api-key-openai">OpenAI API Key (for AI features)</label>
+            <input type="password" id="api-key-openai" aria-label="Enter OpenAI API key" style="flex:1;font-family:monospace;">
+            <button id="btn-save-api-key-openai" aria-label="Save OpenAI API key">Save</button>
+            <button id="btn-reveal-api-key-openai" aria-label="Reveal OpenAI API key">Show</button>
+          </div>
+        </div>
+
+        <div id="settings-project" role="group" aria-label="Project management settings">
+          <h3>Project Management</h3>
+          <div class="setting-row">
+            <label for="project-search-input">Search Projects:</label>
+            <input type="text" id="project-search-input" placeholder="Type to filter projects..." aria-label="Search your saved projects by name">
+          </div>
+          <div id="project-search-results" role="list" aria-label="Filtered project results" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+
+        <div id="settings-general" role="group" aria-label="General application settings">
+          <h3>General</h3>
+
+          <div class="setting-row">
+            <label for="autosave-toggle">
+              <input type="checkbox" id="autosave-toggle" checked aria-label="Automatically save your project every 5 minutes">
+              Auto-save project every 5 minutes
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="announce-actions-toggle">
+              <input type="checkbox" id="announce-actions-toggle" checked aria-label="Have the screen reader announce actions as they happen">
+              Announce actions to screen reader
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="hw-accel-toggle">
+              <input type="checkbox" id="hw-accel-toggle" aria-label="Use hardware acceleration for encoding if available">
+              Hardware-accelerated encoding (if available)
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="blind-first-mode-toggle">
+              <input type="checkbox" id="blind-first-mode-toggle" aria-label="Switch to a completely non-visual interface optimized for screen reader use">
+              Blind-First Design Mode (non-visual interface)
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <button id="btn-reopen-wizard" aria-label="Reopen the accessibility setup wizard">Accessibility Profile Wizard</button>
+            <span style="font-size:0.85em;color:var(--text-muted);">Re-run the first-launch setup</span>
+          </div>
+
+          <div class="setting-row">
+            <label for="rtl-mode-toggle">
+              <input type="checkbox" id="rtl-mode-toggle" aria-label="Switch layout direction to right-to-left for Arabic, Hebrew, Persian, and Urdu">
+              Right-to-Left (RTL) Layout Mode
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="low-bandwidth-toggle">
+              <input type="checkbox" id="low-bandwidth-toggle" aria-label="Disable network features to save bandwidth">
+              Low Bandwidth Mode (disable network features)
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="encryption-toggle">
+              <input type="checkbox" id="encryption-toggle" aria-label="Encrypt your project library with a password">
+              Encrypt Project Library (AES-256)
+            </label>
+          </div>
+          <div class="setting-row" id="encryption-password-row" style="display:none;">
+            <label for="encryption-password">Encryption Password:</label>
+            <input type="password" id="encryption-password" placeholder="Enter a password to encrypt your projects"
+                   aria-label="Enter a password to encrypt all project files" style="flex:1; max-width: 400px;">
+            <button id="btn-set-encryption" aria-label="Set encryption password and encrypt library">Set Password & Encrypt</button>
+          </div>
+
+          <div class="setting-row">
+            <label for="audio-cues-toggle">
+              <input type="checkbox" id="audio-cues-toggle" aria-label="Play sound effects for UI events like focus changes and completed operations">
+              Audio Cues (earcons for UI events)
+            </label>
+          </div>
+          <div class="setting-row">
+            <label for="audio-cues-volume">Audio Cue Volume:</label>
+            <input type="range" id="audio-cues-volume" min="0" max="100" value="30" step="5" aria-label="Volume level for audio cues">
+            <span id="audio-cues-volume-val" aria-hidden="true">30%</span>
+          </div>
+
+          <div class="setting-row">
+            <label for="audio-ducking-toggle">
+              <input type="checkbox" id="audio-ducking-toggle" aria-label="Automatically lower music volume when speech is detected in video clips">
+              Audio Ducking (lower music when speech plays)
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label for="duck-amount">Ducking Amount:</label>
+            <input type="range" id="duck-amount" min="10" max="90" value="30" step="5"
+                   aria-label="How much to reduce music volume during speech, currently 30 percent" aria-valuetext="30%">
+            <span id="duck-amount-val" aria-hidden="true">30%</span>
+          </div>
+
+          <div class="setting-row">
+            <label for="default-export-format">Default Export Format:</label>
+            <select id="default-export-format" aria-label="Choose the default format when exporting videos">
+              <option value="mp4" selected>MP4</option>
+              <option value="webm">WebM</option>
+              <option value="avi">AVI</option>
+              <option value="mov">MOV</option>
+              <option value="mkv">MKV</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <p id="app-info" aria-live="polite" style="font-size: 0.85em; color: var(--text-muted);"></p>
+          </div>
+
+          <div class="setting-row">
+            <button id="btn-check-dependencies" aria-label="Check that all system dependencies are working">Check System Dependencies</button>
+            <span id="dependencies-status" aria-live="polite" style="font-size:0.85em;color:var(--text-muted);padding-left:8px;"></span>
+          </div>
+
+          <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:4px;padding:12px 20px;border:1px solid var(--success);border-radius:var(--radius);">
+            <strong style="color:var(--success);">No Dark Patterns Pledge ✓</strong>
+            <p style="font-size:0.85em;color:var(--text-secondary);margin:0;">This app has no nag screens, no trials, no paywalls, no mandatory accounts, and no email collection. Every documented feature works on first launch with zero sign-up. <a href="#" id="btn-show-pledge" style="color:var(--accent);">Read the full commitments</a></p>
+          </div>
+        </div>
+
+        <div id="settings-storage" role="group" aria-label="Storage and disk space">
+          <h3>Storage</h3>
+          <div id="storage-quota-display" style="padding: 8px 20px; font-size: 0.9em;">
+            <p>Loading storage information...</p>
+          </div>
+          <div class="setting-row">
+            <label for="cleanup-days-input">Delete projects older than (days):</label>
+            <input type="number" id="cleanup-days-input" value="30" min="7" max="365" style="width:80px;">
+            <button id="btn-cleanup-old-projects" aria-label="Delete old project files">Clean Up Old Projects</button>
+          </div>
+        </div>
+
+        <div id="settings-tasks" role="group" aria-label="Background tasks">
+          <h3>Background Tasks</h3>
+          <div id="background-tasks-list" aria-live="polite" style="padding: 8px 20px; max-height: 200px; overflow-y: auto;">
+            <p class="help-text">No background tasks running.</p>
+          </div>
+        </div>
+
+        <div id="settings-audio-cues" role="group" aria-label="Audio cues">
+          <h3>Audio Cues</h3>
+          <p class="help-text">Play short earcon sounds for UI events. Useful for blind and low-vision users.</p>
+          <div class="setting-row">
+            <label for="audio-cues-toggle">Enable audio cues</label>
+            <input type="checkbox" id="audio-cues-toggle" aria-label="Toggle audio cues on or off">
+          </div>
+          <div class="setting-row">
+            <label for="audio-cues-volume">Volume: <span id="audio-cues-volume-val">30%</span></label>
+            <input type="range" id="audio-cues-volume" min="0" max="100" step="5" aria-label="Audio cue volume">
+          </div>
+        </div>
+
+        <div id="settings-dependencies" role="group" aria-label="Dependency health check">
+          <h3>Dependency Health Check</h3>
+          <p class="help-text">Verify that all required system tools (FFmpeg, etc.) are installed and working.</p>
+          <div class="setting-row">
+            <button id="btn-check-dependencies" aria-label="Run dependency health check">Check Dependencies</button>
+            <span id="dependencies-status" aria-live="polite" style="font-size:0.85em;color:var(--text-muted);padding-left:8px;"></span>
+          </div>
+        </div>
+
+        <div id="settings-pledge" role="group" aria-label="No dark patterns pledge">
+          <h3>No Dark Patterns Pledge</h3>
+          <p class="help-text">Accessible Studio respects your privacy and focus. We make these commitments to you:</p>
+          <ul style="padding: 8px 24px; line-height: 1.6;">
+            <li>No nag screens asking for reviews or ratings</li>
+            <li>No artificial trial periods or expiry dates</li>
+            <li>No paywalls — every feature is free on first launch</li>
+            <li>No mandatory accounts or email collection</li>
+            <li>No telemetry or analytics of any kind</li>
+            <li>No upgrade notifications or upsells</li>
+            <li>No misleading UI or dark patterns</li>
+          </ul>
+          <div class="setting-row">
+            <button id="btn-show-pledge" aria-label="Read the full no dark patterns pledge aloud">Read Pledge Aloud</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div id="projects-panel" role="region" aria-label="Your saved projects">
+      <h2 id="projects-panel-title">Projects</h2>
+      <div id="projects-list" role="list" aria-label="List of saved projects">
+        <p id="projects-empty-message" class="help-text">No saved projects yet. Use Save Project to create one.</p>
+      </div>
+      <div id="projects-actions" style="padding: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
+        <button id="btn-refresh-projects" aria-label="Refresh the project list">Refresh</button>
+      </div>
+    </div>
+    </div>
+
+    <!-- Background Task Bar -->
+    <div id="task-bar" role="status" aria-live="polite" class="hidden" style="position:fixed;bottom:0;left:0;right:0;background:var(--bg-panel);border-top:1px solid var(--border);padding:4px 12px;font-size:0.85em;display:flex;gap:8px;align-items:center;z-index:1000;">
+      <span id="task-bar-count" style="font-weight:bold;">0 tasks</span>
+      <span id="task-bar-status" style="flex:1;color:var(--text-muted);">No background tasks</span>
+      <button id="btn-show-task-manager" aria-label="Open background task manager" style="font-size:0.85em;">Manage</button>
+    </div>
+
+    <!-- LUT Browser Dialog -->
+    <div id="lut-dialog" class="modal hidden" role="dialog" aria-labelledby="lut-dialog-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="lut-dialog-title">Color Grading LUTs</h2>
+        <p>Apply a color look to your selected clip or export as .cube files for use in other editors.</p>
+        <div id="lut-list" role="list" aria-label="Available LUT presets" style="max-height:300px;overflow-y:auto;padding:8px 0;"></div>
+        <div id="lut-import-area" style="padding:8px 0;border-top:1px solid var(--border);margin-top:8px;">
+          <button id="btn-import-cube-lut" aria-label="Import a .cube LUT file from disk">Import .cube LUT</button>
+          <span id="lut-import-status" aria-live="polite" style="font-size:0.85em;color:var(--text-muted);padding-left:8px;"></span>
+        </div>
+        <div class="modal-actions">
+          <button id="btn-lut-close" aria-label="Close LUT browser">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Document Templates Dialog -->
+    <div id="template-dialog" class="modal hidden" role="dialog" aria-labelledby="template-dialog-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="template-dialog-title">Document Templates</h2>
+        <p>Choose a template to create a new .docx document.</p>
+        <div id="template-list" role="list" aria-label="Available document templates" style="max-height:300px;overflow-y:auto;padding:8px 0;"></div>
+        <div class="modal-actions">
+          <button id="btn-template-close" aria-label="Close template browser">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Project Dialog -->
+    <div id="save-project-dialog" class="modal hidden" role="dialog" aria-labelledby="save-project-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="save-project-title">Save Project</h2>
+        <label for="save-project-name">Project Name:</label>
+        <input type="text" id="save-project-name" placeholder="My awesome project" aria-label="Enter a name for your project">
+        <div class="modal-actions">
+          <button id="btn-save-project-confirm" aria-label="Save the project">Save</button>
+          <button id="btn-save-project-cancel" aria-label="Cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accessibility Score Dialog -->
+    <div id="accessibility-score-dialog" class="modal hidden" role="dialog" aria-labelledby="accessibility-score-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="accessibility-score-title">Content Accessibility Score</h2>
+        <p>Before export, check how accessible your content is. Higher scores mean more viewers can enjoy your video.</p>
+        <div id="accessibility-score-results" aria-live="polite" style="padding: 12px 0;">
+          <p>Run the accessibility check to see your score.</p>
+        </div>
+        <div id="accessibility-score-breakdown" style="padding: 8px 0;"></div>
+        <p id="accessibility-score-total" style="font-size: 1.4em; font-weight: bold; padding: 8px 0;" aria-live="assertive"></p>
+        <div class="modal-actions">
+          <button id="btn-run-accessibility-check" aria-label="Run the content accessibility check">Run Check</button>
+          <button id="btn-accessibility-score-close" aria-label="Close the accessibility score dialog">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Dialog -->
+    <div id="export-dialog" class="modal hidden" role="dialog" aria-labelledby="export-dialog-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="export-dialog-title">Export Video</h2>
+
+        <label for="export-format">Video Format:</label>
+        <select id="export-format" aria-label="Choose the format for your exported video">
+          <option value="mp4">MP4 (H.264) - Most Compatible</option>
+          <option value="webm">WebM (VP9) - For Web</option>
+          <option value="avi">AVI - Windows</option>
+          <option value="mov">MOV - Apple</option>
+          <option value="mkv">MKV - High Quality</option>
+        </select>
+
+        <label for="export-resolution">Resolution:</label>
+        <select id="export-resolution" aria-label="Choose the resolution for your exported video">
+          <option value="3840:2160">4K Ultra HD (3840 by 2160)</option>
+          <option value="1920:1080" selected>Full HD (1920 by 1080)</option>
+          <option value="1280:720">HD (1280 by 720)</option>
+          <option value="854:480">Standard (854 by 480)</option>
+          <option value="original">Keep Original Resolution</option>
+        </select>
+
+        <label for="export-fps">Frame Rate:</label>
+        <select id="export-fps" aria-label="Choose frames per second">
+          <option value="24">24 fps (Film)</option>
+          <option value="30" selected>30 fps (Standard)</option>
+          <option value="60">60 fps (Smooth)</option>
+        </select>
+
+        <label for="export-quality">Quality:</label>
+        <select id="export-quality" aria-label="Choose export quality, higher means bigger file">
+          <option value="high">High (8 Megabits per second)</option>
+          <option value="medium" selected>Medium (5 Megabits per second)</option>
+          <option value="low">Low (2 Megabits per second)</option>
+        </select>
+
+        <div id="export-progress-area" class="hidden">
+          <div id="export-progress" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Export progress">
+            <div id="export-progress-fill"></div>
+          </div>
+          <p id="export-status" aria-live="assertive">Preparing to export...</p>
+          <button id="btn-export-cancel-proc" aria-label="Cancel the current export" class="hidden">Cancel Export</button>
+          <button id="btn-export-open-folder" aria-label="Open the folder containing the exported file" class="hidden">Open Containing Folder</button>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-export-start" aria-label="Begin exporting your video">Export</button>
+          <button id="btn-export-cancel" aria-label="Cancel and close the export window">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Text Overlay Dialog -->
+    <div id="text-dialog" class="modal hidden" role="dialog" aria-labelledby="text-dialog-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="text-dialog-title">Add Text Overlay</h2>
+
+        <label for="text-content-input">Text to display:</label>
+        <textarea id="text-content-input" rows="3" aria-label="Enter the text you want to appear on the video"></textarea>
+
+        <label for="text-font-size-input">Font Size:</label>
+        <input type="number" id="text-font-size-input" value="48" min="8" max="200" aria-label="Font size in pixels">
+
+        <label for="text-color-input">Text Color:</label>
+        <input type="color" id="text-color-input" value="#ffffff" aria-label="Choose the color for your text">
+
+        <label for="text-position-select">Position on screen:</label>
+        <select id="text-position-select" aria-label="Where the text appears on the video">
+          <option value="top">Top of video</option>
+          <option value="center" selected>Center of video</option>
+          <option value="bottom">Bottom of video</option>
+        </select>
+
+        <label for="text-duration-input">How long to show (seconds):</label>
+        <input type="number" id="text-duration-input" value="5" min="0.5" step="0.5" aria-label="How many seconds the text appears">
+
+        <div class="modal-actions">
+          <button id="btn-text-add" aria-label="Add this text to your video">Add Text</button>
+          <button id="btn-text-cancel" aria-label="Cancel and close">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Dialog -->
+    <div id="shortcuts-dialog" class="modal hidden" role="dialog" aria-labelledby="shortcuts-title" aria-modal="true">
+      <div class="modal-content modal-large">
+        <h2 id="shortcuts-title">Keyboard Shortcuts</h2>
+        <table role="table" aria-label="All available keyboard shortcuts">
+          <thead><tr><th scope="col">What it does</th><th scope="col">Keys to press</th></tr></thead>
+          <tbody>
+            <tr><td>Play or Pause video</td><td>Space bar</td></tr>
+            <tr><td>Skip forward 5 seconds</td><td>Right Arrow</td></tr>
+            <tr><td>Skip backward 5 seconds</td><td>Left Arrow</td></tr>
+            <tr><td>Forward 1 frame</td><td>Period key</td></tr>
+            <tr><td>Backward 1 frame</td><td>Comma key</td></tr>
+            <tr><td>Split clip at playhead</td><td>S key</td></tr>
+            <tr><td>Delete selected clip</td><td>Delete key</td></tr>
+            <tr><td>Undo</td><td>Control plus Z</td></tr>
+            <tr><td>Redo</td><td>Control plus Y</td></tr>
+            <tr><td>Import media files</td><td>Control plus I</td></tr>
+            <tr><td>Import audio files</td><td>Control plus Shift plus I</td></tr>
+            <tr><td>Export video</td><td>Control plus E</td></tr>
+            <tr><td>Mute or unmute</td><td>M key</td></tr>
+            <tr><td>Where Am I? (announce playhead position)</td><td>W key</td></tr>
+            <tr><td>Volume up</td><td>Up Arrow</td></tr>
+            <tr><td>Volume down</td><td>Down Arrow</td></tr>
+            <tr><td>Paste copied clip at playhead</td><td>Control plus V</td></tr>
+            <tr><td>Save project</td><td>Control plus S</td></tr>
+            <tr><td>Focus assistant bar</td><td>Control plus B</td></tr>
+            <tr><td>Show keyboard shortcuts</td><td>F1</td></tr>
+            <tr><td>Move between items</td><td>Tab or Shift plus Tab</td></tr>
+            <tr><td>Activate a button</td><td>Enter or Space bar</td></tr>
+            <tr><td>Close any dialog</td><td>Escape key</td></tr>
+          </tbody>
+        </table>
+        <div class="modal-actions">
+          <button id="btn-shortcuts-close" aria-label="Close the keyboard shortcuts list">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placement Dialog -->
+    <div id="placement-dialog" class="modal hidden" role="dialog" aria-labelledby="placement-title" aria-modal="true">
+      <div class="modal-content">
+        <h2 id="placement-title">Where do you want to place this file?</h2>
+        <p id="placement-file-name" aria-live="polite">File: example.mp4</p>
+        <p id="placement-file-info" class="help-text">Choose where on the timeline this file should be placed.</p>
+
+        <div id="placement-options" role="group" aria-label="Placement options">
+          <button id="placement-start-track" class="placement-option" aria-label="Add to the very beginning of the track, at 0 seconds">
+            Start of Track (0 seconds)
+          </button>
+          <button id="placement-playhead" class="placement-option" aria-label="Add at the current playhead position">
+            Current Playhead Position
+          </button>
+          <button id="placement-end-track" class="placement-option" aria-label="Add to the end of the track, after all existing clips">
+            End of Track
+          </button>
+          <button id="placement-after-selected" class="placement-option" aria-label="Add right after the currently selected clip">
+            After Selected Clip
+          </button>
+          <button id="placement-before-selected" class="placement-option" aria-label="Add right before the currently selected clip">
+            Before Selected Clip
+          </button>
+        </div>
+
+        <div class="modal-actions">
+          <button id="placement-cancel" aria-label="Cancel importing this file">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Assistant Bar -->
+    <div id="global-chat-bar" role="region" aria-label="Assistant. Type a command and press Enter to get instant responses.">
+      <div id="chat-response-inline" class="hidden" role="log" aria-label="Assistant responses" aria-live="polite">
+        <div id="chat-response-body" tabindex="0"></div>
+        <button id="btn-chat-dismiss" aria-label="Dismiss assistant response" class="chat-dismiss-btn">&times;</button>
+      </div>
+      <div id="chat-input-row">
+        <label for="chat-input" class="sr-only">Ask the assistant</label>
+        <input type="text" id="chat-input" placeholder="Ask the assistant anything... (e.g. trim 5 seconds, describe image, help)"
+               aria-label="Ask the assistant. Type a command then press Enter.">
+        <button id="btn-send-chat" aria-label="Send command to assistant">Send</button>
+      </div>
+    </div>
+
+    <div id="chat-response-dialog" class="modal hidden" role="dialog" aria-labelledby="chat-response-title" aria-modal="true">
+      <div class="modal-content" id="chat-response-content">
+        <h2 id="chat-response-title">Assistant</h2>
+        <div role="region" aria-label="Assistant response" tabindex="0"></div>
+        <div class="modal-actions">
+          <button id="btn-chat-response-close" aria-label="Close assistant response">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <footer id="status-bar" role="status" aria-live="polite" aria-label="Application status">
+      <span id="status-text">Ready. Use the sidebar to navigate between sections. Type commands in the assistant bar at the bottom.</span>
+    </footer>
+    </div>
+  </div>
+
+  <script src="js/accessibility.js"></script>
+  <script src="js/timeline.js"></script>
+
+  <!-- Accessibility Profile Wizard -->
+  <div id="a11y-profile-wizard" class="modal hidden" role="dialog" aria-labelledby="a11y-wizard-title" aria-modal="true">
+    <div class="modal-content">
+      <h2 id="a11y-wizard-title" tabindex="-1">Welcome — Let's Set Up Your Experience</h2>
+      <p id="a11y-wizard-desc">Tell us about your needs so the app adapts to you. Everything can be changed later in Settings.</p>
+
+      <div id="wizard-step-1" role="group" aria-labelledby="step-1-title">
+        <h3 id="step-1-title" tabindex="-1">Step 1: Primary Input Method</h3>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-1-title">
+          <label><input type="radio" name="wizard-input" value="keyboard" checked> Keyboard only</label>
+        </div>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-1-title">
+          <label><input type="radio" name="wizard-input" value="mouse"> Mouse and keyboard</label>
+        </div>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-1-title">
+          <label><input type="radio" name="wizard-input" value="switch"> Switch device</label>
+        </div>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-1-title">
+          <label><input type="radio" name="wizard-input" value="voice"> Voice control</label>
+        </div>
+      </div>
+
+      <div id="wizard-step-2" class="hidden" role="group" aria-labelledby="step-2-title">
+        <h3 id="step-2-title" tabindex="-1">Step 2: Screen Reader</h3>
+        <div class="setting-row">
+          <label for="wizard-sr-select">Which screen reader do you use?</label>
+          <select id="wizard-sr-select" aria-describedby="a11y-wizard-desc">
+            <option value="nvda">NVDA (Windows)</option>
+            <option value="jaws">JAWS (Windows)</option>
+            <option value="narrator">Narrator (Windows)</option>
+            <option value="voiceover">VoiceOver (Mac)</option>
+            <option value="none">None / I don't use one</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="wizard-step-3" class="hidden" role="group" aria-labelledby="step-3-title">
+        <h3 id="step-3-title" tabindex="-1">Step 3: Vision Level</h3>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-3-title">
+          <label><input type="radio" name="wizard-vision" value="blind"> Blind (use screen reader exclusively)</label>
+        </div>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-3-title">
+          <label><input type="radio" name="wizard-vision" value="low-vision"> Low vision (use screen reader + visual)</label>
+        </div>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-3-title">
+          <label><input type="radio" name="wizard-vision" value="full" checked> Full vision (primarily visual)</label>
+        </div>
+      </div>
+
+      <div id="wizard-step-4" class="hidden" role="group" aria-labelledby="step-4-title">
+        <h3 id="step-4-title" tabindex="-1">Step 4: Motor Impairment</h3>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-4-title">
+          <label><input type="radio" name="wizard-motor" value="none" checked> None</label>
+        </div>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-4-title">
+          <label><input type="radio" name="wizard-motor" value="limited"> Limited (some difficulty with fine motor)</label>
+        </div>
+        <div class="setting-row" role="radiogroup" aria-labelledby="step-4-title">
+          <label><input type="radio" name="wizard-motor" value="significant"> Significant (switch access or voice control)</label>
+        </div>
+      </div>
+
+      <div id="wizard-step-5" class="hidden" role="group" aria-labelledby="step-5-title">
+        <h3 id="step-5-title" tabindex="-1">Step 5: You're All Set</h3>
+        <p>The app will adapt based on your preferences. Here's what we've configured:</p>
+        <ul id="wizard-summary" style="padding:8px 20px;" aria-live="polite"></ul>
+        <p>You can change any of these in Settings at any time.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-wizard-prev" aria-label="Previous step" disabled>Previous</button>
+        <button id="btn-wizard-next" aria-label="Next step">Next</button>
+        <button id="btn-wizard-finish" aria-label="Finish setup" class="hidden">Finish Setup</button>
+        <button id="btn-wizard-skip" aria-label="Skip setup and use defaults">Skip Setup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Rename Dialog -->
+  <div id="batch-rename-dialog" class="modal hidden" role="dialog" aria-labelledby="batch-rename-title" aria-modal="true">
+    <div class="modal-content">
+      <h2 id="batch-rename-title">Batch Rename Files</h2>
+      <p>Rename multiple files using a pattern. Use <code>{sequence}</code>, <code>{date}</code>, and <code>{original}</code> as placeholders.</p>
+      <div class="setting-row">
+        <label for="batch-rename-pattern">Pattern:</label>
+        <input type="text" id="batch-rename-pattern" value="{sequence}_{original}" aria-label="Rename pattern with placeholders" style="flex:1;font-family:monospace;">
+      </div>
+      <div class="setting-row">
+        <span style="font-size:0.85em;color:var(--text-muted);">Example: <code>2024_event_{sequence}</code> → <code>2024_event_001.jpg</code></span>
+      </div>
+      <div id="batch-rename-preview" style="max-height:200px;overflow-y:auto;padding:8px 0;"></div>
+      <div class="modal-actions">
+        <button id="btn-batch-rename-execute" aria-label="Execute the batch rename">Rename Files</button>
+        <button id="btn-batch-rename-close" aria-label="Close batch rename dialog">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Readability Analyser Dialog -->
+  <div id="readability-dialog" class="modal hidden" role="dialog" aria-labelledby="readability-title" aria-modal="true">
+    <div class="modal-content">
+      <h2 id="readability-title">Readability Analyser</h2>
+      <p>Paste text below to analyse its reading level and complexity.</p>
+      <textarea id="readability-input" rows="8" aria-label="Text to analyse" style="width:100%;padding:8px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius-sm);"></textarea>
+      <button id="btn-analyse-readability" aria-label="Analyse the entered text">Analyse</button>
+      <div id="readability-results" aria-live="polite" style="padding:8px 0;"></div>
+      <div class="modal-actions">
+        <button id="btn-readability-close" aria-label="Close readability analyser">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="about-dialog" class="modal hidden" role="dialog" aria-labelledby="about-title" aria-modal="true">
+    <div class="modal-content">
+      <h2 id="about-title">About Accessible Studio</h2>
+      <p id="about-version"></p>
+      <p>An NVDA-accessible video editor, photo editor, and file converter.</p>
+      <p>Built with accessibility first. All features work with screen readers.</p>
+      <p>Copyright &copy; 2026 Accessible Studio. MIT License.</p>
+      <div class="dialog-buttons">
+        <button id="about-close" aria-label="Close about dialog">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/player.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/photoeditor.js"></script>
+  <script src="js/ai-assistant.js"></script>
+  <script src="js/gemini.js"></script>
+  <script src="js/chatbot.js"></script>
+  <script src="js/converter.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

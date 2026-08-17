@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Package app
+        run: npx electron-packager . "Accessible Studio" --platform=win32 --arch=x64 --out=build --overwrite
+
+      - name: Zip build
+        run: Compress-Archive -Path "build/Accessible Studio-win32-x64/*" -DestinationPath "Accessible-Studio-win32-x64.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Accessible-Studio-win32-x64.zip
+          generate_release_notes: true
