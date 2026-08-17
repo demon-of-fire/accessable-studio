@@ -1,0 +1,12 @@
+node_modules/
+build/
+dist/
+.claude/
+*.exe
+*.blockmap
+latest*.yml
+builder-debug.yml
+.env
+*.log
+.DS_Store
+Thumbs.db

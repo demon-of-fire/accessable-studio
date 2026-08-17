@@ -1,0 +1,83 @@
+{
+  "name": "accessible-studio",
+  "version": "3.4.0",
+  "description": "Accessible Studio - NVDA-Accessible Video Editor, Photo Editor & Media Studio",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:nsis": "electron-builder --win nsis",
+    "build:portable": "electron-builder --win portable",
+    "dist": "npm run build:nsis"
+  },
+  "build": {
+    "appId": "com.accessible-studio.app",
+    "productName": "Accessible Studio",
+    "copyright": "Copyright © 2026 Accessible Studio",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "extraResources": [],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Accessible Studio",
+      "uninstallDisplayName": "Accessible Studio",
+      "include": "build/installer.nsh",
+      "artifactName": "Accessible-Studio-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Accessible-Studio-Portable-${version}.${ext}"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "demon-of-fire",
+      "repo": "accessable-studio"
+    }
+  },
+  "dependencies": {
+    "docx": "^8.5.0",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.9",
+    "fluent-ffmpeg": "^2.1.3",
+    "mammoth": "^1.8.0",
+    "pdf-lib": "^1.17.1",
+    "pdfkit": "^0.18.0",
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "author": "Accessible Studio",
+  "license": "MIT"
+}
