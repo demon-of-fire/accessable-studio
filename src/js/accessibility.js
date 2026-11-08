@@ -105,6 +105,40 @@ const Accessibility = (() => {
     announce('Dialog closed');
   }
 
+  /**
+   * Accessible replacement for window.prompt(), which Electron does not support.
+   * Resolves with the entered string, or null if cancelled.
+   */
+  function promptText(message, defaultValue = '') {
+    return new Promise((resolve) => {
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      const titleId = 'prompt-title-' + Date.now();
+      modal.setAttribute('aria-labelledby', titleId);
+      modal.innerHTML = `<div class="modal-content">
+        <h2 id="${titleId}"></h2>
+        <input type="text" aria-labelledby="${titleId}">
+        <div class="modal-actions"><button type="button" data-act="cancel">Cancel</button><button type="button" data-act="ok">OK</button></div>
+      </div>`;
+      modal.querySelector('h2').textContent = message;
+      const input = modal.querySelector('input');
+      input.value = defaultValue;
+      document.body.appendChild(modal);
+      showModal(modal);
+      input.focus();
+      input.select();
+      const finish = (value) => { hideModal(modal); modal.remove(); resolve(value); };
+      modal.querySelector('[data-act="ok"]').addEventListener('click', () => finish(input.value));
+      modal.querySelector('[data-act="cancel"]').addEventListener('click', () => finish(null));
+      modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target === input) { e.preventDefault(); finish(input.value); }
+        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(null); }
+      });
+    });
+  }
+
   /** Setup toolbar arrow key navigation (WAI-ARIA toolbar pattern) */
   function setupToolbarNavigation(toolbar) {
     const buttons = toolbar.querySelectorAll('button');
@@ -210,6 +244,7 @@ const Accessibility = (() => {
     trapFocus,
     showModal,
     hideModal,
+    promptText,
     setupToolbarNavigation,
     setupListboxNavigation,
   };

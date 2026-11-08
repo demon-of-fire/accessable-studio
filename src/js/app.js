@@ -3,8 +3,6 @@ const App = (() => {
   const navButtons = {
     'nav-video-editor': 'section-video-editor',
     'nav-photo-editor': 'section-photo-editor',
-    'nav-music-studio': 'section-music-studio',
-    'nav-podcast-studio': 'section-podcast-studio',
     'nav-live-stream': 'section-live-stream',
     'nav-file-converter': 'section-file-converter',
     'nav-user-guide': 'section-user-guide',
@@ -37,8 +35,6 @@ const App = (() => {
     const sectionNames = {
       'section-video-editor': 'Video Editor',
       'section-photo-editor': 'Photo Editor',
-      'section-music-studio': 'Music Studio',
-      'section-podcast-studio': 'Podcast Studio',
       'section-file-converter': 'File Converter',
       'section-user-guide': 'User Guide',
       'section-settings': 'Settings',
@@ -1897,7 +1893,8 @@ const App = (() => {
           // Developer hasn't embedded their Client IDs yet
           const urls = { youtube: 'https://console.cloud.google.com/apis/credentials', twitch: 'https://dev.twitch.tv/console/apps' };
           const url = urls[platform] || '';
-          Accessibility.announce(`One-time setup needed. Open ${platform} developer console to get a Client ID. ${url ? 'Opening link now.' : ''}`);
+          const redirect = platform === 'twitch' ? 'http://localhost:47823/oauth/twitch' : `http://127.0.0.1:47823/oauth/${platform}`;
+          Accessibility.announce(`One-time setup needed. In the ${platform} developer console, create an app with redirect URL ${redirect}, then paste its Client ID into Settings, API Keys, and press Connect again. ${url ? 'Opening the developer console now.' : ''}`);
           if (url && window.api) window.api.openExternal(url);
         } else {
           Accessibility.announce(`Connection failed: ${result.error || 'Unknown error'}`);
@@ -2285,7 +2282,7 @@ const App = (() => {
         localStorage.setItem('as-contrast', 'high');
         document.getElementById('contrast-level-select').value = 'high';
       }
-      Accessibility.announce(`Setup complete. Welcome to Accessible Studio. The app has been configured for ${inputMethod} input and ${sr} screen reader.`);
+      Accessibility.announce(`Setup complete. Welcome to Accessable Studios. The app has been configured for ${inputMethod} input and ${sr} screen reader.`);
     });
     document.getElementById('btn-wizard-skip')?.addEventListener('click', async () => {
       if (window.api) await window.api.saveAccessibilityProfile({ skipped: true, completedAt: new Date().toISOString() });
@@ -2689,7 +2686,7 @@ const App = (() => {
         const renameBtn = item.querySelector('.rename-btn');
         renameBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          const newName = prompt('Enter a new name for the project:', proj.name);
+          const newName = await Accessibility.promptText('Enter a new name for the project:', proj.name);
           if (newName && newName.trim()) {
             try {
               const result = await window.api.renameProject({ oldPath: proj.path, newName: newName.trim() });
@@ -3015,8 +3012,10 @@ const App = (() => {
       renderQualityLadder();
     });
 
-    document.getElementById('btn-add-lang-track')?.addEventListener('click', () => {
-      const lang = prompt('Enter language code (e.g., en, es, fr, de):') || 'en';
+    document.getElementById('btn-add-lang-track')?.addEventListener('click', async () => {
+      const entered = await Accessibility.promptText('Enter language code (e.g., en, es, fr, de):', 'en');
+      if (entered === null) return;
+      const lang = entered.trim().replace(/[^A-Za-z0-9-]/g, '').slice(0, 12) || 'en';
       langTracks.push({ language: lang, label: lang.toUpperCase() });
       document.getElementById('stream-lang-list').innerHTML = langTracks.map((l, i) =>
         `<div style="padding:2px 0;font-size:0.9em;">${l.label} — <button class="btn-remove-lang" data-index="${i}">Remove</button></div>`
@@ -3059,401 +3058,13 @@ const App = (() => {
     renderQualityLadder();
   }
 
-  function initMusicStudio() {
-    let currentMidiClip = null;
-
-    // MIDI Tab
-    document.querySelectorAll('.music-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.music-tab-btn').forEach(b => {
-          b.classList.remove('active'); b.setAttribute('aria-selected', 'false');
-        });
-        btn.classList.add('active'); btn.setAttribute('aria-selected', 'true');
-        document.querySelectorAll('.music-tab-panel').forEach(p => p.classList.add('hidden'));
-        const panel = document.getElementById(`music-${btn.dataset.musicTab}`);
-        if (panel) panel.classList.remove('hidden');
-        Accessibility.announce(`Switched to ${btn.textContent} panel`);
-      });
-    });
-
-    // MIDI: New clip
-    const midiClipSelect = document.getElementById('midi-clip-select');
-    document.getElementById('btn-midi-new-clip')?.addEventListener('click', () => {
-      const id = `midi-clip-${Date.now()}`;
-      const option = document.createElement('option');
-      option.value = id; option.textContent = `MIDI Clip ${midiClipSelect.options.length}`;
-      midiClipSelect?.appendChild(option);
-      midiClipSelect.value = id;
-      currentMidiClip = id;
-      if (window.api) window.api.dawSetMidi({ clipId: id, data: { notes: [], timeSignature: '4/4', keySignature: 'C major' } });
-      renderMidiNotes();
-      Accessibility.announce('New MIDI clip created');
-    });
-
-    // MIDI: Clip select
-    midiClipSelect?.addEventListener('change', () => {
-      currentMidiClip = midiClipSelect.value || null;
-      renderMidiNotes();
-    });
-
-    // MIDI: Add note
-    document.getElementById('btn-midi-add-note')?.addEventListener('click', async () => {
-      if (!currentMidiClip || !window.api) { Accessibility.announce('Create or select a MIDI clip first'); return; }
-      const pitch = parseInt(document.getElementById('midi-note-pitch')?.value) || 60;
-      const velocity = parseInt(document.getElementById('midi-note-velocity')?.value) || 100;
-      const duration = parseFloat(document.getElementById('midi-note-duration')?.value) || 1.0;
-      const note = { pitch, velocity, duration, startTime: 0 };
-      await window.api.dawAddNote({ clipId: currentMidiClip, note });
-      renderMidiNotes();
-      Accessibility.announce(`Added note ${pitch} with velocity ${velocity}`);
-    });
-
-    async function renderMidiNotes() {
-      const list = document.getElementById('midi-notes-list');
-      if (!list) return;
-      if (!currentMidiClip || !window.api) { list.innerHTML = '<p class="help-text">Select a clip to view MIDI notes.</p>'; return; }
-      const data = await window.api.dawGetMidi(currentMidiClip);
-      if (!data || !data.notes || data.notes.length === 0) {
-        list.innerHTML = '<p class="help-text">No notes in this clip. Add some notes above.</p>';
-        return;
-      }
-      const pitchNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-      list.innerHTML = data.notes.map((n, i) => {
-        const noteName = pitchNames[n.pitch % 12] + Math.floor(n.pitch / 12);
-        return `<div style="padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;">
-          <span style="flex:1;"><strong>${noteName}</strong> (${n.pitch}) — vel:${n.velocity} — dur:${n.duration} beats</span>
-          <button class="btn-midi-delete-note" data-index="${i}" aria-label="Delete note ${noteName}">Delete</button>
-        </div>`;
-      }).join('');
-      list.querySelectorAll('.btn-midi-delete-note').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (window.api) {
-            await window.api.dawRemoveNote({ clipId: currentMidiClip, noteIndex: parseInt(btn.dataset.index) });
-            renderMidiNotes();
-            Accessibility.announce('Note deleted');
-          }
-        });
-      });
-    }
-
-    // MIDI: Key/Time signature
-    document.getElementById('midi-key-signature')?.addEventListener('change', async () => {
-      if (!currentMidiClip || !window.api) return;
-      const data = await window.api.dawGetMidi(currentMidiClip);
-      data.keySignature = document.getElementById('midi-key-signature').value;
-      await window.api.dawSetMidi({ clipId: currentMidiClip, data });
-    });
-    document.getElementById('midi-time-signature')?.addEventListener('change', async () => {
-      if (!currentMidiClip || !window.api) return;
-      const data = await window.api.dawGetMidi(currentMidiClip);
-      data.timeSignature = document.getElementById('midi-time-signature').value;
-      await window.api.dawSetMidi({ clipId: currentMidiClip, data });
-    });
-
-    // DAW Tracks
-    async function renderDawTracks() {
-      const list = document.getElementById('daw-tracks-list');
-      if (!list) return;
-      if (!window.api) { list.innerHTML = ''; return; }
-      const tracks = await window.api.dawGetTracks();
-      list.innerHTML = tracks.map(t => `
-        <div style="padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;">
-          <span style="flex:1;"><strong>${t.name}</strong> — Vol:${Math.round(t.volume * 100)}% Pan:${t.pan}</span>
-          <span style="font-size:0.85em;color:var(--text-muted);">${t.muted ? 'Muted' : ''}${t.solo ? ' Solo' : ''}</span>
-          <button class="btn-daw-delete-track" data-id="${t.id}" aria-label="Delete track ${t.name}">Delete</button>
-        </div>
-      `).join('');
-      list.querySelectorAll('.btn-daw-delete-track').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (window.api) { await window.api.dawDeleteTrack(btn.dataset.id); renderDawTracks(); }
-        });
-      });
-    }
-    document.getElementById('btn-daw-add-track')?.addEventListener('click', async () => {
-      if (!window.api) return;
-      await window.api.dawCreateTrack({ name: `Track ${(await window.api.dawGetTracks()).length + 1}` });
-      renderDawTracks();
-      Accessibility.announce('New track added');
-    });
-
-    // Step Sequencer
-    let currentPattern = null;
-    const seqPatternSelect = document.getElementById('sequencer-pattern-select');
-
-    document.getElementById('btn-seq-new-pattern')?.addEventListener('click', async () => {
-      if (!window.api) return;
-      const pattern = await window.api.dawCreatePattern({ name: `Pattern ${seqPatternSelect.options.length}` });
-      const option = document.createElement('option');
-      option.value = pattern.pattern.id; option.textContent = pattern.pattern.name;
-      seqPatternSelect?.appendChild(option);
-      seqPatternSelect.value = pattern.pattern.id;
-      currentPattern = pattern.pattern.id;
-      renderSequencer();
-      Accessibility.announce('New step sequencer pattern created');
-    });
-
-    seqPatternSelect?.addEventListener('change', () => {
-      currentPattern = seqPatternSelect.value || null;
-      renderSequencer();
-    });
-
-    document.getElementById('sequencer-bpm')?.addEventListener('change', async () => {
-      if (!currentPattern || !window.api) return;
-      await window.api.dawUpdatePattern({ patternId: currentPattern, updates: { bpm: parseInt(document.getElementById('sequencer-bpm').value) || 120 } });
-    });
-    document.getElementById('sequencer-swing')?.addEventListener('change', async () => {
-      if (!currentPattern || !window.api) return;
-      await window.api.dawUpdatePattern({ patternId: currentPattern, updates: { swing: parseInt(document.getElementById('sequencer-swing').value) || 0 } });
-    });
-
-    async function renderSequencer() {
-      const list = document.getElementById('sequencer-steps-list');
-      if (!list) return;
-      if (!currentPattern || !window.api) { list.innerHTML = '<p class="help-text">Select or create a pattern to edit steps.</p>'; return; }
-      const patterns = await window.api.dawGetPatterns();
-      const pat = patterns.find(p => p.id === currentPattern);
-      if (!pat || !pat.steps || pat.steps.length === 0) {
-        list.innerHTML = '<p class="help-text">No steps in this pattern. Steps would appear here in a grid format.</p>';
-        return;
-      }
-      list.innerHTML = pat.steps.map((s, i) =>
-        `<div style="padding:2px 0;">Step ${i + 1}: Pitch ${s.pitch}, Vel ${s.velocity}, Steps: [${s.steps.map(ss => ss ? 'X' : '.').join(' ')}]</div>`
-      ).join('');
-    }
-
-    // Stems Separator
-    let stemsInputFile = '';
-    document.getElementById('btn-stems-select')?.addEventListener('click', async () => {
-      if (!window.api) return;
-      const result = await window.api.showOpenDialog({
-        title: 'Select audio file for stem separation',
-        filters: [{ name: 'Audio Files', extensions: ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'wma'] }],
-        properties: ['openFile'],
-      });
-      if (!result.canceled && result.filePaths[0]) {
-        stemsInputFile = result.filePaths[0];
-        document.getElementById('stems-file-display').textContent = result.filePaths[0].split(/[/\\]/).pop();
-      }
-    });
-
-    document.getElementById('btn-stems-separate')?.addEventListener('click', async () => {
-      if (!stemsInputFile || !window.api) { Accessibility.announce('Select an audio file first'); return; }
-      const stems = [];
-      if (document.getElementById('stem-vocals')?.checked) stems.push('vocals');
-      if (document.getElementById('stem-drums')?.checked) stems.push('drums');
-      if (document.getElementById('stem-bass')?.checked) stems.push('bass');
-      if (document.getElementById('stem-other')?.checked) stems.push('other');
-      if (stems.length === 0) { Accessibility.announce('Select at least one stem type'); return; }
-      const statusEl = document.getElementById('stems-status');
-      if (statusEl) statusEl.textContent = 'Separating stems...';
-      Accessibility.announce('Separating audio into stems. This may take a while.');
-      const outputDir = stemsInputFile.substring(0, stemsInputFile.lastIndexOf('\\'));
-      const result = await window.api.dawSeparateStems({ inputPath: stemsInputFile, outputDir, stems });
-      if (statusEl) statusEl.textContent = result.success ? 'Done!' : 'Failed';
-      const resultsEl = document.getElementById('stems-results');
-      if (resultsEl) {
-        resultsEl.innerHTML = result.results.map(r =>
-          `<div style="padding:4px 0;">${r.stem}: ${r.success ? 'OK - ' + r.path.split(/[/\\]/).pop() : 'Failed - ' + (r.error || '')}</div>`
-        ).join('');
-      }
-      if (result.success) Accessibility.announce('Stem separation complete');
-    });
-
-    // VST Scan
-    document.getElementById('btn-vst-scan')?.addEventListener('click', async () => {
-      if (!window.api) return;
-      const result = await window.api.showOpenDialog({
-        title: 'Select VST folder to scan',
-        properties: ['openDirectory'],
-      });
-      if (result.canceled) return;
-      document.getElementById('vst-scan-status').textContent = 'Scanning...';
-      const scanResult = await window.api.dawScanVst(result.filePaths[0]);
-      document.getElementById('vst-scan-status').textContent = scanResult.success ? `Found ${scanResult.plugins.length} plugins` : 'Scan failed';
-      const list = document.getElementById('vst-plugins-list');
-      if (list) {
-        if (!scanResult.success || scanResult.plugins.length === 0) {
-          list.innerHTML = '<p class="help-text">No VST plugins found in that folder.</p>';
-        } else {
-          list.innerHTML = scanResult.plugins.map(p =>
-            `<div style="padding:4px 0;border-bottom:1px solid var(--border);">${p.name} (${p.format}) — ${(p.size / 1024).toFixed(1)} KB</div>`
-          ).join('');
-        }
-      }
-      Accessibility.announce(`VST scan complete. Found ${scanResult.plugins.length} plugins.`);
-    });
-  }
-
-  function initPodcastStudio() {
-    let isRecording = false;
-
-    // Podcast Tab switching
-    document.querySelectorAll('.podcast-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.podcast-tab-btn').forEach(b => {
-          b.classList.remove('active'); b.setAttribute('aria-selected', 'false');
-        });
-        btn.classList.add('active'); btn.setAttribute('aria-selected', 'true');
-        document.querySelectorAll('.podcast-tab-panel').forEach(p => p.classList.add('hidden'));
-        const panel = document.getElementById(`podcast-${btn.dataset.podcastTab}`);
-        if (panel) panel.classList.remove('hidden');
-        Accessibility.announce(`Switched to ${btn.textContent} panel`);
-      });
-    });
-
-    // Load settings
-    if (window.api) {
-      window.api.podcastGetConfig().then(config => {
-        if (config) {
-          document.getElementById('podcast-show-name').value = config.showName || '';
-          document.getElementById('podcast-host-name').value = config.hostName || '';
-          document.getElementById('podcast-show-email').value = config.showEmail || '';
-          document.getElementById('podcast-show-category').value = config.showCategory || 'Technology';
-          document.getElementById('podcast-recording-dir').value = config.recordingDir || '';
-        }
-      });
-    }
-
-    // Save settings
-    document.getElementById('btn-podcast-save-settings')?.addEventListener('click', async () => {
-      if (!window.api) return;
-      const config = {
-        showName: document.getElementById('podcast-show-name').value,
-        hostName: document.getElementById('podcast-host-name').value,
-        showEmail: document.getElementById('podcast-show-email').value,
-        showCategory: document.getElementById('podcast-show-category').value,
-        recordingDir: document.getElementById('podcast-recording-dir').value,
-      };
-      await window.api.podcastSaveConfig(config);
-      document.getElementById('podcast-settings-status').textContent = 'Settings saved';
-      Accessibility.announce('Podcast settings saved');
-    });
-
-    // Browse recording directory
-    document.getElementById('btn-podcast-browse-dir')?.addEventListener('click', async () => {
-      if (!window.api) return;
-      const result = await window.api.showOpenDialog({
-        title: 'Select podcast recording directory',
-        properties: ['openDirectory'],
-      });
-      if (!result.canceled && result.filePaths[0]) {
-        document.getElementById('podcast-recording-dir').value = result.filePaths[0];
-      }
-    });
-
-    // Refresh audio device list
-    async function loadAudioDevices() {
-      if (!window.api) return;
-      const sel = document.getElementById('podcast-audio-device');
-      if (!sel) return;
-      try {
-        const devices = await window.api.podcastListDevices();
-        sel.innerHTML = '<option value="">System Audio (what you hear)</option>';
-        if (devices && devices.length > 0) {
-          devices.forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d;
-            opt.textContent = d;
-            sel.appendChild(opt);
-          });
-        }
-      } catch (e) { /* device list unavailable */ }
-    }
-    loadAudioDevices();
-    document.getElementById('btn-podcast-refresh-devices')?.addEventListener('click', loadAudioDevices);
-
-    // Record
-    document.getElementById('btn-podcast-record')?.addEventListener('click', async () => {
-      if (!window.api) return;
-      if (!isRecording) {
-        const dir = document.getElementById('podcast-recording-dir').value || '';
-        if (!dir) { Accessibility.announce('Set a recording directory first'); return; }
-        const filename = `podcast-ep-${Date.now()}.mp3`;
-        const outputPath = `${dir}\\${filename}`;
-        const deviceSelect = document.getElementById('podcast-audio-device');
-        const audioDevice = deviceSelect ? deviceSelect.value : '';
-        const result = await window.api.podcastStartRecording({ outputPath, audioDevice });
-        if (result.success) {
-          isRecording = true;
-          document.getElementById('podcast-record-label').textContent = 'Stop Recording';
-          document.getElementById('podcast-record-status').textContent = 'Recording...';
-          Accessibility.announce('Recording started');
-        }
-      } else {
-        const result = await window.api.podcastStopRecording();
-        isRecording = false;
-        document.getElementById('podcast-record-label').textContent = 'Start Recording';
-        document.getElementById('podcast-record-status').textContent = result.success ? 'Recording stopped' : 'Error stopping';
-        if (result.success) renderPodcastEpisodes();
-        Accessibility.announce('Recording stopped');
-      }
-    });
-
-    // Render episodes
-    async function renderPodcastEpisodes() {
-      const list = document.getElementById('podcast-episodes-list');
-      if (!list || !window.api) return;
-      const episodes = await window.api.podcastGetEpisodes();
-      if (!episodes || episodes.length === 0) {
-        list.innerHTML = '<p class="help-text">No episodes yet.</p>';
-        return;
-      }
-      list.innerHTML = episodes.map(ep =>
-        `<div style="padding:4px 0;border-bottom:1px solid var(--border);">${ep.title} — ${Math.floor(ep.duration / 60)}:${String(ep.duration % 60).padStart(2, '0')} — ${new Date(ep.createdAt).toLocaleDateString()}</div>`
-      ).join('');
-    }
-
-    // ID3 Tags
-    let id3File = '';
-    document.getElementById('btn-id3-select')?.addEventListener('click', async () => {
-      if (!window.api) return;
-      const result = await window.api.showOpenDialog({
-        title: 'Select MP3 file for ID3 editing',
-        filters: [{ name: 'MP3 Audio', extensions: ['mp3'] }],
-        properties: ['openFile'],
-      });
-      if (!result.canceled && result.filePaths[0]) {
-        id3File = result.filePaths[0];
-        document.getElementById('id3-file-display').textContent = result.filePaths[0].split(/[/\\]/).pop();
-      }
-    });
-
-    document.getElementById('btn-id3-write')?.addEventListener('click', async () => {
-      if (!id3File || !window.api) { Accessibility.announce('Select an MP3 file first'); return; }
-      const title = document.getElementById('id3-title').value;
-      const artist = document.getElementById('id3-artist').value;
-      const album = document.getElementById('id3-album').value;
-      const year = document.getElementById('id3-year').value;
-      const genre = document.getElementById('id3-genre').value;
-      document.getElementById('id3-status').textContent = 'Writing tags...';
-      const result = await window.api.podcastWriteId3({ filePath: id3File, title, artist, album, year, genre });
-      document.getElementById('id3-status').textContent = result.success ? 'Tags written successfully' : 'Failed';
-      Accessibility.announce(result.success ? 'ID3 tags written successfully' : 'Failed to write ID3 tags');
-    });
-
-    // RSS
-    document.getElementById('btn-rss-generate')?.addEventListener('click', async () => {
-      if (!window.api) return;
-      const result = await window.api.showSaveDialog({
-        title: 'Save RSS feed',
-        defaultPath: 'podcast-feed.xml',
-        filters: [{ name: 'RSS Feed', extensions: ['xml'] }],
-      });
-      if (result.canceled) return;
-      document.getElementById('rss-status').textContent = 'Generating...';
-      const rssResult = await window.api.podcastGenerateRss({ outputPath: result.filePath });
-      document.getElementById('rss-status').textContent = rssResult.success ? 'RSS feed generated!' : 'Failed';
-      Accessibility.announce(rssResult.success ? 'RSS feed generated successfully' : 'Failed to generate RSS feed');
-    });
-  }
-
   function init() {
     console.log('DEBUG: init() function called');
     const initFunctions = [
       initNavigation, initMenuBar, initVideoToolbar, initPhotoToolbar, 
       initExportDialog, initAccessibilityScore, initRawPhoto, initPdfForm, 
-      initEpubReader, initTextDialog, initStreaming, initMusicStudio, 
-      initPodcastStudio, initSettings, initKeyboardShortcuts, initDialogs, 
+      initEpubReader, initTextDialog, initStreaming, 
+      initSettings, initKeyboardShortcuts, initDialogs, 
       initPlacementDialog, initIPC
     ];
 
@@ -3486,7 +3097,7 @@ const App = (() => {
     const aboutVersion = document.getElementById('about-version');
     if (aboutVersion && window.api) {
       window.api.getAppVersion().then(v => {
-        aboutVersion.textContent = `Accessible Studio v${v}`;
+        aboutVersion.textContent = `Accessable Studios v${v}`;
       });
     }
 
@@ -3494,7 +3105,7 @@ const App = (() => {
     const appInfo = document.getElementById('app-info');
     if (appInfo && window.api) {
       window.api.getAppVersion().then(v => {
-        appInfo.textContent = `Accessible Studio v${v} — Built with Electron`;
+        appInfo.textContent = `Accessable Studios v${v} — Built with Electron`;
       });
     }
 
@@ -3524,7 +3135,7 @@ const App = (() => {
     document.getElementById('btn-refresh-projects')?.addEventListener('click', loadProjectList);
 
     Accessibility.setStatus('Ready. Use the sidebar to navigate between sections.');
-    Accessibility.announce('Accessible Studio loaded. Use the sidebar buttons to switch between Video Editor, Photo Editor, File Converter, User Guide, and Settings.');
+    Accessibility.announce('Accessable Studios loaded. Use the sidebar buttons to switch between Video Editor, Photo Editor, File Converter, User Guide, and Settings.');
 
     let clipboardClip = null;
   let clipboardAction = null;

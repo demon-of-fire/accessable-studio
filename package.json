@@ -1,7 +1,7 @@
 {
-  "name": "accessible-studio",
-  "version": "3.4.0",
-  "description": "Accessible Studio - NVDA-Accessible Video Editor, Photo Editor & Media Studio",
+  "name": "accessable-studios",
+  "version": "3.5.0",
+  "description": "Accessable Studios - NVDA-Accessible Video Editor, Photo Editor & Media Studio",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -13,9 +13,9 @@
     "dist": "npm run build:nsis"
   },
   "build": {
-    "appId": "com.accessible-studio.app",
-    "productName": "Accessible Studio",
-    "copyright": "Copyright © 2026 Accessible Studio",
+    "appId": "com.accessable-studios.app",
+    "productName": "Accessable Studios",
+    "copyright": "Copyright © 2026 Accessable Studios",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -50,13 +50,13 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Accessible Studio",
-      "uninstallDisplayName": "Accessible Studio",
+      "shortcutName": "Accessable Studios",
+      "uninstallDisplayName": "Accessable Studios",
       "include": "build/installer.nsh",
-      "artifactName": "Accessible-Studio-Setup-${version}.${ext}"
+      "artifactName": "Accessable-Studios-Setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "Accessible-Studio-Portable-${version}.${ext}"
+      "artifactName": "Accessable-Studios-Portable-${version}.${ext}"
     },
     "publish": {
       "provider": "github",
@@ -78,6 +78,6 @@
     "electron": "^33.0.0",
     "electron-builder": "^24.13.3"
   },
-  "author": "Accessible Studio",
+  "author": "Accessable Studios",
   "license": "MIT"
 }

@@ -1,5 +1,5 @@
 /* ==========================================
-   Accessible Studio - Main Stylesheet
+   Accessable Studios - Main Stylesheet
    Supports dark/light mode + contrast levels
    NVDA-friendly, all buttons, all labeled
    ========================================== */
@@ -2336,7 +2336,7 @@ body.rtl-mode .setting-row label {
   padding: 2px 0;
 }
 
-/* Music Studio & Podcast Studio tabs */
+/* Tab lists */
 [role="tablist"] {
   display: flex;
   gap: 2px;
@@ -2357,12 +2357,4 @@ body.rtl-mode .setting-row label {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
-}
-.music-tab-panel,
-.podcast-tab-panel {
-  padding: 8px 0;
-}
-.music-tab-panel.hidden,
-.podcast-tab-panel.hidden {
-  display: none;
 }

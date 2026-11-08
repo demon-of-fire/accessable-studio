@@ -8,6 +8,34 @@ const crypto = require('crypto');
 const os = require('os');
 const { autoUpdater } = require('electron-updater');
 const Store = require('electron-store');
+
+// One-time migration: the app was previously named "Accessible Studio".
+// Renaming changes the userData folder, so copy settings,
+// saved projects and localStorage across before electron-store opens config.json.
+(function migrateLegacyUserData() {
+  try {
+    const current = app.getPath('userData');
+    if (fs.existsSync(path.join(current, 'config.json')) || fs.existsSync(path.join(current, 'projects'))) return;
+    const appData = app.getPath('appData');
+    const legacyNames = ['accessible-studio', 'Accessible Studio'];
+    const skip = new Set(['Cache', 'Code Cache', 'GPUCache', 'DawnGraphiteCache', 'DawnWebGPUCache', 'Crashpad',
+      'lockfile', 'SingletonLock', 'SingletonCookie', 'SingletonSocket', 'DevToolsActivePort']);
+    for (const name of legacyNames) {
+      const legacy = path.join(appData, name);
+      if (path.resolve(legacy) === path.resolve(current) || !fs.existsSync(legacy)) continue;
+      fs.mkdirSync(current, { recursive: true });
+      for (const entry of fs.readdirSync(legacy)) {
+        if (skip.has(entry)) continue;
+        try { fs.cpSync(path.join(legacy, entry), path.join(current, entry), { recursive: true, force: false, errorOnExist: false }); } catch (e) { /* best effort */ }
+      }
+      console.log(`Migrated user data from ${legacy}`);
+      return;
+    }
+  } catch (e) {
+    console.error('User data migration failed:', e.message);
+  }
+})();
+
 const store = new Store();
 
 let mainWindow;
@@ -160,7 +188,7 @@ function createWindow() {
     height: 900,
     minWidth: 800,
     minHeight: 600,
-    title: 'Accessible Studio',
+    title: 'Accessable Studios',
     backgroundColor: '#000000',
     show: false,
 
@@ -308,7 +336,7 @@ async function handleImportAudio() {
 async function handleOpenProject() {
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Open Project',
-    filters: [{ name: 'Accessible Studio Project', extensions: ['asproj'] }],
+    filters: [{ name: 'Accessable Studios Project', extensions: ['asproj'] }],
     properties: ['openFile'],
   });
   if (!result.canceled && result.filePaths.length > 0) {
@@ -352,7 +380,7 @@ function checkForRecovery() {
         const data = fs.readFileSync(recoveryFilePath, 'utf-8');
         const projectData = JSON.parse(data);
         sendToRenderer('project-loaded', projectData);
-        notifyUser('Accessible Studio', 'Your previous project has been restored from auto-save.');
+        notifyUser('Accessable Studios', 'Your previous project has been restored from auto-save.');
       } catch (e) {
         dialog.showErrorBox('Recovery Error', 'Could not read the recovery file. It may be corrupted.');
       }
@@ -464,7 +492,7 @@ ipcMain.handle('get-hardware-accel', () => hardwareAccelAvailable);
 ipcMain.handle('save-project', async (event, projectData) => {
   const result = await dialog.showSaveDialog(mainWindow, {
     title: 'Save Project',
-    filters: [{ name: 'Accessible Studio Project', extensions: ['asproj'] }],
+    filters: [{ name: 'Accessable Studios Project', extensions: ['asproj'] }],
   });
   if (!result.canceled) {
     backupProject(result.filePath);
@@ -1226,359 +1254,6 @@ ipcMain.handle('delete-encrypted-setting', async (event, key) => {
 });
 
 // ==========================================
-// DAW / Music Production
-// ==========================================
-
-// MIDI data store: { clipId: { notes: [{pitch, startTime, duration, velocity}], timeSignature, keySignature } }
-const midiData = {};
-const dawTracks = {}; // { trackId: { name, volume, pan, muted, solo, armed, instrument } }
-const stepSequencerPatterns = {}; // { patternId: { name, steps: [{pitch, velocity, steps: boolean[]}], bpm, swing } }
-
-// MIDI Note CRUD
-ipcMain.handle('daw-get-midi', async (event, clipId) => {
-  return midiData[clipId] || { notes: [], timeSignature: '4/4', keySignature: 'C major' };
-});
-
-ipcMain.handle('daw-set-midi', async (event, { clipId, data }) => {
-  midiData[clipId] = data;
-  return { success: true };
-});
-
-ipcMain.handle('daw-add-note', async (event, { clipId, note }) => {
-  if (!midiData[clipId]) midiData[clipId] = { notes: [], timeSignature: '4/4', keySignature: 'C major' };
-  midiData[clipId].notes.push(note);
-  return { success: true, note };
-});
-
-ipcMain.handle('daw-remove-note', async (event, { clipId, noteIndex }) => {
-  if (midiData[clipId] && midiData[clipId].notes[noteIndex] !== undefined) {
-    midiData[clipId].notes.splice(noteIndex, 1);
-    return { success: true };
-  }
-  return { success: false, error: 'Note not found' };
-});
-
-ipcMain.handle('daw-update-note', async (event, { clipId, noteIndex, note }) => {
-  if (midiData[clipId] && midiData[clipId].notes[noteIndex] !== undefined) {
-    Object.assign(midiData[clipId].notes[noteIndex], note);
-    return { success: true };
-  }
-  return { success: false, error: 'Note not found' };
-});
-
-// DAW Track management
-ipcMain.handle('daw-create-track', async (event, track) => {
-  const id = track.id || `track-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  dawTracks[id] = { name: 'New Track', volume: 1.0, pan: 0, muted: false, solo: false, armed: false, instrument: 'piano', ...track, id };
-  return { success: true, track: dawTracks[id] };
-});
-
-ipcMain.handle('daw-get-tracks', async () => Object.values(dawTracks));
-
-ipcMain.handle('daw-update-track', async (event, { trackId, updates }) => {
-  if (dawTracks[trackId]) {
-    Object.assign(dawTracks[trackId], updates);
-    return { success: true, track: dawTracks[trackId] };
-  }
-  return { success: false, error: 'Track not found' };
-});
-
-ipcMain.handle('daw-delete-track', async (event, trackId) => {
-  delete dawTracks[trackId];
-  return { success: true };
-});
-
-// Step Sequencer
-ipcMain.handle('daw-create-pattern', async (event, pattern) => {
-  const id = pattern.id || `pattern-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  stepSequencerPatterns[id] = { name: 'New Pattern', steps: [], bpm: 120, swing: 0, ...pattern, id };
-  return { success: true, pattern: stepSequencerPatterns[id] };
-});
-
-ipcMain.handle('daw-get-patterns', async () => Object.values(stepSequencerPatterns));
-
-ipcMain.handle('daw-update-pattern', async (event, { patternId, updates }) => {
-  if (stepSequencerPatterns[patternId]) {
-    Object.assign(stepSequencerPatterns[patternId], updates);
-    return { success: true, pattern: stepSequencerPatterns[patternId] };
-  }
-  return { success: false, error: 'Pattern not found' };
-});
-
-ipcMain.handle('daw-delete-pattern', async (event, patternId) => {
-  delete stepSequencerPatterns[patternId];
-  return { success: true };
-});
-
-// VST Plugin scanning (store VST paths and metadata)
-const vstPlugins = [];
-ipcMain.handle('daw-scan-vst', async (event, directory) => {
-  // Scan a directory for VST/DLL/AU files
-  const results = [];
-  try {
-    const entries = fs.readdirSync(directory);
-    const vstExts = process.platform === 'win32' ? ['.dll'] : process.platform === 'darwin' ? ['.vst3', '.component'] : ['.so'];
-    for (const entry of entries) {
-      const ext = path.extname(entry).toLowerCase();
-      if (vstExts.includes(ext)) {
-        const fullPath = path.join(directory, entry);
-        const stat = fs.statSync(fullPath);
-        results.push({ name: path.basename(entry, ext), path: fullPath, format: ext, size: stat.size });
-      }
-    }
-    vstPlugins.push(...results);
-  } catch (e) { return { success: false, error: e.message }; }
-  return { success: true, plugins: results };
-});
-
-ipcMain.handle('daw-get-vst-plugins', async () => vstPlugins);
-
-// Stems Separator (basic FFmpeg-based separation)
-ipcMain.handle('daw-separate-stems', async (event, { inputPath, outputDir, stems }) => {
-  // stems: array of stem types ['vocals', 'drums', 'bass', 'other']
-  // Uses FFmpeg pan/equalizer filters for basic separation
-  const results = [];
-  const baseName = path.basename(inputPath, path.extname(inputPath));
-
-  const stemFilters = {
-    'vocals': 'pan=|stereo|FL=FC|FR=FC', // Center channel extraction (crude vocal isolation)
-    'drums': 'lowpass=f=200,highpass=f=80', // Low-mid range
-    'bass': 'lowpass=f=150', // Low frequencies
-    'other': 'highpass=f=200', // Everything else
-  };
-
-  for (const stem of stems) {
-    const filter = stemFilters[stem];
-    if (!filter) continue;
-    const outputPath = path.join(outputDir, `${baseName}_${stem}.wav`);
-    try {
-      await new Promise((resolve, reject) => {
-        const proc = spawn(ffmpegPath, ['-i', inputPath, '-af', filter, '-y', outputPath]);
-        proc.on('close', (code) => {
-          if (code === 0) {
-            results.push({ stem, path: outputPath, success: true });
-            resolve();
-          } else {
-            results.push({ stem, error: `FFmpeg exit code ${code}`, success: false });
-            resolve();
-          }
-        });
-        proc.on('error', (err) => {
-          results.push({ stem, error: err.message, success: false });
-          resolve();
-        });
-      });
-    } catch (e) {
-      results.push({ stem, error: e.message, success: false });
-    }
-  }
-  return { success: true, results };
-});
-
-// ==========================================
-// Podcast Studio
-// ==========================================
-const podcastConfig = { recordingDir: '', hostName: '', showName: '', showEmail: '', showCategory: 'Technology' };
-const podcastEpisodes = [];
-
-ipcMain.handle('podcast-get-config', async () => podcastConfig);
-ipcMain.handle('podcast-save-config', async (event, config) => {
-  Object.assign(podcastConfig, config);
-  return { success: true };
-});
-
-ipcMain.handle('podcast-start-recording', async (event, { guestUrl, outputPath, audioDevice }) => {
-  try {
-    const platform = process.platform;
-    let inputDevice = [];
-    const device = audioDevice || podcastConfig.audioDevice || '';
-    if (device) {
-      if (platform === 'win32') {
-        inputDevice = ['-f', 'dshow', '-i', device];
-      } else if (platform === 'darwin') {
-        inputDevice = ['-f', 'coreaudio', '-i', device];
-      } else {
-        inputDevice = ['-f', 'pulse', '-i', device];
-      }
-    } else {
-      if (platform === 'win32') {
-        inputDevice = ['-f', 'dshow', '-i', 'audio=virtual-audio-capturer'];
-      } else if (platform === 'darwin') {
-        inputDevice = ['-f', 'coreaudio', '-i', ':default'];
-      } else {
-        inputDevice = ['-f', 'pulse', '-i', 'default'];
-      }
-    }
-    const proc = spawn(ffmpegPath, [...inputDevice, '-c:a', 'libmp3lame', '-b:a', '192k', '-y', outputPath]);
-    proc.stderr.on('data', () => {});
-    podcastConfig._recordingProc = proc;
-    podcastConfig._recordingPath = outputPath;
-    podcastConfig._recordingStart = Date.now();
-    return { success: true, message: 'Recording started' };
-  } catch (e) {
-    return { success: false, error: e.message };
-  }
-});
-
-ipcMain.handle('podcast-list-devices', async () => {
-  try {
-    const platform = process.platform;
-    if (platform === 'win32') {
-      const proc = spawn(ffmpegPath, ['-list_devices', 'true', '-f', 'dshow', '-i', 'dummy']);
-      const output = await new Promise((resolve) => {
-        let data = '';
-        proc.stderr.on('data', (d) => { data += d.toString(); });
-        proc.on('close', () => resolve(data));
-        setTimeout(() => { proc.kill(); resolve(data); }, 3000);
-      });
-      const devices = [];
-      const lines = output.split('\n');
-      let currentType = '';
-      for (const line of lines) {
-        if (line.includes('DirectShow audio devices')) {
-          currentType = 'audio';
-        } else if (line.includes('DirectShow video devices')) {
-          currentType = 'video';
-        } else if (currentType === 'audio' && line.includes('"')) {
-          const m = line.match(/"([^"]+)"/);
-          if (m) devices.push(m[1]);
-        }
-      }
-      return devices;
-    } else if (platform === 'darwin') {
-      const proc = spawn(ffmpegPath, ['-f', 'coreaudio', '-list_devices', 'true', '-i', '']);
-      const output = await new Promise((resolve) => {
-        let data = '';
-        proc.stderr.on('data', (d) => { data += d.toString(); });
-        proc.on('close', () => resolve(data));
-        setTimeout(() => { proc.kill(); resolve(data); }, 3000);
-      });
-      const devices = [];
-      const lines = output.split('\n');
-      for (const line of lines) {
-        const m = line.match(/\[(\d+)\]\s+(.+)/);
-        if (m) devices.push(m[2].trim());
-      }
-      return devices;
-    } else {
-      const proc = spawn(ffmpegPath, ['-f', 'pulse', '-list_devices', 'true', '-i', '']);
-      const output = await new Promise((resolve) => {
-        let data = '';
-        proc.stderr.on('data', (d) => { data += d.toString(); });
-        proc.on('close', () => resolve(data));
-        setTimeout(() => { proc.kill(); resolve(data); }, 3000);
-      });
-      const devices = [];
-      const lines = output.split('\n');
-      for (const line of lines) {
-        const m = line.match(/^\s+(\S.+)$/);
-        if (m && !m[1].startsWith('[')) devices.push(m[1].trim());
-      }
-      return devices.length ? devices : ['default'];
-    }
-  } catch (e) {
-    return [];
-  }
-});
-
-ipcMain.handle('podcast-stop-recording', async () => {
-  try {
-    if (podcastConfig._recordingProc) {
-      podcastConfig._recordingProc.kill('SIGTERM');
-      const duration = Math.round((Date.now() - (podcastConfig._recordingStart || Date.now())) / 1000);
-      podcastConfig._recordingProc = null;
-      podcastConfig._recordingStart = null;
-      const episode = {
-        id: `ep-${Date.now()}`,
-        title: `Episode ${podcastEpisodes.length + 1}`,
-        filePath: podcastConfig._recordingPath,
-        duration,
-        createdAt: new Date().toISOString(),
-      };
-      podcastEpisodes.push(episode);
-      return { success: true, episode };
-    }
-    return { success: false, error: 'No recording in progress' };
-  } catch (e) {
-    return { success: false, error: e.message };
-  }
-});
-
-ipcMain.handle('podcast-get-episodes', async () => podcastEpisodes);
-
-ipcMain.handle('podcast-generate-rss', async (event, { outputPath }) => {
-  try {
-    const { showName, showEmail, showCategory } = podcastConfig;
-    const now = new Date().toUTCString();
-    let items = '';
-    for (const ep of podcastEpisodes) {
-      const size = fs.existsSync(ep.filePath) ? fs.statSync(ep.filePath).size : 0;
-      const pubDate = new Date(ep.createdAt).toUTCString();
-      items += `    <item>
-      <title>${escapeXml(ep.title)}</title>
-      <enclosure url="${escapeXml(ep.filePath)}" length="${size}" type="audio/mpeg" />
-      <guid>${ep.id}</guid>
-      <pubDate>${pubDate}</pubDate>
-      <duration>${ep.duration}</duration>
-    </item>\n`;
-    }
-    const rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
-  <channel>
-    <title>${escapeXml(showName || 'My Podcast')}</title>
-<link>https://accessiblestudio.example.com</link>
-        <description>Podcast generated by Accessible Studio</description>
-    <language>en-us</language>
-    <itunes:author>${escapeXml(podcastConfig.hostName || 'Unknown')}</itunes:author>
-    <itunes:category text="${escapeXml(showCategory)}"></itunes:category>
-    <itunes:explicit>no</itunes:explicit>
-    <managingEditor>${escapeXml(showEmail || '')}</managingEditor>
-${items}  </channel>
-</rss>`;
-    fs.writeFileSync(outputPath, rss, 'utf-8');
-    return { success: true, path: outputPath };
-  } catch (e) {
-    return { success: false, error: e.message };
-  }
-});
-
-ipcMain.handle('podcast-write-id3', async (event, { filePath, title, artist, album, year, genre }) => {
-  try {
-    // Write ID3 tags using FFmpeg metadata
-    const metadataArgs = [];
-    if (title) metadataArgs.push('-metadata', `title=${title}`);
-    if (artist) metadataArgs.push('-metadata', `artist=${artist}`);
-    if (album) metadataArgs.push('-metadata', `album=${album}`);
-    if (year) metadataArgs.push('-metadata', `year=${year}`);
-    if (genre) metadataArgs.push('-metadata', `genre=${genre}`);
-    const tempPath = filePath + '.tagged.mp3';
-    await new Promise((resolve, reject) => {
-      const proc = spawn(ffmpegPath, ['-i', filePath, '-c', 'copy', ...metadataArgs, '-y', tempPath]);
-      proc.on('close', (code) => {
-        if (code === 0) {
-          try {
-            fs.unlinkSync(filePath);
-            fs.renameSync(tempPath, filePath);
-          } catch (e) { /* ignore */ }
-          resolve();
-        } else {
-          reject(new Error(`FFmpeg exit code ${code}`));
-        }
-      });
-      proc.on('error', reject);
-    });
-    return { success: true };
-  } catch (e) {
-    return { success: false, error: e.message };
-  }
-});
-
-function escapeXml(str) {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-}
-
-// ==========================================
 // Advanced Streaming (SRT/NDI/RTSP, HLS, Quality Ladder, Multi-lang)
 // ==========================================
 const advancedStreamConfig = {
@@ -2161,9 +1836,9 @@ ipcMain.handle('generate-countdown-overlay', async (event, { minutes, outputPath
     <text x="960" y="400" font-family="Arial,sans-serif" font-size="120" fill="white" text-anchor="middle" dominant-baseline="middle">Starting in</text>
     <text x="960" y="600" font-family="Arial,sans-serif" font-size="240" fill="#6c63ff" text-anchor="middle" dominant-baseline="middle" id="countdown">${minutes}:00</text>
     <text x="960" y="750" font-family="Arial,sans-serif" font-size="48" fill="#888" text-anchor="middle" dominant-baseline="middle">minutes</text>
-    <text x="960" y="900" font-family="Arial,sans-serif" font-size="36" fill="#666" text-anchor="middle" dominant-baseline="middle">Accessible Studio Live</text>
+    <text x="960" y="900" font-family="Arial,sans-serif" font-size="36" fill="#666" text-anchor="middle" dominant-baseline="middle">Accessable Studios Live</text>
   </svg>`;
-  const svgPath = outputPath || path.join(app.getPath('temp'), 'accessible-studio-countdown-overlay.svg');
+  const svgPath = outputPath || path.join(app.getPath('temp'), 'accessable-studios-countdown-overlay.svg');
   try {
     fs.writeFileSync(svgPath, svgContent);
     // Convert SVG to PNG via FFmpeg
@@ -2236,10 +1911,10 @@ const linkedAccounts = {}; // platform -> { accessToken, refreshToken, expiresAt
 // Register custom protocol for OAuth redirects
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('accessiblestudio', process.execPath, [path.resolve(process.argv[1])]);
+    app.setAsDefaultProtocolClient('accessablestudios', process.execPath, [path.resolve(process.argv[1])]);
   }
 } else {
-  app.setAsDefaultProtocolClient('accessiblestudio');
+  app.setAsDefaultProtocolClient('accessablestudios');
 }
 
 // Handle OAuth redirect on macOS (open-url event)
@@ -2256,16 +1931,85 @@ app.on('second-instance', (event, commandLine) => {
     mainWindow.focus();
   }
   // Check if launched with OAuth redirect URL
-  const oauthUrl = commandLine.find(arg => arg.startsWith('accessiblestudio://oauth'));
+  const oauthUrl = commandLine.find(arg => arg.startsWith('accessablestudios://oauth'));
   if (oauthUrl) {
     handleOAuthRedirect(oauthUrl);
   }
 });
 
+// ------------------------------------------------------------------
+// OAuth loopback server. Google (Desktop clients) and Twitch both reject
+// custom-scheme redirects like accessablestudios://, so the browser is sent
+// back to a short-lived local HTTP server that only listens on loopback.
+// ------------------------------------------------------------------
+const OAUTH_LOOPBACK_PORT = 47823;
+const OAUTH_LOOPBACK_TIMEOUT_MS = 5 * 60 * 1000;
+let oauthServer = null;
+let oauthServerTimer = null;
+
+function isPlaceholderClientId(id) {
+  return !id || /^(YOUR_|REPLACE_ME)/.test(id);
+}
+
+function stopOAuthLoopbackServer() {
+  if (oauthServerTimer) { clearTimeout(oauthServerTimer); oauthServerTimer = null; }
+  if (oauthServer) {
+    try { oauthServer.close(); } catch (e) { /* already closed */ }
+    oauthServer = null;
+  }
+}
+
+function oauthResultPage(ok, message) {
+  const color = ok ? '#2e7d32' : '#c62828';
+  const safe = String(message).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Accessable Studios</title></head>
+<body style="font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:80px auto;padding:0 16px">
+<h1 style="color:${color}" role="alert">${ok ? 'Account connected' : 'Connection failed'}</h1>
+<p>${safe}</p><p>You can close this tab and return to Accessable Studios.</p></body></html>`;
+}
+
+function startOAuthLoopbackServer() {
+  if (oauthServer) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      const url = new URL(req.url, `http://127.0.0.1:${OAUTH_LOOPBACK_PORT}`);
+      if (!url.pathname.startsWith('/oauth/')) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not found');
+        return;
+      }
+      const error = url.searchParams.get('error');
+      const ok = !error && url.searchParams.get('code');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(oauthResultPage(!!ok, ok ? 'Finishing sign-in in the app now.' : `Authorization was not completed${error ? `: ${error}` : '.'}`));
+      handleOAuthRedirect(url.toString());
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.focus();
+      }
+      stopOAuthLoopbackServer();
+    });
+    server.once('error', (err) => {
+      oauthServer = null;
+      reject(err.code === 'EADDRINUSE'
+        ? new Error(`Port ${OAUTH_LOOPBACK_PORT} is already in use by another program. Close it and try connecting again.`)
+        : err);
+    });
+    // Bind to IPv4 loopback only; "localhost" in the Twitch redirect resolves here.
+    server.listen(OAUTH_LOOPBACK_PORT, '127.0.0.1', () => {
+      oauthServer = server;
+      oauthServerTimer = setTimeout(stopOAuthLoopbackServer, OAUTH_LOOPBACK_TIMEOUT_MS);
+      resolve();
+    });
+  });
+}
+
+app.on('before-quit', stopOAuthLoopbackServer);
+
 // Platform OAuth configuration
-// === ONCE: Register Accessible Studio at the links below, then paste your Client IDs here ===
-// YouTube: https://console.cloud.google.com/apis/credentials  (OAuth 2.0 Desktop, redirect: accessiblestudio://oauth/youtube)
-// Twitch:  https://dev.twitch.tv/console/apps               (redirect: accessiblestudio://oauth/twitch)
+// === ONCE: Register Accessable Studios at the links below, then paste your Client IDs here ===
+// YouTube: https://console.cloud.google.com/apis/credentials  (OAuth 2.0 Desktop, redirect: http://127.0.0.1:47823/oauth/youtube — Desktop clients accept any loopback port)
+// Twitch:  https://dev.twitch.tv/console/apps               (redirect: http://localhost:47823/oauth/twitch)
 const OAUTH_CONFIGS = {
   youtube: {
     authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -2273,7 +2017,7 @@ const OAUTH_CONFIGS = {
     revokeUrl: 'https://oauth2.googleapis.com/revoke',
     scopes: ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube.readonly', 'https://www.googleapis.com/auth/youtube.force-ssl'],
     clientId: 'REPLACE_ME_YOUTUBE_CLIENT_ID',
-    redirectUri: 'accessiblestudio://oauth/youtube',
+    redirectUri: `http://127.0.0.1:${OAUTH_LOOPBACK_PORT}/oauth/youtube`,
   },
   twitch: {
     authorizeUrl: 'https://id.twitch.tv/oauth2/authorize',
@@ -2281,7 +2025,7 @@ const OAUTH_CONFIGS = {
     revokeUrl: 'https://id.twitch.tv/oauth2/revoke',
     scopes: ['channel:manage:broadcast', 'chat:read', 'chat:edit', 'clips:edit', 'channel:read:stream_key'],
     clientId: 'REPLACE_ME_TWITCH_CLIENT_ID',
-    redirectUri: 'accessiblestudio://oauth/twitch',
+    redirectUri: `http://localhost:${OAUTH_LOOPBACK_PORT}/oauth/twitch`,
   },
 };
 
@@ -2333,7 +2077,7 @@ async function exchangeCodeForTokens(platform, code) {
     return;
   }
 
-  if (!config.clientId || config.clientId.startsWith('YOUR_')) {
+  if (!config.clientId || isPlaceholderClientId(config.clientId)) {
     sendToRenderer('oauth-result', { success: false, error: `OAuth not configured. Click Connect again and follow the setup guide.` });
     return;
   }
@@ -2348,11 +2092,9 @@ async function exchangeCodeForTokens(platform, code) {
       redirect_uri: config.redirectUri,
       grant_type: 'authorization_code',
     };
-    if (codeVerifier) {
-      bodyParams.code_verifier = codeVerifier;
-    } else {
-      bodyParams.client_secret = config.clientSecret || '';
-    }
+    if (codeVerifier) bodyParams.code_verifier = codeVerifier;
+    // Google Desktop and Twitch clients still expect client_secret alongside PKCE.
+    if (config.clientSecret) bodyParams.client_secret = config.clientSecret;
     const response = await fetch(config.tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -2550,8 +2292,15 @@ ipcMain.handle('oauth-link-account', async (event, platform) => {
   const config = getStoredOAuthConfig(platform);
   if (!config) return { success: false, error: `Platform ${platform} not supported yet.` };
 
-  if (!config.clientId || config.clientId.startsWith('YOUR_')) {
+  if (!config.clientId || isPlaceholderClientId(config.clientId)) {
     return { success: false, error: `No Client ID configured.`, needsSetup: true };
+  }
+
+  // The browser redirects back to this local server once the user approves.
+  try {
+    await startOAuthLoopbackServer();
+  } catch (e) {
+    return { success: false, error: `Could not start the local sign-in server: ${e.message}` };
   }
 
   // Generate state for CSRF protection
@@ -3538,7 +3287,7 @@ ipcMain.handle('apply-audio-watermark', async (event, { inputPath, outputPath, w
   if (!fs.existsSync(inputPath)) return { success: false, error: 'Input file not found.' };
   try {
     // Embed watermark as ultrasonic tone (18kHz) + metadata
-    const text = watermarkText || 'Accessible Studio';
+    const text = watermarkText || 'Accessable Studios';
     // FFmpeg: generate a sine tone at 18kHz (nearly inaudible), mix it at very low volume
     const filter = `aevalsrc=sin(18000*t)*0.005:duration=2[sine];[0:a][sine]amix=inputs=2:duration=first[out]`;
     // Also embed the text in metadata

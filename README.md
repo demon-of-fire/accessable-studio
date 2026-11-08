@@ -1,4 +1,4 @@
-# Accessible Studio
+# Accessable Studios
 
 An NVDA-accessible video editor, photo editor, and file converter built with Electron. Fully keyboard-navigable, screen reader friendly, and controlled via natural language commands. Optionally powered by Google Gemini 2.5 Pro for intelligent image descriptions, context-aware editing, and real-time project control.
 
@@ -6,7 +6,7 @@ The app is organized into **modes** (Video Editor, Photo Editor, File Converter,
 
 ## Download
 
-Head to the [Releases](https://github.com/demon-of-fire/accessable-studio/releases) page and download the latest `.zip` for Windows. Extract it and run **Accessible Studio.exe** — no install required.
+Head to the [Releases](https://github.com/demon-of-fire/accessable-studio/releases) page and download the latest `.zip` for Windows. Extract it and run **Accessable Studios.exe** — no install required.
 
 ## Getting Started
 
@@ -21,7 +21,7 @@ npm install
 npm start
 ```
 
-If you downloaded the release `.zip`, just extract it and double-click **Accessible Studio.exe**.
+If you downloaded the release `.zip`, just extract it and double-click **Accessable Studios.exe**.
 
 ### Step 2: Install FFmpeg (required for video/audio features)
 
@@ -186,7 +186,7 @@ npm start
 To package a distributable build:
 
 ```bash
-npx electron-packager . "Accessible Studio" --platform=win32 --arch=x64 --out=build --overwrite
+npx electron-packager . "Accessable Studios" --platform=win32 --arch=x64 --out=build --overwrite
 ```
 
 ## License

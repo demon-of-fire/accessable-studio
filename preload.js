@@ -224,42 +224,6 @@ contextBridge.exposeInMainWorld('api', {
   // Render Farm
   renderFarmExport: (data) => ipcRenderer.invoke('render-farm-export', data),
 
-  // DAW / Music Production — MIDI
-  dawGetMidi: (clipId) => ipcRenderer.invoke('daw-get-midi', clipId),
-  dawSetMidi: (data) => ipcRenderer.invoke('daw-set-midi', data),
-  dawAddNote: (data) => ipcRenderer.invoke('daw-add-note', data),
-  dawRemoveNote: (data) => ipcRenderer.invoke('daw-remove-note', data),
-  dawUpdateNote: (data) => ipcRenderer.invoke('daw-update-note', data),
-
-  // DAW — Tracks
-  dawCreateTrack: (track) => ipcRenderer.invoke('daw-create-track', track),
-  dawGetTracks: () => ipcRenderer.invoke('daw-get-tracks'),
-  dawUpdateTrack: (data) => ipcRenderer.invoke('daw-update-track', data),
-  dawDeleteTrack: (trackId) => ipcRenderer.invoke('daw-delete-track', trackId),
-
-  // DAW — Step Sequencer
-  dawCreatePattern: (pattern) => ipcRenderer.invoke('daw-create-pattern', pattern),
-  dawGetPatterns: () => ipcRenderer.invoke('daw-get-patterns'),
-  dawUpdatePattern: (data) => ipcRenderer.invoke('daw-update-pattern', data),
-  dawDeletePattern: (patternId) => ipcRenderer.invoke('daw-delete-pattern', patternId),
-
-  // DAW — VST
-  dawScanVst: (directory) => ipcRenderer.invoke('daw-scan-vst', directory),
-  dawGetVstPlugins: () => ipcRenderer.invoke('daw-get-vst-plugins'),
-
-  // DAW — Stems Separator
-  dawSeparateStems: (data) => ipcRenderer.invoke('daw-separate-stems', data),
-
-  // Podcast Studio
-  podcastGetConfig: () => ipcRenderer.invoke('podcast-get-config'),
-  podcastSaveConfig: (data) => ipcRenderer.invoke('podcast-save-config', data),
-  podcastStartRecording: (data) => ipcRenderer.invoke('podcast-start-recording', data),
-  podcastStopRecording: () => ipcRenderer.invoke('podcast-stop-recording'),
-  podcastGetEpisodes: () => ipcRenderer.invoke('podcast-get-episodes'),
-  podcastGenerateRss: (data) => ipcRenderer.invoke('podcast-generate-rss', data),
-  podcastWriteId3: (data) => ipcRenderer.invoke('podcast-write-id3', data),
-  podcastListDevices: () => ipcRenderer.invoke('podcast-list-devices'),
-
   // Advanced Streaming
   streamingSetSource: (data) => ipcRenderer.invoke('streaming-set-source', data),
   streamingGetSource: () => ipcRenderer.invoke('streaming-get-source'),

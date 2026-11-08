@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Accessible Studio</title>
+  <title>Accessable Studios</title>
   <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
 
   <div id="app">
     <nav id="sidebar" role="navigation" aria-label="Main navigation">
-      <h1 id="app-title">Accessible Studio</h1>
+      <h1 id="app-title">Accessable Studios</h1>
       <p id="app-version" style="padding: 0 14px 8px; font-size: 0.7em; color: var(--text-muted);"></p>
       <p id="mode-label" style="padding: 8px 14px 2px; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin: 0;">Mode</p>
       <div id="nav-buttons" role="group" aria-label="Switch between application modes">
@@ -27,12 +27,6 @@
         </button>
         <button id="nav-photo-editor" class="nav-button" aria-pressed="false" aria-label="Photo Editor mode">
           Photo Editor
-        </button>
-        <button id="nav-music-studio" class="nav-button" aria-pressed="false" aria-label="Music Studio mode">
-          Music Studio
-        </button>
-        <button id="nav-podcast-studio" class="nav-button" aria-pressed="false" aria-label="Podcast Studio mode">
-          Podcast Studio
         </button>
         <button id="nav-live-stream" class="nav-button" aria-pressed="false" aria-label="Live Stream mode">
           Live Stream
@@ -829,250 +823,6 @@
         </div>
       </section>
 
-      <section id="section-music-studio" class="app-section" role="region" aria-label="Music Studio" style="display:none">
-        <h2>Music Studio</h2>
-        <p class="help-text">Create music with MIDI sequencing, step sequencer, and stem separation. Requires FFmpeg.</p>
-
-        <div role="tablist" aria-label="Music Studio tools">
-          <button class="music-tab-btn active" data-music-tab="midi" aria-selected="true">MIDI Editor</button>
-          <button class="music-tab-btn" data-music-tab="sequencer" aria-selected="false">Step Sequencer</button>
-          <button class="music-tab-btn" data-music-tab="stems" aria-selected="false">Stems Separator</button>
-          <button class="music-tab-btn" data-music-tab="plugins" aria-selected="false">VST Plugins</button>
-        </div>
-
-        <!-- MIDI Editor -->
-        <div id="music-midi" class="music-tab-panel" role="tabpanel">
-          <h3>MIDI Piano Roll Editor</h3>
-          <p class="help-text">Add, edit, and remove MIDI notes on the virtual piano roll.</p>
-          <div class="setting-row">
-            <label for="midi-clip-select">MIDI Clip:</label>
-            <select id="midi-clip-select" aria-label="Select a MIDI clip to edit" style="flex:1;">
-              <option value="">-- Select or create a clip --</option>
-            </select>
-            <button id="btn-midi-new-clip" aria-label="Create new MIDI clip">New Clip</button>
-          </div>
-          <div id="midi-piano-roll" style="overflow-x:auto;padding:8px 0;min-height:200px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);">
-            <p class="help-text" style="padding:8px;">Select a clip above to view its MIDI notes. Notes are shown as pitch vs. time on the piano roll.</p>
-            <div id="midi-notes-list" aria-live="polite" style="max-height:300px;overflow-y:auto;"></div>
-          </div>
-          <div class="setting-row" style="margin-top:8px;">
-            <label for="midi-note-pitch">Note (MIDI pitch 0-127):</label>
-            <input type="number" id="midi-note-pitch" value="60" min="0" max="127" aria-label="MIDI note pitch number">
-            <label for="midi-note-velocity">Velocity (0-127):</label>
-            <input type="number" id="midi-note-velocity" value="100" min="0" max="127" aria-label="MIDI note velocity" style="width:80px;">
-            <label for="midi-note-duration">Duration (beats):</label>
-            <input type="number" id="midi-note-duration" value="1.0" min="0.1" step="0.1" aria-label="MIDI note duration in beats" style="width:80px;">
-            <button id="btn-midi-add-note" aria-label="Add MIDI note to the current clip">Add Note</button>
-          </div>
-          <div class="setting-row">
-            <label for="midi-key-signature">Key Signature:</label>
-            <select id="midi-key-signature" aria-label="MIDI key signature">
-              <option value="C major">C major</option>
-              <option value="G major">G major</option>
-              <option value="D major">D major</option>
-              <option value="A major">A major</option>
-              <option value="E major">E major</option>
-              <option value="F major">F major</option>
-              <option value="A minor">A minor</option>
-              <option value="E minor">E minor</option>
-            </select>
-            <label for="midi-time-signature">Time Signature:</label>
-            <select id="midi-time-signature" aria-label="MIDI time signature">
-              <option value="4/4">4/4</option>
-              <option value="3/4">3/4</option>
-              <option value="6/8">6/8</option>
-              <option value="2/4">2/4</option>
-            </select>
-          </div>
-          <div id="midi-daw-tracks" style="padding:8px 0;">
-            <h4>DAW Tracks</h4>
-            <div id="daw-tracks-list" aria-live="polite" style="max-height:200px;overflow-y:auto;"></div>
-            <button id="btn-daw-add-track" aria-label="Add a new DAW track">Add Track</button>
-          </div>
-        </div>
-
-        <!-- Step Sequencer -->
-        <div id="music-sequencer" class="music-tab-panel hidden" role="tabpanel">
-          <h3>Step Sequencer</h3>
-          <p class="help-text">Program rhythmic patterns using a grid of step buttons.</p>
-          <div class="setting-row">
-            <label for="sequencer-pattern-select">Pattern:</label>
-            <select id="sequencer-pattern-select" aria-label="Select a step sequencer pattern" style="flex:1;">
-              <option value="">-- Select or create a pattern --</option>
-            </select>
-            <button id="btn-seq-new-pattern" aria-label="Create new step sequencer pattern">New Pattern</button>
-          </div>
-          <div class="setting-row">
-            <label for="sequencer-bpm">BPM:</label>
-            <input type="number" id="sequencer-bpm" value="120" min="20" max="300" aria-label="Sequencer beats per minute" style="width:80px;">
-            <label for="sequencer-swing">Swing (%):</label>
-            <input type="number" id="sequencer-swing" value="0" min="0" max="100" aria-label="Sequencer swing percentage" style="width:80px;">
-          </div>
-          <div id="sequencer-grid" style="overflow-x:auto;padding:8px 0;min-height:100px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);">
-            <p class="help-text" style="padding:8px;">Select or create a pattern to edit its step grid.</p>
-            <div id="sequencer-steps-list" aria-live="polite"></div>
-          </div>
-        </div>
-
-        <!-- Stems Separator -->
-        <div id="music-stems" class="music-tab-panel hidden" role="tabpanel">
-          <h3>Stems Separator</h3>
-          <p class="help-text">Split an audio file into vocal, drum, bass, and other stems using FFmpeg filters.</p>
-          <div class="setting-row">
-            <button id="btn-stems-select" aria-label="Select an audio file to split into stems">Select Audio File...</button>
-            <span id="stems-file-display" aria-live="polite" style="padding-left:8px;">No file selected</span>
-          </div>
-          <fieldset style="border:1px solid var(--border);padding:12px;margin:8px 0;border-radius:var(--radius-sm);">
-            <legend>Stems to generate:</legend>
-            <label style="display:block;padding:4px 0;"><input type="checkbox" id="stem-vocals" checked aria-label="Extract vocals stem"> Vocals (center channel)</label>
-            <label style="display:block;padding:4px 0;"><input type="checkbox" id="stem-drums" checked aria-label="Extract drums stem"> Drums (low-mid)</label>
-            <label style="display:block;padding:4px 0;"><input type="checkbox" id="stem-bass" aria-label="Extract bass stem"> Bass (low frequencies)</label>
-            <label style="display:block;padding:4px 0;"><input type="checkbox" id="stem-other" aria-label="Extract other frequencies stem"> Other (everything else)</label>
-          </fieldset>
-          <div class="setting-row">
-            <button id="btn-stems-separate" aria-label="Start separating audio into stems">Separate Stems</button>
-            <span id="stems-status" aria-live="polite" style="padding-left:8px;"></span>
-          </div>
-          <div id="stems-results" aria-live="polite" style="padding:4px 0;"></div>
-        </div>
-
-        <!-- VST Plugins -->
-        <div id="music-plugins" class="music-tab-panel hidden" role="tabpanel">
-          <h3>VST Plugin Scanner</h3>
-          <p class="help-text">Scan a folder for VST/AU plugins. Plugin support requires the actual VST files to be present on your system.</p>
-          <div class="setting-row">
-            <button id="btn-vst-scan" aria-label="Scan a directory for VST plugins">Scan Folder for VSTs...</button>
-            <span id="vst-scan-status" aria-live="polite" style="padding-left:8px;"></span>
-          </div>
-          <div id="vst-plugins-list" aria-live="polite" style="max-height:250px;overflow-y:auto;padding:4px 0;"></div>
-        </div>
-      </section>
-
-      <!-- Podcast Studio -->
-      <section id="section-podcast-studio" class="app-section" role="region" aria-label="Podcast Studio" style="display:none">
-        <h2>Podcast Studio</h2>
-        <p class="help-text">Record remote podcasts, edit ID3 tags, and generate RSS feeds — all offline.</p>
-
-        <div role="tablist" aria-label="Podcast Studio tools">
-          <button class="podcast-tab-btn active" data-podcast-tab="recording" aria-selected="true">Recording</button>
-          <button class="podcast-tab-btn" data-podcast-tab="episodes" aria-selected="false">Episodes</button>
-          <button class="podcast-tab-btn" data-podcast-tab="id3" aria-selected="false">ID3 Tags</button>
-          <button class="podcast-tab-btn" data-podcast-tab="rss" aria-selected="false">RSS Feed</button>
-          <button class="podcast-tab-btn" data-podcast-tab="settings" aria-selected="false">Settings</button>
-        </div>
-
-        <!-- Recording -->
-        <div id="podcast-recording" class="podcast-tab-panel" role="tabpanel">
-          <h3>Record Episode</h3>
-          <p class="help-text">Record audio from your microphone or system audio (what you hear) directly into an MP3 file. Defaults to system audio for accessibility.</p>
-          <div class="setting-row">
-            <label for="podcast-audio-device">Audio Input:</label>
-            <select id="podcast-audio-device" aria-label="Select audio input device. Default records what you hear." style="flex:1;">
-              <option value="">System Audio (what you hear)</option>
-            </select>
-            <button id="btn-podcast-refresh-devices" aria-label="Refresh list of available audio input devices">Refresh</button>
-          </div>
-          <div class="setting-row">
-            <button id="btn-podcast-record" aria-label="Start or stop podcast recording">
-              <span id="podcast-record-label">Start Recording</span>
-            </button>
-            <span id="podcast-record-status" aria-live="polite">Ready</span>
-          </div>
-          <div class="setting-row">
-            <label for="podcast-recording-dir">Output Directory:</label>
-            <input type="text" id="podcast-recording-dir" aria-label="Directory for podcast recordings" style="flex:1;font-family:monospace;">
-            <button id="btn-podcast-browse-dir" aria-label="Browse for recording directory">Browse</button>
-          </div>
-        </div>
-
-        <!-- Episodes -->
-        <div id="podcast-episodes" class="podcast-tab-panel hidden" role="tabpanel">
-          <h3>Episode List</h3>
-          <div id="podcast-episodes-list" aria-live="polite" style="max-height:250px;overflow-y:auto;">
-            <p class="help-text">No episodes yet. Record your first episode to see it here.</p>
-          </div>
-        </div>
-
-        <!-- ID3 Tags -->
-        <div id="podcast-id3" class="podcast-tab-panel hidden" role="tabpanel">
-          <h3>ID3 Tag Editor</h3>
-          <p class="help-text">Edit metadata tags on an MP3 file. This rewrites the file's ID3 tags using FFmpeg.</p>
-          <div class="setting-row">
-            <button id="btn-id3-select" aria-label="Select an MP3 file to edit ID3 tags">Select MP3 File...</button>
-            <span id="id3-file-display" aria-live="polite">No file selected</span>
-          </div>
-          <div class="setting-row">
-            <label for="id3-title">Title:</label>
-            <input type="text" id="id3-title" aria-label="Song or episode title" style="flex:1;">
-          </div>
-          <div class="setting-row">
-            <label for="id3-artist">Artist:</label>
-            <input type="text" id="id3-artist" aria-label="Artist or host name" style="flex:1;">
-          </div>
-          <div class="setting-row">
-            <label for="id3-album">Album:</label>
-            <input type="text" id="id3-album" aria-label="Album or show name" style="flex:1;">
-          </div>
-          <div class="setting-row">
-            <label for="id3-year">Year:</label>
-            <input type="text" id="id3-year" aria-label="Release year" style="width:100px;">
-          </div>
-          <div class="setting-row">
-            <label for="id3-genre">Genre:</label>
-            <input type="text" id="id3-genre" aria-label="Genre of the recording" style="flex:1;">
-          </div>
-          <div class="setting-row">
-            <button id="btn-id3-write" aria-label="Write ID3 tags to the selected file">Write Tags</button>
-            <span id="id3-status" aria-live="polite"></span>
-          </div>
-        </div>
-
-        <!-- RSS Feed -->
-        <div id="podcast-rss" class="podcast-tab-panel hidden" role="tabpanel">
-          <h3>RSS Feed Generator</h3>
-          <p class="help-text">Generate an RSS 2.0 feed from your podcast episodes. Requires configured show settings.</p>
-          <div class="setting-row">
-            <button id="btn-rss-generate" aria-label="Generate RSS feed from episodes">Generate RSS Feed...</button>
-            <span id="rss-status" aria-live="polite"></span>
-          </div>
-        </div>
-
-        <!-- Podcast Settings -->
-        <div id="podcast-settings" class="podcast-tab-panel hidden" role="tabpanel">
-          <h3>Podcast Settings</h3>
-          <div class="setting-row">
-            <label for="podcast-show-name">Show Name:</label>
-            <input type="text" id="podcast-show-name" aria-label="Your podcast show name" style="flex:1;">
-          </div>
-          <div class="setting-row">
-            <label for="podcast-host-name">Host Name:</label>
-            <input type="text" id="podcast-host-name" aria-label="Host name" style="flex:1;">
-          </div>
-          <div class="setting-row">
-            <label for="podcast-show-email">Contact Email:</label>
-            <input type="email" id="podcast-show-email" aria-label="Contact email for the podcast" style="flex:1;">
-          </div>
-          <div class="setting-row">
-            <label for="podcast-show-category">Category:</label>
-            <select id="podcast-show-category" aria-label="Podcast category">
-              <option value="Technology">Technology</option>
-              <option value="Arts">Arts</option>
-              <option value="Business">Business</option>
-              <option value="Comedy">Comedy</option>
-              <option value="Education">Education</option>
-              <option value="Music">Music</option>
-              <option value="News">News & Politics</option>
-              <option value="Science">Science</option>
-              <option value="Sports">Sports</option>
-            </select>
-          </div>
-          <div class="setting-row">
-            <button id="btn-podcast-save-settings" aria-label="Save podcast settings">Save Settings</button>
-            <span id="podcast-settings-status" aria-live="polite"></span>
-          </div>
-        </div>
-      </section>
-
       <section id="section-live-stream" class="app-section" role="region" aria-label="Live Stream" style="display:none">
         <h2>Live Stream</h2>
         <p>Stream your content to RTMP destinations with adaptive bitrate and automatic backup failover.</p>
@@ -1200,8 +950,8 @@
         </div>
         <div class="guide-layout">
           <div class="guide-content" id="guide-content">
-            <p>Welcome to Accessible Studio. Use the sidebar to switch between modes. Press F1 for keyboard shortcuts at any time. The assistant bar at the bottom accepts natural language commands.</p>
-            <p>Key areas: <strong>Video Editor</strong> for timeline editing, <strong>Photo Editor</strong> for image editing, <strong>Music Studio</strong> for MIDI/sequencer/audio, <strong>Podcast Studio</strong> for recording/RSS, <strong>Live Stream</strong> for RTMP/HLS streaming, <strong>File Converter</strong> for format conversion, and <strong>Settings</strong> for configuration.</p>
+            <p>Welcome to Accessable Studios. Use the sidebar to switch between modes. Press F1 for keyboard shortcuts at any time. The assistant bar at the bottom accepts natural language commands.</p>
+            <p>Key areas: <strong>Video Editor</strong> for timeline editing, <strong>Photo Editor</strong> for image editing, <strong>Live Stream</strong> for RTMP/HLS streaming, <strong>File Converter</strong> for format conversion, and <strong>Settings</strong> for configuration.</p>
           </div>
         </div>
       </section>
@@ -1492,7 +1242,7 @@
 
         <div id="settings-pledge" role="group" aria-label="No dark patterns pledge">
           <h3>No Dark Patterns Pledge</h3>
-          <p class="help-text">Accessible Studio respects your privacy and focus. We make these commitments to you:</p>
+          <p class="help-text">Accessable Studios respects your privacy and focus. We make these commitments to you:</p>
           <ul style="padding: 8px 24px; line-height: 1.6;">
             <li>No nag screens asking for reviews or ratings</li>
             <li>No artificial trial periods or expiry dates</li>
@@ -1886,11 +1636,11 @@
 
   <div id="about-dialog" class="modal hidden" role="dialog" aria-labelledby="about-title" aria-modal="true">
     <div class="modal-content">
-      <h2 id="about-title">About Accessible Studio</h2>
+      <h2 id="about-title">About Accessable Studios</h2>
       <p id="about-version"></p>
       <p>An NVDA-accessible video editor, photo editor, and file converter.</p>
       <p>Built with accessibility first. All features work with screen readers.</p>
-      <p>Copyright &copy; 2026 Accessible Studio. MIT License.</p>
+      <p>Copyright &copy; 2026 Accessable Studios. MIT License.</p>
       <div class="dialog-buttons">
         <button id="about-close" aria-label="Close about dialog">Close</button>
       </div>
