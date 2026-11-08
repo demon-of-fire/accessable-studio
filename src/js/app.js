@@ -1796,7 +1796,7 @@ const App = (() => {
     });
 
     // Encrypted API Keys (safeStorage)
-    const apiKeyServices = ['youtube', 'twitch', 'openai'];
+    const apiKeyServices = ['youtube', 'openai'];
     apiKeyServices.forEach(service => {
       const input = document.getElementById(`api-key-${service}`);
       const saveBtn = document.getElementById(`btn-save-api-key-${service}`);
@@ -1890,9 +1890,9 @@ const App = (() => {
           Accessibility.announce(`Opening browser to connect your ${platform} account. Complete authorization there, then return here.`);
         } else if (result.needsSetup) {
           // Developer hasn't embedded their Client IDs yet
-          const urls = { youtube: 'https://console.cloud.google.com/apis/credentials', twitch: 'https://dev.twitch.tv/console/apps' };
+          const urls = { youtube: 'https://console.cloud.google.com/apis/credentials' };
           const url = urls[platform] || '';
-          const redirect = platform === 'twitch' ? 'http://localhost:47823/oauth/twitch' : `http://127.0.0.1:47823/oauth/${platform}`;
+          const redirect = `http://127.0.0.1:47823/oauth/${platform}`;
           Accessibility.announce(`One-time setup needed. In the ${platform} developer console, create an app with redirect URL ${redirect}, then paste its Client ID into Settings, API Keys, and press Connect again. ${url ? 'Opening the developer console now.' : ''}`);
           if (url && window.api) window.api.openExternal(url);
         } else {

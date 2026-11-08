@@ -1460,7 +1460,7 @@ app.on('second-instance', (event, commandLine) => {
 });
 
 // ------------------------------------------------------------------
-// OAuth loopback server. Google (Desktop clients) and Twitch both reject
+// OAuth loopback server. Google (Desktop clients) rejects
 // custom-scheme redirects like accessablestudios://, so the browser is sent
 // back to a short-lived local HTTP server that only listens on loopback.
 // ------------------------------------------------------------------
@@ -1517,7 +1517,7 @@ function startOAuthLoopbackServer() {
         ? new Error(`Port ${OAUTH_LOOPBACK_PORT} is already in use by another program. Close it and try connecting again.`)
         : err);
     });
-    // Bind to IPv4 loopback only; "localhost" in the Twitch redirect resolves here.
+    // Bind to IPv4 loopback only.
     server.listen(OAUTH_LOOPBACK_PORT, '127.0.0.1', () => {
       oauthServer = server;
       oauthServerTimer = setTimeout(stopOAuthLoopbackServer, OAUTH_LOOPBACK_TIMEOUT_MS);
@@ -1531,7 +1531,6 @@ app.on('before-quit', stopOAuthLoopbackServer);
 // Platform OAuth configuration
 // === ONCE: Register Accessable Studios at the links below, then paste your Client IDs here ===
 // YouTube: https://console.cloud.google.com/apis/credentials  (OAuth 2.0 Desktop, redirect: http://127.0.0.1:47823/oauth/youtube — Desktop clients accept any loopback port)
-// Twitch:  https://dev.twitch.tv/console/apps               (redirect: http://localhost:47823/oauth/twitch)
 const OAUTH_CONFIGS = {
   youtube: {
     authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -1540,14 +1539,6 @@ const OAUTH_CONFIGS = {
     scopes: ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube.readonly', 'https://www.googleapis.com/auth/youtube.force-ssl'],
     clientId: 'REPLACE_ME_YOUTUBE_CLIENT_ID',
     redirectUri: `http://127.0.0.1:${OAUTH_LOOPBACK_PORT}/oauth/youtube`,
-  },
-  twitch: {
-    authorizeUrl: 'https://id.twitch.tv/oauth2/authorize',
-    tokenUrl: 'https://id.twitch.tv/oauth2/token',
-    revokeUrl: 'https://id.twitch.tv/oauth2/revoke',
-    scopes: ['channel:manage:broadcast', 'chat:read', 'chat:edit', 'clips:edit', 'channel:read:stream_key'],
-    clientId: 'REPLACE_ME_TWITCH_CLIENT_ID',
-    redirectUri: `http://localhost:${OAUTH_LOOPBACK_PORT}/oauth/twitch`,
   },
 };
 
@@ -1581,7 +1572,6 @@ function handleOAuthRedirect(url) {
     // Determine which platform from the redirect URI path
     const path = parsedUrl.pathname || '';
     let platform = 'youtube';
-    if (path.includes('twitch')) platform = 'twitch';
     if (path.includes('facebook')) platform = 'facebook';
     if (path.includes('tiktok')) platform = 'tiktok';
 
@@ -1615,7 +1605,7 @@ async function exchangeCodeForTokens(platform, code) {
       grant_type: 'authorization_code',
     };
     if (codeVerifier) bodyParams.code_verifier = codeVerifier;
-    // Google Desktop and Twitch clients still expect client_secret alongside PKCE.
+    // Google Desktop clients still expect client_secret alongside PKCE.
     if (config.clientSecret) bodyParams.client_secret = config.clientSecret;
     const response = await fetch(config.tokenUrl, {
       method: 'POST',
@@ -1669,17 +1659,6 @@ async function fetchPlatformProfile(platform, accessToken) {
         return { name: ch.snippet.title, id: ch.id, avatarUrl: ch.snippet.thumbnails?.default?.url, subscribers: ch.statistics?.subscriberCount || '0' };
       }
       return { name: 'YouTube User', id: 'youtube' };
-    }
-    case 'twitch': {
-      const res = await fetch('https://api.twitch.tv/helix/users', {
-        headers: { Authorization: `Bearer ${accessToken}`, 'Client-Id': OAUTH_CONFIGS.twitch.clientId },
-      });
-      const data = await res.json();
-      if (data.data && data.data[0]) {
-        const u = data.data[0];
-        return { name: u.display_name, id: u.id, avatarUrl: u.profile_image_url, description: u.description };
-      }
-      return { name: 'Twitch User', id: 'twitch' };
     }
     default:
       return { name: platform, id: platform };
@@ -1735,7 +1714,7 @@ function storeLinkedAccount(platform, account) {
 }
 
 function loadLinkedAccounts() {
-  const platforms = ['youtube', 'twitch', 'facebook', 'tiktok'];
+  const platforms = ['youtube', 'facebook', 'tiktok'];
   for (const platform of platforms) {
     try {
       if (app.isReady() && require('electron').safeStorage && require('electron').safeStorage.isEncryptionAvailable()) {
