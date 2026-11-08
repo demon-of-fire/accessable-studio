@@ -28,9 +28,6 @@
         <button id="nav-photo-editor" class="nav-button" aria-pressed="false" aria-label="Photo Editor mode">
           Photo Editor
         </button>
-        <button id="nav-live-stream" class="nav-button" aria-pressed="false" aria-label="Live Stream mode">
-          Live Stream
-        </button>
         <button id="nav-file-converter" class="nav-button" aria-pressed="false" aria-label="File Converter mode">
           File Converter
         </button>
@@ -823,124 +820,6 @@
         </div>
       </section>
 
-      <section id="section-live-stream" class="app-section" role="region" aria-label="Live Stream" style="display:none">
-        <h2>Live Stream</h2>
-        <p>Stream your content to RTMP destinations with adaptive bitrate and automatic backup failover.</p>
-
-        <div id="stream-setup" role="group" aria-label="Stream setup">
-          <div class="setting-row">
-            <label for="stream-input-file">Input File:</label>
-            <input type="text" id="stream-input-file" placeholder="Path to the video file to stream..." aria-label="Path to the video or audio file" readonly style="flex:1;">
-            <button id="btn-browse-stream-input" aria-label="Browse for a file to stream">Browse</button>
-          </div>
-
-          <div class="setting-row">
-            <label for="stream-primary-url">Primary RTMP URL:</label>
-            <input type="text" id="stream-primary-url" placeholder="rtmp://live.twitch.tv/app/streamkey" aria-label="Primary RTMP stream destination URL" style="flex:1;">
-          </div>
-
-          <div class="setting-row">
-            <label for="stream-backup-url">Backup RTMP URL (optional):</label>
-            <input type="text" id="stream-backup-url" placeholder="rtmp://a.rtmp.youtube.com/live2/streamkey" aria-label="Backup RTMP stream destination for automatic failover" style="flex:1;">
-          </div>
-
-          <div class="setting-row">
-            <label for="stream-bitrate-input">Bitrate (kbps):</label>
-            <input type="number" id="stream-bitrate-input" value="6000" min="500" max="50000" step="500" aria-label="Stream bitrate in kilobits per second">
-            <span style="padding:0 8px;font-size:0.85em;color:var(--text-muted);">Typical: 6000 for 1080p, 4000 for 720p, 2000 for 480p</span>
-          </div>
-
-          <div class="setting-row">
-            <label for="stream-overlay-file">Overlay Image (optional):</label>
-            <input type="text" id="stream-overlay-file" placeholder="Path to a PNG overlay to composite on the stream" aria-label="Path to overlay image" readonly style="flex:1;">
-            <button id="btn-browse-overlay" aria-label="Browse for an overlay image">Browse</button>
-          </div>
-        </div>
-
-        <div id="stream-controls" role="group" aria-label="Stream controls" style="padding: 12px 0;">
-          <button id="btn-test-connection" aria-label="Test connection to the RTMP server">Test Connection</button>
-          <button id="btn-run-checklist" aria-label="Run pre-stream checklist">Pre-stream Checklist</button>
-          <button id="btn-start-stream" aria-label="Start streaming to the configured destinations">Start Stream</button>
-          <button id="btn-stop-stream" aria-label="Stop the current stream" disabled>Stop Stream</button>
-        </div>
-
-        <div id="stream-checklist-results" aria-live="polite" style="padding: 8px 0;"></div>
-
-        <div id="stream-status-area" class="hidden" style="padding: 12px; border: 1px solid var(--border); margin: 8px 0;" role="alert" aria-live="assertive">
-          <h3>Stream Status</h3>
-          <p id="stream-status-text" style="font-weight:bold;">Not streaming.</p>
-          <div id="stream-stats" style="padding: 8px 0; font-size:0.9em;">
-            <p>Destination: <span id="stream-stat-dest">—</span></p>
-            <p>Bitrate: <span id="stream-stat-bitrate">—</span></p>
-            <p>FPS: <span id="stream-stat-fps">—</span></p>
-            <p>Uptime: <span id="stream-stat-uptime">—</span></p>
-          </div>
-          <div id="stream-progress-bar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="height:6px;margin:4px 0;">
-            <div id="stream-progress-fill" style="width:0%;height:100%;background:var(--success);"></div>
-          </div>
-        </div>
-
-        <div id="stream-advanced" role="region" aria-label="Advanced streaming options" style="padding:8px 0;border-top:1px solid var(--border);margin-top:12px;">
-          <h3>Advanced Source & Output</h3>
-          <div class="setting-row">
-            <label for="stream-source-type">Source Type:</label>
-            <select id="stream-source-type" aria-label="Select streaming source type">
-              <option value="file">Media File</option>
-              <option value="rtsp">RTSP Camera Stream</option>
-              <option value="srt">SRT Stream</option>
-            </select>
-          </div>
-          <div class="setting-row">
-            <label for="stream-output-mode">Output Mode:</label>
-            <select id="stream-output-mode" aria-label="Select output mode">
-              <option value="rtmp">RTMP (Twitch, YouTube, etc.)</option>
-              <option value="hls">HLS (HTTP Live Streaming)</option>
-            </select>
-          </div>
-          <div id="stream-quality-ladder" style="padding:4px 0;">
-            <h4>Quality Ladder</h4>
-            <p class="help-text" style="font-size:0.85em;">Configure one or more quality levels. Multiple levels are used for HLS adaptive streaming or multi-destination RTMP.</p>
-            <div id="quality-ladder-list" style="max-height:200px;overflow-y:auto;"></div>
-            <div class="setting-row">
-              <button id="btn-add-quality-tier" aria-label="Add a quality tier to the ladder">Add Quality Tier</button>
-            </div>
-          </div>
-          <div id="stream-multi-lang" style="padding:4px 0;">
-            <h4>Multi-Language Audio</h4>
-            <p class="help-text" style="font-size:0.85em;">Add alternate audio tracks. Each track maps to a different language.</p>
-            <div id="stream-lang-list"></div>
-            <div class="setting-row">
-              <button id="btn-add-lang-track" aria-label="Add a language audio track">Add Language Track</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="stream-overlay-section" style="padding: 8px 0;">
-          <h3>Overlays</h3>
-          <p>Overlays are composited onto your stream in real time. Create a simple text overlay or use a PNG image.</p>
-          <div class="setting-row">
-            <label for="overlay-type-select">Overlay Type:</label>
-            <select id="overlay-type-select" aria-label="Choose overlay type">
-              <option value="none">No overlay</option>
-              <option value="image">Image overlay (PNG)</option>
-              <option value="countdown">Countdown timer</option>
-              <option value="brb">BRB / Intermission screen</option>
-            </select>
-          </div>
-          <div id="overlay-image-row" class="setting-row hidden">
-            <label for="overlay-image-path">Image Path:</label>
-            <input type="text" id="overlay-image-path" placeholder="Path to PNG overlay image" readonly style="flex:1;">
-            <button id="btn-browse-overlay-img" aria-label="Browse for overlay image">Browse</button>
-          </div>
-          <div id="overlay-countdown-row" class="setting-row hidden">
-            <label for="overlay-countdown-minutes">Countdown minutes:</label>
-            <input type="number" id="overlay-countdown-minutes" value="5" min="1" max="60" aria-label="Countdown duration in minutes">
-            <button id="btn-generate-countdown" aria-label="Generate countdown overlay">Generate Countdown</button>
-          </div>
-          <p id="overlay-status" aria-live="polite" style="font-size:0.85em;color:var(--text-muted);padding:4px 0;">No overlay active.</p>
-        </div>
-      </section>
-
       <section id="section-user-guide" class="app-section" role="region" aria-label="User Guide" style="display:none">
         <h2>User Guide</h2>
         <div class="guide-search-wrapper">
@@ -951,7 +830,7 @@
         <div class="guide-layout">
           <div class="guide-content" id="guide-content">
             <p>Welcome to Accessable Studios. Use the sidebar to switch between modes. Press F1 for keyboard shortcuts at any time. The assistant bar at the bottom accepts natural language commands.</p>
-            <p>Key areas: <strong>Video Editor</strong> for timeline editing, <strong>Photo Editor</strong> for image editing, <strong>Live Stream</strong> for RTMP/HLS streaming, <strong>File Converter</strong> for format conversion, and <strong>Settings</strong> for configuration.</p>
+            <p>Key areas: <strong>Video Editor</strong> for timeline editing, <strong>Photo Editor</strong> for image editing, <strong>File Converter</strong> for format conversion, and <strong>Settings</strong> for configuration.</p>
           </div>
         </div>
       </section>
@@ -1019,7 +898,7 @@
 
         <div id="settings-accounts" role="group" aria-label="Connected platform accounts">
           <h3>Linked Accounts</h3>
-          <p class="help-text" style="padding: 0 20px 8px;">Connect your platform accounts to unlock live streaming, uploads, analytics, and chat features. OAuth tokens are encrypted and stored locally. You can disconnect at any time.</p>
+          <p class="help-text" style="padding: 0 20px 8px;">Connect your platform accounts to unlock uploads, analytics, and chat features. OAuth tokens are encrypted and stored locally. You can disconnect at any time.</p>
           <div id="accounts-list" aria-live="polite">
             <div class="account-item" data-platform="youtube">
               <span class="account-name">YouTube</span>

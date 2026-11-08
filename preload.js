@@ -84,20 +84,6 @@ contextBridge.exposeInMainWorld('api', {
   setLowBandwidthMode: (enabled) => ipcRenderer.invoke('set-low-bandwidth-mode', enabled),
   getLowBandwidthMode: () => ipcRenderer.invoke('get-low-bandwidth-mode'),
 
-  // RTMP Streaming
-  startStream: (data) => ipcRenderer.invoke('start-stream', data),
-  stopStream: () => ipcRenderer.invoke('stop-stream'),
-  getStreamStatus: () => ipcRenderer.invoke('get-stream-status'),
-  setStreamBitrate: (bitrate) => ipcRenderer.invoke('set-stream-bitrate', bitrate),
-  runPreStreamChecklist: () => ipcRenderer.invoke('run-pre-stream-checklist'),
-
-  // Stream event listeners
-  onStreamStatus: (callback) => ipcRenderer.on('stream-status', (_, data) => callback(data)),
-  onStreamProgress: (callback) => ipcRenderer.on('stream-progress', (_, data) => callback(data)),
-
-  // Overlay generation
-  generateCountdownOverlay: (data) => ipcRenderer.invoke('generate-countdown-overlay', data),
-
   // OAuth Account Linking
   linkAccount: (platform) => ipcRenderer.invoke('oauth-link-account', platform),
   getLinkedAccounts: () => ipcRenderer.invoke('oauth-get-linked-accounts'),
@@ -108,13 +94,8 @@ contextBridge.exposeInMainWorld('api', {
   onOAuthResult: (callback) => ipcRenderer.on('oauth-result', (_, data) => callback(data)),
 
   // YouTube API
-  youtubeCreateBroadcast: (data) => ipcRenderer.invoke('youtube-create-broadcast', data),
   youtubeUpdateDescription: (data) => ipcRenderer.invoke('youtube-update-video-description', data),
   youtubeUploadVideo: (data) => ipcRenderer.invoke('youtube-upload-video', data),
-
-  // Twitch API
-  twitchUpdateStream: (data) => ipcRenderer.invoke('twitch-update-stream', data),
-  twitchCreateClip: (data) => ipcRenderer.invoke('twitch-create-clip', data),
 
   // Document Templates
   listDocumentTemplates: () => ipcRenderer.invoke('list-document-templates'),
@@ -223,15 +204,6 @@ contextBridge.exposeInMainWorld('api', {
 
   // Render Farm
   renderFarmExport: (data) => ipcRenderer.invoke('render-farm-export', data),
-
-  // Advanced Streaming
-  streamingSetSource: (data) => ipcRenderer.invoke('streaming-set-source', data),
-  streamingGetSource: () => ipcRenderer.invoke('streaming-get-source'),
-  streamingGetAvailableSources: () => ipcRenderer.invoke('streaming-get-available-sources'),
-  streamingStartAdvanced: (data) => ipcRenderer.invoke('streaming-start-advanced', data),
-  streamingStopAdvanced: () => ipcRenderer.invoke('streaming-stop-advanced'),
-  streamingTestConnection: (data) => ipcRenderer.invoke('streaming-test-connection', data),
-  streamingGetStats: () => ipcRenderer.invoke('streaming-get-stats'),
 
   // Raw Photo Support
   rawPhotoGetSupported: () => ipcRenderer.invoke('raw-photo-get-supported'),
